@@ -2,6 +2,13 @@
 
 These rules apply to all coding agents working in this repository.
 
+## Initial Project Context
+
+- Before planning, reviewing, or changing this project, read [PROJECT_SPEC.md](PROJECT_SPEC.md) in the repository root.
+- Use the specification as the initial context for the product purpose, scope, user flows, and system responsibilities.
+- Preserve the distinction between owner-confirmed decisions, board-supported concepts, proposals, and open decisions. Owner-confirmed architecture updates replace conflicting earlier concepts. Do not treat design decisions, draft thresholds, or proposed features as verified integrations or implemented behavior.
+- Follow the user's current instructions when they change the specification. Report any relevant conflict with the document.
+
 ## Output and Implementation
 
 - When presenting code, provide complete files unless fragments are explicitly requested.
