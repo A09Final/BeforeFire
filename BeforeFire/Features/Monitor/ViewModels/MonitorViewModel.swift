@@ -8,7 +8,7 @@ struct MonitorViewModel {
     // Fixed values for the UI prototype. No device connection is made.
     static let mock = MonitorViewModel(
         connectionTitle: "Hub connected",
-        statusTitle: "Your Kitchen\nIs Safe",
+        statusTitle: "Your Kitchen Is\nSafe",
         // DESIGN: Urutan array menjadi urutan kartu, dari kiri ke kanan lalu ke baris berikutnya.
         // DESIGN: value berisi nilai, unit berisi satuan. Gunakan nil untuk status tanpa satuan.
         // Sesuaikan spokenValue agar VoiceOver tetap membaca nilai dan satuan secara lengkap.

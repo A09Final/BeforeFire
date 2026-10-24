@@ -9,7 +9,7 @@ struct MonitorReadingCard: View {
     // DESIGN: Change the icon size, column width, and gap independently from the label.
     @ScaledMetric(relativeTo: .body) private var iconSize = 20.0
     @ScaledMetric(relativeTo: .body) private var iconColumnWidth = 24.0
-    @ScaledMetric(relativeTo: .body) private var labelRowHeight = 60.0
+    @ScaledMetric(relativeTo: .body) private var labelRowHeight = 40.0
     private let iconSpacing: CGFloat = 8
     @ScaledMetric(relativeTo: .title) private var standardValueSize = 32.0
     @ScaledMetric(relativeTo: .title2) private var presenceValueSize = 32.0

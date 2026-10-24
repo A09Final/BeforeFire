@@ -6,7 +6,7 @@ struct MonitorView: View {
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @State private var isSettingsPresented = false
     // DESIGN: Ukuran dasar judul dan status koneksi. Pertahankan ScaledMetric untuk Dynamic Type.
-    @ScaledMetric(relativeTo: .largeTitle) private var titleSize = 32.0
+    @ScaledMetric(relativeTo: .largeTitle) private var titleSize = 45.0
     @ScaledMetric(relativeTo: .subheadline) private var connectionSize = 15.0
 
     var body: some View {
@@ -18,15 +18,18 @@ struct MonitorView: View {
                     // DESIGN: Jarak minimum antara header dan kartu; ruang layar tambahan dapat memperbesar jarak ini.
                     Spacer(minLength: 40)
 
-                    // DESIGN: Susunan kolom diatur oleh columns; urutan kartu mengikuti readings di MonitorViewModel.
-                    LazyVGrid(columns: columns, spacing: MonitorStyle.spacing) {
-                        ForEach(viewModel.readings) { reading in
-                            MonitorReadingCard(reading: reading)
+                    // DESIGN: Keep the connection status with the cards; spacing controls their gap.
+                    VStack(alignment: .leading, spacing: MonitorStyle.spacing) {
+                        connectionStatus
+
+                        // DESIGN: Susunan kolom diatur oleh columns; urutan kartu mengikuti readings di MonitorViewModel.
+                        LazyVGrid(columns: columns, spacing: MonitorStyle.spacing) {
+                            ForEach(viewModel.readings) { reading in
+                                MonitorReadingCard(reading: reading)
+                            }
                         }
                     }
-                    // DESIGN: Ubah padding ini untuk mengatur ruang di atas dan di bawah kumpulan kartu.
-                    .padding(.top, MonitorStyle.spacing)
-                    .padding(.bottom, 52)
+                    .padding(.bottom, MonitorStyle.sensorSectionBottomInset)
                 }
                 .frame(minHeight: geometry.size.height, alignment: .top)
                 .frame(maxWidth: MonitorStyle.maximumContentWidth)
@@ -46,42 +49,41 @@ struct MonitorView: View {
     }
 
     private var header: some View {
-        // DESIGN: spacing pada VStack mengatur jarak judul; spacing pada HStack mengatur jarak elemen koneksi.
-        VStack(alignment: .leading, spacing: 8) {
-            HStack(spacing: 10) {
-                Circle()
-                    .fill(MonitorStyle.connected)
-                    .frame(width: 16, height: 16)
-                    .accessibilityHidden(true)
-
-                Text(viewModel.connectionTitle)
-                    .font(.system(size: connectionSize))
-                    .foregroundStyle(MonitorStyle.secondaryText)
-
-                Spacer(minLength: 8)
-
-                Button {
-                    isSettingsPresented = true
-                } label: {
-                    Image(systemName: "gearshape")
-                        .font(.system(size: 24, weight: .regular))
-                        .foregroundStyle(MonitorStyle.primaryText)
-                        .frame(width: MonitorStyle.buttonSize, height: MonitorStyle.buttonSize)
-                        .background(MonitorStyle.buttonBackground, in: Circle())
-                        .overlay {
-                            Circle().strokeBorder(MonitorStyle.buttonBorder, lineWidth: 1)
-                        }
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel("Settings")
-            }
-
+        // DESIGN: Align the kitchen title and settings button at the top of the page.
+        HStack(alignment: .top, spacing: MonitorStyle.spacing) {
             Text(viewModel.statusTitle)
                 // DESIGN: Ganti font di MonitorStyle. fixedSize memakai ukuran yang sudah diskalakan oleh ScaledMetric.
                 .font(.custom(MonitorStyle.emphasisFontName, fixedSize: titleSize))
                 .foregroundStyle(MonitorStyle.primaryText)
-                .fixedSize(horizontal: false, vertical: true)
+                // DESIGN: Keep the explicit two-line title; reduce its size when the first line needs more space.
+                .lineLimit(2)
+                .minimumScaleFactor(0.5)
+                .layoutPriority(1)
                 .accessibilityAddTraits(.isHeader)
+
+            Spacer(minLength: 8)
+
+            Button("Settings", systemImage: "gearshape") {
+                isSettingsPresented = true
+            }
+            // DESIGN: Keep the native Liquid Glass fill, border, and press effect.
+            .labelStyle(.iconOnly)
+            .buttonStyle(.glass)
+            .buttonBorderShape(.circle)
+            .controlSize(.large)
+        }
+    }
+
+    private var connectionStatus: some View {
+        HStack(spacing: 10) {
+            Circle()
+                .fill(MonitorStyle.connected)
+                .frame(width: 16, height: 16)
+                .accessibilityHidden(true)
+
+            Text(viewModel.connectionTitle)
+                .font(.system(size: connectionSize))
+                .foregroundStyle(MonitorStyle.secondaryText)
         }
     }
 
