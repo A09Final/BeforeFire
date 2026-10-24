@@ -77,9 +77,8 @@ struct MonitorView: View {
             }
 
             Text(viewModel.statusTitle)
-                // DESIGN: Ganti font atau weight untuk eksplorasi strong bold typeface; tracking mengatur jarak huruf.
-                .font(.system(size: titleSize, weight: .bold))
-                .tracking(-0.8)
+                // DESIGN: Ganti font di MonitorStyle. fixedSize memakai ukuran yang sudah diskalakan oleh ScaledMetric.
+                .font(.custom(MonitorStyle.emphasisFontName, fixedSize: titleSize))
                 .foregroundStyle(MonitorStyle.primaryText)
                 .fixedSize(horizontal: false, vertical: true)
                 .accessibilityAddTraits(.isHeader)

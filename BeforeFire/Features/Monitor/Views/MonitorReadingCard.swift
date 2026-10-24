@@ -6,9 +6,14 @@ struct MonitorReadingCard: View {
     // DESIGN: Ubah ukuran dasar label, nilai umum, Presence, dan Area Pressure di sini.
     // ScaledMetric menjaga ukuran teks agar mengikuti pengaturan Dynamic Type pengguna.
     @ScaledMetric(relativeTo: .body) private var labelSize = 16.0
+    // DESIGN: Change the icon size, column width, and gap independently from the label.
+    @ScaledMetric(relativeTo: .body) private var iconSize = 20.0
+    @ScaledMetric(relativeTo: .body) private var iconColumnWidth = 24.0
+    @ScaledMetric(relativeTo: .body) private var labelRowHeight = 60.0
+    private let iconSpacing: CGFloat = 8
     @ScaledMetric(relativeTo: .title) private var standardValueSize = 32.0
-    @ScaledMetric(relativeTo: .title2) private var presenceValueSize = 22.0
-    @ScaledMetric(relativeTo: .title2) private var pressureValueSize = 26.0
+    @ScaledMetric(relativeTo: .title2) private var presenceValueSize = 32.0
+    @ScaledMetric(relativeTo: .title2) private var pressureValueSize = 32.0
     // DESIGN: Ukuran satuan terpisah dari angka. Ubah unitSize untuk °C, %, dan hPa.
     @ScaledMetric(relativeTo: .body) private var unitSize = 20.0
     @ScaledMetric(relativeTo: .body) private var cardHeight = MonitorStyle.cardHeight
@@ -18,10 +23,7 @@ struct MonitorReadingCard: View {
     var body: some View {
         // DESIGN: alignment dan spacing mengatur posisi serta jarak label terhadap area nilai.
         VStack(alignment: .leading, spacing: 12) {
-            Text(reading.title)
-                .font(.system(size: labelSize, weight: .medium))
-                .foregroundStyle(MonitorStyle.primaryText)
-                .fixedSize(horizontal: false, vertical: true)
+            readingLabel
 
             readingValue
                 .foregroundStyle(MonitorStyle.primaryText)
@@ -40,17 +42,53 @@ struct MonitorReadingCard: View {
         .accessibilityValue(reading.spokenValue)
     }
 
+    private var readingLabel: some View {
+        HStack(alignment: .center, spacing: iconSpacing) {
+            Image(systemName: symbolName)
+                .font(.system(size: iconSize, weight: .medium))
+                .symbolRenderingMode(.monochrome)
+                .frame(width: iconColumnWidth)
+                .accessibilityHidden(true)
+
+            Text(reading.title)
+                .font(.system(size: labelSize, weight: .medium))
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .foregroundStyle(MonitorStyle.primaryText)
+        // DESIGN: Reserve two label lines so long titles do not shift the values between cards.
+        .frame(minHeight: labelRowHeight, alignment: .leading)
+    }
+
+    private var symbolName: String {
+        // DESIGN: Change the SF Symbol for each reading here.
+        switch reading.id {
+        case .stoveHeat:
+            "cooktop"
+        case .airQuality:
+            "wind"
+        case .presence:
+            "figure.stand"
+        case .roomTemperature:
+            "thermometer.medium"
+        case .roomHumidity:
+            "humidity"
+        case .areaPressure:
+            "barometer"
+        }
+    }
+
     private var readingValue: some View {
         // DESIGN: firstTextBaseline menyelaraskan dasar teks angka dan satuan meskipun ukurannya berbeda.
         HStack(alignment: .firstTextBaseline, spacing: unitSpacing) {
             Text(reading.value)
-                // DESIGN: Ganti font atau weight ini untuk angka dan status tanpa satuan.
-                .font(.system(size: valueSize, weight: .bold))
+                // DESIGN: Font mengikuti MonitorStyle; ukuran angka dan status tetap diatur lewat valueSize.
+                // fixedSize mencegah penskalaan ganda karena ukuran sudah memakai ScaledMetric.
+                .font(.custom(MonitorStyle.emphasisFontName, fixedSize: valueSize))
 
             if let unit = reading.unit {
                 Text(unit)
-                    // DESIGN: Font dan ketebalan satuan dapat diubah tanpa mengubah angka.
-                    .font(.system(size: unitSize, weight: .bold))
+                    // DESIGN: unitSize tetap terpisah dari angka; ganti font di sini jika satuan perlu gaya lain.
+                    .font(.custom(MonitorStyle.emphasisFontName, fixedSize: unitSize))
             }
         }
     }

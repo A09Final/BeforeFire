@@ -1,6 +1,9 @@
 import SwiftUI
 
 enum MonitorStyle {
+    // DESIGN: Font judul, nilai, dan satuan. Nama ini sudah mencakup ketebalan Heavy.
+    static let emphasisFontName = "AvenirNextCondensed-Heavy"
+
     // DESIGN: Stucco #E2E2DE is the page background. Greige #B7AC9B is the card surface.
     static let background = Color(red: 226 / 255, green: 226 / 255, blue: 222 / 255)
     static let card = Color(red: 183 / 255, green: 172 / 255, blue: 155 / 255)
