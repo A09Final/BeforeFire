@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct MonitorView: View {
-    let viewModel: MonitorViewModel
+    @State private var viewModel: MonitorViewModel
 
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @State private var isSettingsPresented = false
@@ -9,14 +9,23 @@ struct MonitorView: View {
     @ScaledMetric(relativeTo: .largeTitle) private var titleSize = 45.0
     @ScaledMetric(relativeTo: .subheadline) private var connectionSize = 15.0
 
+    init(viewModel: MonitorViewModel) {
+        _viewModel = State(initialValue: viewModel)
+    }
+
     var body: some View {
         GeometryReader { geometry in
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
                     header
 
+                    if let guidance = viewModel.actionGuidance {
+                        MonitorActionGuidanceView(guidance: guidance)
+                            .padding(.top, MonitorStyle.actionGuidanceTopSpacing)
+                    }
+
                     // DESIGN: Jarak minimum antara header dan kartu; ruang layar tambahan dapat memperbesar jarak ini.
-                    Spacer(minLength: 40)
+                    Spacer(minLength: viewModel.isActionGuidanceVisible ? MonitorStyle.spacing : 40)
 
                     // DESIGN: Keep the connection status with the cards; spacing controls their gap.
                     VStack(alignment: .leading, spacing: MonitorStyle.spacing) {
@@ -25,7 +34,10 @@ struct MonitorView: View {
                         // DESIGN: Susunan kolom diatur oleh columns; urutan kartu mengikuti readings di MonitorViewModel.
                         LazyVGrid(columns: columns, spacing: MonitorStyle.spacing) {
                             ForEach(viewModel.readings) { reading in
-                                MonitorReadingCard(reading: reading)
+                                MonitorReadingCard(
+                                    reading: reading,
+                                    alertCondition: viewModel.badgeCondition(for: reading.id)
+                                )
                             }
                         }
                     }
@@ -44,17 +56,20 @@ struct MonitorView: View {
         // DESIGN: Keep the warm neutral palette in light mode. Edit its colors in MonitorStyle.
         .preferredColorScheme(.light)
         .sheet(isPresented: $isSettingsPresented) {
-            MonitorSettingsPlaceholderView()
+            MonitorDeveloperSettingsView(
+                isActionGuidanceVisible: $viewModel.isActionGuidanceVisible,
+                previewCondition: $viewModel.previewCondition
+            )
         }
     }
 
     private var header: some View {
         // DESIGN: Align the kitchen title and settings button at the top of the page.
         HStack(alignment: .top, spacing: MonitorStyle.spacing) {
-            Text(viewModel.statusTitle)
+            Text(viewModel.displayedStatusTitle)
                 // DESIGN: Ganti font di MonitorStyle. fixedSize memakai ukuran yang sudah diskalakan oleh ScaledMetric.
                 .font(.custom(MonitorStyle.emphasisFontName, fixedSize: titleSize))
-                .foregroundStyle(MonitorStyle.primaryText)
+                .foregroundStyle(viewModel.isAlarmPreview ? MonitorStyle.alarmText : MonitorStyle.primaryText)
                 // DESIGN: Keep the explicit two-line title; reduce its size when the first line needs more space.
                 .lineLimit(2)
                 .minimumScaleFactor(0.5)

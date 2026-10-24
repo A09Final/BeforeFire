@@ -2,13 +2,14 @@ import SwiftUI
 
 struct MonitorReadingCard: View {
     let reading: MonitorReading
+    var alertCondition: MonitorPreviewCondition? = nil
 
     // DESIGN: Ubah ukuran dasar label, nilai umum, Presence, dan Area Pressure di sini.
     // ScaledMetric menjaga ukuran teks agar mengikuti pengaturan Dynamic Type pengguna.
     @ScaledMetric(relativeTo: .body) private var labelSize = 16.0
     // DESIGN: Change the icon size, column width, and gap independently from the label.
-    @ScaledMetric(relativeTo: .body) private var iconSize = 20.0
-    @ScaledMetric(relativeTo: .body) private var iconColumnWidth = 24.0
+    @ScaledMetric(relativeTo: .body) private var iconSize = 25.0
+    @ScaledMetric(relativeTo: .body) private var iconColumnWidth = 25.0
     @ScaledMetric(relativeTo: .body) private var labelRowHeight = 40.0
     private let iconSpacing: CGFloat = 8
     @ScaledMetric(relativeTo: .title) private var standardValueSize = 32.0
@@ -17,6 +18,9 @@ struct MonitorReadingCard: View {
     // DESIGN: Ukuran satuan terpisah dari angka. Ubah unitSize untuk °C, %, dan hPa.
     @ScaledMetric(relativeTo: .body) private var unitSize = 20.0
     @ScaledMetric(relativeTo: .body) private var cardHeight = MonitorStyle.cardHeight
+    // DESIGN: Move the badge northeast to cover the rounded corner. Positive offsets move it up and right.
+    @ScaledMetric(relativeTo: .body) private var badgeTopOffset = 8.0
+    @ScaledMetric(relativeTo: .body) private var badgeTrailingOffset = 8.0
     // DESIGN: Jarak antara angka dan satuan. Gunakan 0 jika ingin keduanya menempel.
     private let unitSpacing: CGFloat = 4
 
@@ -37,9 +41,27 @@ struct MonitorReadingCard: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .frame(minHeight: cardHeight)
         .background(MonitorStyle.card, in: RoundedRectangle(cornerRadius: MonitorStyle.cardCornerRadius))
+        .overlay(alignment: .topTrailing) {
+            if let badgeSeverity {
+                MonitorAlertBadge(severity: badgeSeverity)
+                    .offset(x: badgeTrailingOffset, y: -badgeTopOffset)
+                    .allowsHitTesting(false)
+            }
+        }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(reading.title)
-        .accessibilityValue(reading.spokenValue)
+        .accessibilityValue(accessibilityReadingValue)
+    }
+
+    private var badgeSeverity: MonitorAlertBadge.Severity? {
+        switch alertCondition {
+        case .unsafe:
+            .warning
+        case .dangerous:
+            .alarm
+        case nil:
+            nil
+        }
     }
 
     private var readingLabel: some View {
@@ -53,10 +75,17 @@ struct MonitorReadingCard: View {
             Text(reading.title)
                 .font(.system(size: labelSize, weight: .medium))
                 .fixedSize(horizontal: false, vertical: true)
+                .frame(maxWidth: .infinity, alignment: .leading)
+
         }
         .foregroundStyle(MonitorStyle.primaryText)
         // DESIGN: Reserve two label lines so long titles do not shift the values between cards.
         .frame(minHeight: labelRowHeight, alignment: .leading)
+    }
+
+    private var accessibilityReadingValue: String {
+        guard let alertCondition else { return reading.spokenValue }
+        return "\(reading.spokenValue), \(alertCondition.rawValue)"
     }
 
     private var symbolName: String {

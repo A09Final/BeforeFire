@@ -5,6 +5,28 @@ struct MonitorViewModel {
     let statusTitle: String
     let readings: [MonitorReading]
 
+    // Developer preview state stays in memory and does not control any device.
+    var isActionGuidanceVisible = false
+    var previewCondition: MonitorPreviewCondition = .unsafe
+
+    var displayedStatusTitle: String {
+        isActionGuidanceVisible ? previewCondition.statusTitle : statusTitle
+    }
+
+    var actionGuidance: String? {
+        isActionGuidanceVisible ? previewCondition.actionGuidance : nil
+    }
+
+    var isAlarmPreview: Bool {
+        isActionGuidanceVisible && previewCondition == .dangerous
+    }
+
+    func badgeCondition(for kind: MonitorReading.Kind) -> MonitorPreviewCondition? {
+        // The current mock scenario flags only stove heat. No sensor threshold is evaluated.
+        guard isActionGuidanceVisible, kind == .stoveHeat else { return nil }
+        return previewCondition
+    }
+
     // Fixed values for the UI prototype. No device connection is made.
     static let mock = MonitorViewModel(
         connectionTitle: "Hub connected",
