@@ -1,6 +1,6 @@
 import SwiftUI
 
-struct MonitorAlertBadge: View {
+struct AlertBadge: View {
     enum Severity {
         case warning
         case alarm

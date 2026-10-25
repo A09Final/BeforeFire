@@ -43,7 +43,7 @@ struct MonitorReadingCard: View {
         .background(MonitorStyle.card, in: RoundedRectangle(cornerRadius: MonitorStyle.cardCornerRadius))
         .overlay(alignment: .topTrailing) {
             if let badgeSeverity {
-                MonitorAlertBadge(severity: badgeSeverity)
+                AlertBadge(severity: badgeSeverity)
                     .offset(x: badgeTrailingOffset, y: -badgeTopOffset)
                     .allowsHitTesting(false)
             }
@@ -53,7 +53,7 @@ struct MonitorReadingCard: View {
         .accessibilityValue(accessibilityReadingValue)
     }
 
-    private var badgeSeverity: MonitorAlertBadge.Severity? {
+    private var badgeSeverity: AlertBadge.Severity? {
         switch alertCondition {
         case .unsafe:
             .warning
