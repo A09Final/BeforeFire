@@ -4,12 +4,12 @@ enum MonitorStyle {
     // DESIGN: Font judul, nilai, dan satuan. Nama ini sudah mencakup ketebalan Heavy.
     static let emphasisFontName = "AvenirNextCondensed-Heavy"
 
-    // DESIGN: Stucco #E2E2DE is the page background. Greige #B7AC9B is the card surface.
-    static let background = Color(red: 226 / 255, green: 226 / 255, blue: 222 / 255)
-    static let card = Color(red: 183 / 255, green: 172 / 255, blue: 155 / 255)
+    // DESIGN: Bon Jour #E1DFE0 is the page background. Aluminium #AAB1BB is the card surface.
+    static let background = Color(red: 225 / 255, green: 223 / 255, blue: 224 / 255)
+    static let card = Color(red: 170 / 255, green: 177 / 255, blue: 187 / 255)
     // DESIGN: Onyx #1C1C1B keeps headings, values, card labels, and icons clear on warm surfaces.
     static let primaryText = Color(red: 28 / 255, green: 28 / 255, blue: 27 / 255)
-    // DESIGN: Use Walnut #6A5D52 on Stucco only. Its contrast is too low on Greige for small text.
+    // DESIGN: Walnut #6A5D52 is used for secondary text on the page background.
     static let secondaryText = Color(red: 106 / 255, green: 93 / 255, blue: 82 / 255)
     static let connected = Color(red: 70 / 255, green: 181 / 255, blue: 85 / 255)
     // DESIGN: Red #B91C1C marks Dangerous. Yellow #FACC15 marks an Unsafe warning badge.
