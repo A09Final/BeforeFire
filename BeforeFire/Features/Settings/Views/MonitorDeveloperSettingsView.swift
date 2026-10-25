@@ -1,41 +1,31 @@
 import SwiftUI
 
 struct MonitorDeveloperSettingsView: View {
-    @Environment(\.dismiss) private var dismiss
     @Binding var isActionGuidanceVisible: Bool
     @Binding var previewCondition: MonitorPreviewCondition
 
     var body: some View {
-        NavigationStack {
-            Form {
-                Section {
-                    Toggle("Show action guidance", isOn: $isActionGuidanceVisible)
-                        .accessibilityIdentifier("settings.actionGuidanceToggle")
+        Form {
+            Section {
+                Toggle("Show action guidance", isOn: $isActionGuidanceVisible)
+                    .accessibilityIdentifier("settings.actionGuidanceToggle")
 
-                    if isActionGuidanceVisible {
-                        Picker("Preview condition", selection: $previewCondition) {
-                            ForEach(MonitorPreviewCondition.allCases) { condition in
-                                Text(condition.rawValue).tag(condition)
-                            }
+                if isActionGuidanceVisible {
+                    Picker("Preview condition", selection: $previewCondition) {
+                        ForEach(MonitorPreviewCondition.allCases) { condition in
+                            Text(condition.rawValue).tag(condition)
                         }
-                        .accessibilityIdentifier("settings.previewCondition")
                     }
-                } header: {
-                    Text("Developer Settings")
-                } footer: {
-                    Text("Preview the status and action text with mock readings. These settings reset when the app restarts.")
+                    .accessibilityIdentifier("settings.previewCondition")
                 }
-            }
-            .navigationTitle("Settings")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Done") {
-                        dismiss()
-                    }
-                }
+            } header: {
+                Text("Developer Settings")
+            } footer: {
+                Text("Preview the status and action text with mock readings. These settings reset when the app restarts.")
             }
         }
-        .presentationDetents([.medium, .large])
+        .navigationTitle("Settings")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar(.visible, for: .navigationBar)
     }
 }

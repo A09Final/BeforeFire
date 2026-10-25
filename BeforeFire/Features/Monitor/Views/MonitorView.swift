@@ -4,7 +4,6 @@ struct MonitorView: View {
     @State private var viewModel: MonitorViewModel
 
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
-    @State private var isSettingsPresented = false
     // DESIGN: Ukuran dasar judul dan status koneksi. Pertahankan ScaledMetric untuk Dynamic Type.
     @ScaledMetric(relativeTo: .largeTitle) private var titleSize = 45.0
     @ScaledMetric(relativeTo: .subheadline) private var connectionSize = 15.0
@@ -50,18 +49,13 @@ struct MonitorView: View {
                 .frame(maxWidth: .infinity)
             }
             // DESIGN: Halaman monitoring tetap diam saat digeser; wadah ini hanya mempertahankan layout.
-            .scrollDisabled(true)
+            .scrollDisabled(false)
             .scrollIndicators(.hidden)
         }
         .background(MonitorStyle.background.ignoresSafeArea())
         // DESIGN: Keep the warm neutral palette in light mode. Edit its colors in MonitorStyle.
         .preferredColorScheme(.light)
-        .sheet(isPresented: $isSettingsPresented) {
-            MonitorDeveloperSettingsView(
-                isActionGuidanceVisible: $viewModel.isActionGuidanceVisible,
-                previewCondition: $viewModel.previewCondition
-            )
-        }
+        .toolbar(.hidden, for: .navigationBar)
     }
 
     private var header: some View {
@@ -79,8 +73,13 @@ struct MonitorView: View {
 
             Spacer(minLength: 8)
 
-            Button("Settings", systemImage: "gearshape") {
-                isSettingsPresented = true
+            NavigationLink {
+                MonitorDeveloperSettingsView(
+                    isActionGuidanceVisible: $viewModel.isActionGuidanceVisible,
+                    previewCondition: $viewModel.previewCondition
+                )
+            } label: {
+                Label("Settings", systemImage: "gearshape")
             }
             // DESIGN: Keep the native Liquid Glass fill, border, and press effect.
             .labelStyle(.iconOnly)
@@ -123,10 +122,14 @@ struct MonitorView: View {
 }
 
 #Preview("Monitoring") {
-    MonitorView(viewModel: .mock)
+    NavigationStack {
+        MonitorView(viewModel: .mock)
+    }
 }
 
 #Preview("Large Text") {
-    MonitorView(viewModel: .mock)
-        .environment(\.dynamicTypeSize, .accessibility3)
+    NavigationStack {
+        MonitorView(viewModel: .mock)
+            .environment(\.dynamicTypeSize, .accessibility3)
+    }
 }
