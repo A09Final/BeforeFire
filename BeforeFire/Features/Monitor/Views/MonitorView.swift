@@ -8,6 +8,7 @@ struct MonitorView: View {
     // DESIGN: Ukuran dasar judul dan status koneksi. Pertahankan ScaledMetric untuk Dynamic Type.
     @ScaledMetric(relativeTo: .largeTitle) private var titleSize = 45.0
     @ScaledMetric(relativeTo: .subheadline) private var connectionSize = 15.0
+    @ScaledMetric(relativeTo: .body) private var actionGuidanceTextSize = MonitorStyle.actionGuidanceTextSize
 
     init(viewModel: MonitorViewModel) {
         _viewModel = State(initialValue: viewModel)
@@ -20,7 +21,7 @@ struct MonitorView: View {
                     header
 
                     if let guidance = viewModel.actionGuidance {
-                        MonitorActionGuidanceView(guidance: guidance)
+                        actionGuidance(guidance)
                             .padding(.top, MonitorStyle.actionGuidanceTopSpacing)
                     }
 
@@ -87,6 +88,16 @@ struct MonitorView: View {
             .buttonBorderShape(.circle)
             .controlSize(.large)
         }
+    }
+
+    private func actionGuidance(_ guidance: String) -> some View {
+        Text(guidance)
+            .font(.system(size: actionGuidanceTextSize))
+            .foregroundStyle(MonitorStyle.primaryText)
+            .lineSpacing(MonitorStyle.actionGuidanceLineSpacing)
+            .fixedSize(horizontal: false, vertical: true)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .accessibilityIdentifier("monitor.actionGuidance")
     }
 
     private var connectionStatus: some View {

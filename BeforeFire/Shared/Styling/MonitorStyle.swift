@@ -15,6 +15,9 @@ enum MonitorStyle {
     // DESIGN: Red #B91C1C marks Dangerous. Yellow #FACC15 marks an Unsafe warning badge.
     static let alarmText = Color(red: 185 / 255, green: 28 / 255, blue: 28 / 255)
     static let warningBadge = Color(red: 250 / 255, green: 204 / 255, blue: 21 / 255)
+    // DESIGN: Base size and line spacing for the action text. The view scales the font for Dynamic Type.
+    static let actionGuidanceTextSize: CGFloat = 20
+    static let actionGuidanceLineSpacing: CGFloat = 4
     // DESIGN: Gap between the kitchen heading and its action text.
     static let actionGuidanceTopSpacing: CGFloat = 12
 
