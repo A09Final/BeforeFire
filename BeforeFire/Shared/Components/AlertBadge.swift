@@ -32,7 +32,7 @@ struct AlertBadge: View {
                     .resizable()
                     .scaledToFit()
                     .symbolRenderingMode(.palette)
-                    .foregroundStyle(.white, MonitorStyle.alarmText)
+                    .foregroundStyle(MonitorStyle.alarmForeground, MonitorStyle.alarmText)
             }
         }
         .frame(width: badgeSize, height: badgeSize)
