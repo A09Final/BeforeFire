@@ -2,15 +2,24 @@ import Foundation
 
 struct MonitorViewModel {
     let connectionTitle: String
-    let statusTitle: String
+    let statusValue: String
     let readings: [MonitorReading]
+    let statusHeading = "Your Kitchen Is"
 
     // Developer preview state stays in memory and does not control any device.
     var isActionGuidanceVisible = false
     var previewCondition: MonitorPreviewCondition = .unsafe
 
+    var statusTitle: String {
+        "\(statusHeading)\n\(statusValue)"
+    }
+
+    var displayedStatusValue: String {
+        isActionGuidanceVisible ? previewCondition.rawValue : statusValue
+    }
+
     var displayedStatusTitle: String {
-        isActionGuidanceVisible ? previewCondition.statusTitle : statusTitle
+        "\(statusHeading)\n\(displayedStatusValue)"
     }
 
     var actionGuidance: String? {
@@ -21,16 +30,15 @@ struct MonitorViewModel {
         isActionGuidanceVisible && previewCondition == .dangerous
     }
 
-    func badgeCondition(for kind: MonitorReading.Kind) -> MonitorPreviewCondition? {
-        // The current mock scenario flags only stove heat. No sensor threshold is evaluated.
-        guard isActionGuidanceVisible, kind == .stoveHeat else { return nil }
-        return previewCondition
+    var readingAlertCondition: MonitorPreviewCondition? {
+        // The mock preview applies one condition to every card. No sensor threshold is evaluated.
+        isActionGuidanceVisible ? previewCondition : nil
     }
 
     // Fixed values for the UI prototype. No device connection is made.
     static let mock = MonitorViewModel(
         connectionTitle: "Hub connected",
-        statusTitle: "Your Kitchen Is\nSafe",
+        statusValue: "Safe",
         // DESIGN: Urutan array menjadi urutan kartu, dari kiri ke kanan lalu ke baris berikutnya.
         // DESIGN: value berisi nilai, unit berisi satuan. Gunakan nil untuk status tanpa satuan.
         // Sesuaikan spokenValue agar VoiceOver tetap membaca nilai dan satuan secara lengkap.
