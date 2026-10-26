@@ -35,7 +35,7 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		B4F000013089EFBE00BF99E1 /* Exceptions for BeforeFire in BeforeFire target */ = {
+		B4F000013089EFBE00BF99E1 /* Exceptions for "BeforeFire" folder in "BeforeFire" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
@@ -48,7 +48,7 @@
 		F0A0C5DF3089EFBE00BF99E1 /* BeforeFire */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
-				B4F000013089EFBE00BF99E1 /* Exceptions for BeforeFire in BeforeFire target */,
+				B4F000013089EFBE00BF99E1 /* Exceptions for "BeforeFire" folder in "BeforeFire" target */,
 			);
 			path = BeforeFire;
 			sourceTree = "<group>";
