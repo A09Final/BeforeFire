@@ -3,14 +3,16 @@ import SwiftUI
 struct MonitorReadingCard: View {
     let reading: MonitorReading
     var alertCondition: MonitorPreviewCondition? = nil
+    // The normal grid supplies an equal row height; scrolling layouts use the minimum height.
+    var height: CGFloat? = nil
 
     // DESIGN: Ubah ukuran dasar label, nilai umum, Presence, dan Area Pressure di sini.
     // ScaledMetric menjaga ukuran teks agar mengikuti pengaturan Dynamic Type pengguna.
-    @ScaledMetric(relativeTo: .body) private var labelSize = 16.0
+    @ScaledMetric(relativeTo: .body) private var labelSize = MonitorStyle.sensorLabelSize
     // DESIGN: Change the icon size, column width, and gap independently from the label.
-    @ScaledMetric(relativeTo: .body) private var iconSize = 25.0
-    @ScaledMetric(relativeTo: .body) private var iconColumnWidth = 25.0
-    @ScaledMetric(relativeTo: .body) private var labelRowHeight = 40.0
+    @ScaledMetric(relativeTo: .body) private var iconSize = MonitorStyle.sensorIconSize
+    @ScaledMetric(relativeTo: .body) private var iconColumnWidth = MonitorStyle.sensorIconColumnWidth
+    @ScaledMetric(relativeTo: .body) private var labelRowHeight = MonitorStyle.sensorLabelRowHeight
     private let iconSpacing: CGFloat = 8
     @ScaledMetric(relativeTo: .title) private var standardValueSize = 40.0
     @ScaledMetric(relativeTo: .title2) private var presenceValueSize = 40.0
@@ -18,11 +20,7 @@ struct MonitorReadingCard: View {
     // DESIGN: Ukuran satuan terpisah dari angka. Ubah unitSize untuk °C, %, dan hPa.
     @ScaledMetric(relativeTo: .body) private var unitSize = 25.0
     @ScaledMetric(relativeTo: .body) private var cardHeight = MonitorStyle.cardHeight
-    // DESIGN: Move the badge northeast to cover the rounded corner. Positive offsets move it up and right.
-    @ScaledMetric(relativeTo: .body) private var badgeTopOffset = 8.0
-    @ScaledMetric(relativeTo: .body) private var badgeTrailingOffset = 8.0
-    // DESIGN: Jarak antara angka dan satuan. Gunakan 0 jika ingin keduanya menempel.
-    private let unitSpacing: CGFloat = 4
+    @ScaledMetric(relativeTo: .body) private var statusDotSize = MonitorStyle.sensorStatusDotSize
 
     var body: some View {
         // DESIGN: alignment dan spacing mengatur posisi serta jarak label terhadap area nilai.
@@ -32,33 +30,31 @@ struct MonitorReadingCard: View {
             readingValue
                 .foregroundStyle(MonitorStyle.primaryText)
                 .fixedSize(horizontal: false, vertical: true)
-                // DESIGN: alignment ini menempatkan nilai di kiri dan tengah vertikal ruang yang tersisa.
-                .frame(maxHeight: .infinity, alignment: .leading)
+                // DESIGN: Area selebar kartu membuat alignment kiri, tengah, dan kanan berlaku untuk nilai beserta satuannya.
+                .frame(
+                    maxWidth: .infinity,
+                    maxHeight: .infinity,
+                    alignment: MonitorStyle.readingValueAlignment
+                )
         }
         // DESIGN: Padding mengatur jarak isi ke tepi kartu; tinggi dan radius dasarnya ada di MonitorStyle.
         .padding(.horizontal, MonitorStyle.spacing)
         .padding(.vertical, 20)
         .frame(maxWidth: .infinity, alignment: .leading)
         .frame(minHeight: cardHeight)
+        .frame(height: height)
         .background(MonitorStyle.card, in: RoundedRectangle(cornerRadius: MonitorStyle.cardCornerRadius))
-        .overlay(alignment: .topTrailing) {
-            if let badgeSeverity {
-                AlertBadge(severity: badgeSeverity)
-                    .offset(x: badgeTrailingOffset, y: -badgeTopOffset)
-                    .allowsHitTesting(false)
-            }
-        }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(reading.title)
         .accessibilityValue(accessibilityReadingValue)
     }
 
-    private var badgeSeverity: AlertBadge.Severity? {
+    private var statusDotColor: Color? {
         switch alertCondition {
         case .unsafe:
-            .warning
+            MonitorStyle.warningIndicator
         case .dangerous:
-            .alarm
+            MonitorStyle.alarmText
         case nil:
             nil
         }
@@ -67,18 +63,24 @@ struct MonitorReadingCard: View {
     private var readingLabel: some View {
         HStack(alignment: .center, spacing: iconSpacing) {
             Image(systemName: symbolName)
-                .font(.system(size: iconSize, weight: .medium))
+                .font(.system(size: iconSize, weight: .regular))
                 .symbolRenderingMode(.monochrome)
                 .frame(width: iconColumnWidth)
                 .accessibilityHidden(true)
 
             Text(reading.title)
-                .font(.system(size: labelSize, weight: .medium))
+                .font(.system(size: labelSize, weight: .regular))
                 .fixedSize(horizontal: false, vertical: true)
                 .frame(maxWidth: .infinity, alignment: .leading)
 
+            if let statusDotColor {
+                Circle()
+                    .fill(statusDotColor)
+                    .frame(width: statusDotSize, height: statusDotSize)
+                    .accessibilityHidden(true)
+            }
         }
-        .foregroundStyle(MonitorStyle.primaryText)
+        .foregroundStyle(.secondary)
         // DESIGN: Reserve two label lines so long titles do not shift the values between cards.
         .frame(minHeight: labelRowHeight, alignment: .leading)
     }
@@ -107,19 +109,19 @@ struct MonitorReadingCard: View {
     }
 
     private var readingValue: some View {
-        // DESIGN: firstTextBaseline menyelaraskan dasar teks angka dan satuan meskipun ukurannya berbeda.
-        HStack(alignment: .firstTextBaseline, spacing: unitSpacing) {
+        HStack(alignment: MonitorStyle.readingUnitAlignment, spacing: MonitorStyle.readingUnitSpacing) {
             Text(reading.value)
-                // DESIGN: Font mengikuti MonitorStyle; ukuran angka dan status tetap diatur lewat valueSize.
-                // fixedSize mencegah penskalaan ganda karena ukuran sudah memakai ScaledMetric.
-                .font(.custom(MonitorStyle.emphasisFontName, fixedSize: valueSize))
+                .font(.system(size: valueSize, weight: .heavy))
+                .fontWidth(.condensed)
 
             if let unit = reading.unit {
                 Text(unit)
-                    // DESIGN: unitSize tetap terpisah dari angka; ganti font di sini jika satuan perlu gaya lain.
-                    .font(.custom(MonitorStyle.emphasisFontName, fixedSize: unitSize))
+                    // DESIGN: Keep unit size and weight separate from the reading value.
+                    .font(.system(size: unitSize, weight: .semibold))
             }
         }
+        .lineLimit(1)
+        .minimumScaleFactor(MonitorStyle.readingMinimumScaleFactor)
     }
 
     private var valueSize: CGFloat {

@@ -4,10 +4,6 @@ enum MonitorPreviewCondition: String, CaseIterable, Identifiable {
 
     var id: Self { self }
 
-    var statusTitle: String {
-        "Your Kitchen Is\n\(rawValue)"
-    }
-
     // DESIGN: Edit the action text for each developer preview here.
     var actionGuidance: String {
         switch self {
