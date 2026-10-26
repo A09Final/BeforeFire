@@ -12,11 +12,11 @@ struct MonitorReadingCard: View {
     @ScaledMetric(relativeTo: .body) private var iconColumnWidth = 25.0
     @ScaledMetric(relativeTo: .body) private var labelRowHeight = 40.0
     private let iconSpacing: CGFloat = 8
-    @ScaledMetric(relativeTo: .title) private var standardValueSize = 35.0
-    @ScaledMetric(relativeTo: .title2) private var presenceValueSize = 35.0
-    @ScaledMetric(relativeTo: .title2) private var pressureValueSize = 35.0
+    @ScaledMetric(relativeTo: .title) private var standardValueSize = 40.0
+    @ScaledMetric(relativeTo: .title2) private var presenceValueSize = 40.0
+    @ScaledMetric(relativeTo: .title2) private var pressureValueSize = 40.0
     // DESIGN: Ukuran satuan terpisah dari angka. Ubah unitSize untuk °C, %, dan hPa.
-    @ScaledMetric(relativeTo: .body) private var unitSize = 20.0
+    @ScaledMetric(relativeTo: .body) private var unitSize = 25.0
     @ScaledMetric(relativeTo: .body) private var cardHeight = MonitorStyle.cardHeight
     // DESIGN: Move the badge northeast to cover the rounded corner. Positive offsets move it up and right.
     @ScaledMetric(relativeTo: .body) private var badgeTopOffset = 8.0

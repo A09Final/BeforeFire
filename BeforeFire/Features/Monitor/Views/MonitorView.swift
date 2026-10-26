@@ -5,7 +5,7 @@ struct MonitorView: View {
 
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     // DESIGN: Ukuran dasar judul dan status koneksi. Pertahankan ScaledMetric untuk Dynamic Type.
-    @ScaledMetric(relativeTo: .largeTitle) private var titleSize = 45.0
+    @ScaledMetric(relativeTo: .largeTitle) private var titleSize = 60.0
     @ScaledMetric(relativeTo: .subheadline) private var connectionSize = 15.0
     @ScaledMetric(relativeTo: .body) private var actionGuidanceTextSize = MonitorStyle.actionGuidanceTextSize
 

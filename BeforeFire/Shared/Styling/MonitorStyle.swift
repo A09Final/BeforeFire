@@ -1,8 +1,8 @@
 import SwiftUI
 
 enum MonitorStyle {
-    // DESIGN: Font judul, nilai, dan satuan. Nama ini sudah mencakup ketebalan Heavy.
-    static let emphasisFontName = "AvenirNextCondensed-Heavy"
+    // DESIGN: Font judul, nilai, dan satuan. File ExtraBold disertakan di Resources/Fonts.
+    static let emphasisFontName = "BarlowCondensed-ExtraBold"
 
     // DESIGN: Edit colors in Assets.xcassets/Colors. These aliases assign each color to its UI role.
     // Named lookups do not require the editor to resolve generated asset symbols.
