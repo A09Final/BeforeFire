@@ -1,0 +1,78 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+
+# Xcode user state
+xcuserdata/
+*.xcuserstate
+*.xcscmblueprint
+*.xccheckout
+
+# Xcode build output
+DerivedData/
+build/
+Build/
+*.xcresult
+*.ipa
+*.dSYM
+*.dSYM.zip
+*.app.dSYM
+*.moved-aside
+*.hmap
+
+# SwiftPM and package build artifacts
+.build/
+.swiftpm/
+Packages/
+
+# This app vendors LiteRT-LM locally, so stale SwiftPM resolution should not be committed.
+Package.resolved
+
+# Dependency managers, if they are ever used locally
+Pods/
+Carthage/Build/
+
+# Local model downloads - never commit multi-GB runtime models.
+# Keep vendored xcframeworks trackable; only model artifacts are ignored here.
+*.litertlm
+*.download
+*.part
+*.tmp
+LocalLLMModels/
+**/LocalLLMModels/
+LocalModels/*.litertlm
+LocalModels/*.download
+Resources/LocalModels/*.litertlm
+Resources/LocalModels/*.download
+**/Resources/LocalModels/*.litertlm
+**/Resources/LocalModels/*.download
+
+# Runtime app data and caches that may be copied out during debugging
+Application Support/
+Caches/
+LiteRTLMCache/
+**/LiteRTLMCache/
+
+# Logs and diagnostics
+*.log
+*.trace
+*.memgraph
+
+# Environment and signing secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.p8
+*.p12
+*.mobileprovision
+
+# Editors
+.vscode/
+.idea/
+*.swp
+*.swo
