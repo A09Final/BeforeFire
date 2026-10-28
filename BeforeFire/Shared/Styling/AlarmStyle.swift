@@ -7,6 +7,21 @@ enum AlarmStyle {
     static let foreground = Color("AlarmForeground")
     static let symbol = Color("DangerRed")
     static let sliderIcon = Color("Onyx")
+    static let snoozedBackground = Color("Onyx")
+    // DESIGN: The view uses dark appearance, so this resolves to Apple's dark system orange.
+    static let snoozedAccent = Color(uiColor: .systemOrange)
+    static let countdownDiameter: CGFloat = 300
+    static let countdownLineWidth: CGFloat = 18
+    static let countdownTrackOpacity: Double = 0.2
+    static let countdownTextSize: CGFloat = 64
+    static let countdownIconSize: CGFloat = 56
+    static let countdownContentSpacing: CGFloat = 24
+    static let countdownContentInset: CGFloat = 36
+    static let snoozedTitleSize: CGFloat = 32
+    static let snoozedMessageSize: CGFloat = 20
+    static let snoozedTitleSpacing: CGFloat = 24
+    static let snoozedMessageSpacing: CGFloat = 12
+    static let snoozedMessageOpacity: Double = 0.85
 
     // DESIGN: The symbol and rings scale together. Text follows Dynamic Type.
     static let emblemSize: CGFloat = 252

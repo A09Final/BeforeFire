@@ -48,13 +48,24 @@ struct MonitorDeveloperSettingsView: View {
                 }
 
                 Button("Preview Alarm") {
+                    alarmPreview.resumeIfExpired()
                     alarmPreview.isAlarmPresented = true
                 }
+                .disabled(alarmPreview.isEndingActivity)
                 .accessibilityIdentifier("settings.previewAlarm")
+
+                Stepper(value: Binding(
+                    get: { alarmPreview.snoozeDurationSeconds },
+                    set: { alarmPreview.updateSnoozeDuration($0) }
+                ), in: AlarmActivityAttributes.minimumSnoozeSeconds...AlarmActivityAttributes.maximumSnoozeSeconds,
+                        step: AlarmActivityAttributes.snoozeStepSeconds) {
+                    LabeledContent("Snooze duration", value: "\(alarmPreview.snoozeDurationSeconds) seconds")
+                }
+                .accessibilityIdentifier("settings.snoozeDuration")
             } header: {
                 Text("Developer Settings")
             } footer: {
-                Text("Preview the status and action text with mock readings. The alarm preview has no sound or device connection. Slide to close the preview. These settings reset when the app restarts.")
+                Text("Mock alarm only, with no sound or device connection. Slide to start the snooze countdown. Duration changes apply to the next snooze and reset to 60 seconds when the app restarts.")
             }
 
             AlarmLiveActivitySettingsSection()

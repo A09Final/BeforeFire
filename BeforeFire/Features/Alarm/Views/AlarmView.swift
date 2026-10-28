@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct AlarmView: View {
+    let onSnooze: () -> Void
     @Environment(\.dismiss) private var dismiss
     @State private var isDismissing = false
     @ScaledMetric(relativeTo: .title2) private var titleSize = AlarmStyle.titleSize
@@ -25,8 +26,8 @@ struct AlarmView: View {
 
                     Spacer(minLength: AlarmStyle.minimumSliderSpacing)
 
-                    // This action only closes the preview. It sends no alarm command.
-                    AlarmSnoozeSlider { dismissPreview() }
+                    // The preview starts a local countdown. It sends no alarm command.
+                    AlarmSnoozeSlider { snoozePreview() }
                 }
                 .multilineTextAlignment(.center)
                 .foregroundStyle(AlarmStyle.foreground)
@@ -52,20 +53,15 @@ struct AlarmView: View {
         .allowsHitTesting(!isDismissing)
         .preferredColorScheme(.dark)
         .accessibilityIdentifier("alarm.preview")
-        .accessibilityAction(.escape) { dismissPreview() }
+        .accessibilityAction(.escape) { dismiss() }
     }
 
-    private func dismissPreview() {
+    private func snoozePreview() {
         guard !isDismissing else { return }
         withAnimation(.easeOut(duration: AlarmStyle.dismissalFadeDuration)) {
             isDismissing = true
         } completion: {
-            // The screen has already faded. Suppress the cover's vertical dismissal animation.
-            var transaction = Transaction()
-            transaction.disablesAnimations = true
-            withTransaction(transaction) {
-                dismiss()
-            }
+            onSnooze()
         }
     }
 }
@@ -118,10 +114,10 @@ private struct SirenOutline: Shape {
 }
 
 #Preview {
-    AlarmView()
+    AlarmView(onSnooze: {})
 }
 
 #Preview("Large Text") {
-    AlarmView()
+    AlarmView(onSnooze: {})
         .environment(\.dynamicTypeSize, .accessibility3)
 }

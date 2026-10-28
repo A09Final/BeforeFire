@@ -1,5 +1,6 @@
 import ActivityKit
 import AppIntents
+import Foundation
 
 struct SnoozeAlarmPreviewIntent: LiveActivityIntent {
     static var title: LocalizedStringResource = "Snooze Alarm Preview"
@@ -21,8 +22,9 @@ struct SnoozeAlarmPreviewIntent: LiveActivityIntent {
             return .result()
         }
         // TODO: Define and verify hardware snooze commands before adding a real alarm action.
-        let state = AlarmActivityAttributes.ContentState(isSnoozed: true)
-        await activity.update(ActivityContent(state: state, staleDate: nil))
+        let state = activity.content.state.snoozed(at: .now)
+        await activity.update(ActivityContent(state: state, staleDate: state.snoozeEndsAt))
+        NotificationCenter.default.post(name: AlarmActivityAttributes.previewStateDidChange, object: nil)
         return .result()
     }
 }

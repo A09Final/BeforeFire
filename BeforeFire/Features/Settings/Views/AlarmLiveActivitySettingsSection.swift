@@ -6,12 +6,6 @@ struct AlarmLiveActivitySettingsSection: View {
 
     var body: some View {
         Section {
-            Button("Start Live Activity Preview") {
-                alarmPreview.startLiveActivity()
-            }
-            .disabled(alarmPreview.isEndingActivity)
-            .accessibilityIdentifier("settings.startAlarmActivity")
-
             Button("End Live Activity Preview", role: .destructive) {
                 endTask?.cancel()
                 endTask = Task { await alarmPreview.endLiveActivities() }
@@ -28,7 +22,7 @@ struct AlarmLiveActivitySettingsSection: View {
         } header: {
             Text("Developer Settings · Live Activity")
         } footer: {
-            Text("Mock alarm only. Snooze changes the preview state. It does not send a device command or start a timer. End the preview here when finished; it can remain after you close the app.")
+            Text("The Live Activity starts when you open Preview Alarm. Snooze starts a local preview countdown. No sound or device command is sent. End the Live Activity here when finished.")
         }
         .onDisappear { endTask?.cancel() }
     }

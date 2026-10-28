@@ -32,7 +32,7 @@ struct AlarmSnoozeSlider: View {
                     .opacity(1 - progress)
                     .allowsHitTesting(false)
 
-                Image(systemName: "bell.slash.fill")
+                Image(systemName: AlarmActivityAttributes.snoozeSymbol)
                     .font(.system(size: AlarmStyle.snoozeIconSize, weight: .regular))
                     .foregroundStyle(AlarmStyle.sliderIcon)
                     .frame(width: AlarmStyle.thumbSize, height: AlarmStyle.thumbSize)
@@ -58,7 +58,7 @@ struct AlarmSnoozeSlider: View {
         .frame(height: AlarmStyle.sliderHeight)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("Slide to Snooze")
-        .accessibilityHint("Closes the alarm preview. No alarm command is sent.")
+        .accessibilityHint("Starts the snooze preview countdown. No alarm command is sent.")
         .accessibilityAddTraits(.isButton)
         .accessibilityAction { completeSlide() }
         .accessibilityIdentifier("alarm.snoozeSlider")

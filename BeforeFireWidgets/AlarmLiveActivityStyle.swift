@@ -4,6 +4,21 @@ enum AlarmLiveActivityStyle {
     // DESIGN: These assets are shared with the app. Keep the Dynamic Island background native.
     static let foreground = Color("AlarmForeground")
     static let alarm = Color("DangerRed")
+    static let snoozedBackground = Color("Onyx")
+    static let snoozedAccent = Color(uiColor: .systemOrange)
+    static let countdownDiameter: CGFloat = 62
+    // DESIGN: Reserve space for the complete Resume button below the Dynamic Island camera area.
+    static let expandedCountdownDiameter: CGFloat = 48
+    static let countdownIconSize: CGFloat = 16
+    static let countdownTextSize: CGFloat = 16
+    static let countdownContentSpacing: CGFloat = 2
+    static let compactCountdownWidth: CGFloat = 48
+    static let compactCountdownTextSize: CGFloat = 12
+    static let snoozedMessageOpacity: Double = 0.85
+
+    static func accent(for state: AlarmActivityAttributes.ContentState) -> Color {
+        state.isSnoozed ? snoozedAccent : alarm
+    }
     static let gradient = LinearGradient(
         colors: [Color("AlarmBackgroundTop"), Color("AlarmBackgroundBottom")],
         startPoint: .topLeading,
