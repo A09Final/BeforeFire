@@ -132,6 +132,8 @@ Architecture update: The project owner changed the architecture on 2026-10-23. T
 
    The existing project uses SwiftUI. Implementation should follow the repository rules: separate presentation, application state, detection logic, communication, and persistence where needed. Do not add package dependencies without an explicit request.
 
+   **Implemented UI preview (2026-10-27):** The app includes an ActivityKit Live Activity and a WidgetKit extension for the alarm design. It provides Lock Screen, expanded, compact, and minimal presentations. Developer Settings can start and end a local preview. The Snooze action changes only the preview state; it does not send a hardware command or start a timer. Tapping the Live Activity outside its Snooze button opens the existing full-screen alarm preview. The header shows the alarm status beside its icon; there is no app-name label or separate Open app button. Live Activity state can remain after the app closes, until the preview ends or the system removes it. Remote starts, push updates, sensor events, sound, and real snooze behavior are not implemented. This preview does not establish AlarmKit integration or replace the notification-path decisions above.
+
    **Proposed:** Only authorized users can access household readings or send device commands. Wi-Fi credentials and other secrets must not appear in logs.
 
 9. **Acceptance criteria — proposed**

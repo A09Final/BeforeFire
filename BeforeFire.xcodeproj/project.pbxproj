@@ -8,6 +8,12 @@
 
 /* Begin PBXBuildFile section */
 		F0A0C6093089F00D00BF99E1 /* AGENTS.md in Resources */ = {isa = PBXBuildFile; fileRef = F0A0C6083089F00D00BF99E1 /* AGENTS.md */; };
+		BFAC20261027000000000028 /* AlarmLiveActivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFAC20261027000000000014 /* AlarmLiveActivity.swift */; };
+		BFAC20261027000000000029 /* AlarmLiveActivityStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFAC20261027000000000015 /* AlarmLiveActivityStyle.swift */; };
+		BFAC2026102700000000002A /* AlarmActivityAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFAC20261027000000000016 /* AlarmActivityAttributes.swift */; };
+		BFAC2026102700000000002B /* SnoozeAlarmPreviewIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFAC20261027000000000017 /* SnoozeAlarmPreviewIntent.swift */; };
+		BFAC2026102700000000002C /* Shared Assets in Resources */ = {isa = PBXBuildFile; fileRef = BFAC20261027000000000018; };
+		BFAC2026102700000000002D /* BeforeFireWidgets.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = BFAC20261027000000000002; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -25,13 +31,34 @@
 			remoteGlobalIDString = F0A0C5DC3089EFBE00BF99E1;
 			remoteInfo = BeforeFire;
 		};
+		BFAC20261027000000000009 = {isa = PBXContainerItemProxy; containerPortal = F0A0C5D53089EFBE00BF99E1; proxyType = 1; remoteGlobalIDString = BFAC20261027000000000001; remoteInfo = BeforeFireWidgets; };
 /* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		BFAC20261027000000000008 /* Embed App Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (BFAC2026102700000000002D, );
+			name = "Embed App Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		F0A0C5DD3089EFBE00BF99E1 /* BeforeFire.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = BeforeFire.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		F0A0C5EA3089EFBE00BF99E1 /* BeforeFireTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = BeforeFireTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		F0A0C5F43089EFBE00BF99E1 /* BeforeFireUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = BeforeFireUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		F0A0C6083089F00D00BF99E1 /* AGENTS.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = AGENTS.md; sourceTree = "<group>"; };
+		BFAC20261027000000000014 /* AlarmLiveActivity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BeforeFireWidgets/AlarmLiveActivity.swift; sourceTree = SOURCE_ROOT; };
+		BFAC20261027000000000015 /* AlarmLiveActivityStyle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BeforeFireWidgets/AlarmLiveActivityStyle.swift; sourceTree = SOURCE_ROOT; };
+		BFAC20261027000000000016 /* AlarmActivityAttributes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BeforeFire/Shared/LiveActivity/AlarmActivityAttributes.swift; sourceTree = SOURCE_ROOT; };
+		BFAC20261027000000000017 /* SnoozeAlarmPreviewIntent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BeforeFire/Shared/LiveActivity/SnoozeAlarmPreviewIntent.swift; sourceTree = SOURCE_ROOT; };
+		BFAC20261027000000000002 /* BeforeFireWidgets.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = BeforeFireWidgets.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		BFAC20261027000000000018 /* Shared Assets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = BeforeFire/Assets.xcassets; sourceTree = SOURCE_ROOT; };
+		BFAC20261027000000000019 /* Widget Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = BeforeFireWidgets/Info.plist; sourceTree = SOURCE_ROOT; };
+		BFAC2026102700000000001A /* App Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "Configuration/BeforeFire-Info.plist"; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -68,6 +95,7 @@
 			files = (
 			);
 		};
+		BFAC20261027000000000006 = {isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -75,6 +103,7 @@
 			isa = PBXGroup;
 			children = (
 				F0A0C5DF3089EFBE00BF99E1 /* BeforeFire */,
+				BFAC20261027000000000003 /* BeforeFireWidgets */,
 				F0A0C5ED3089EFBE00BF99E1 /* BeforeFireTests */,
 				F0A0C5F73089EFBE00BF99E1 /* BeforeFireUITests */,
 				F0A0C6083089F00D00BF99E1 /* AGENTS.md */,
@@ -86,12 +115,14 @@
 			isa = PBXGroup;
 			children = (
 				F0A0C5DD3089EFBE00BF99E1 /* BeforeFire.app */,
+				BFAC20261027000000000002 /* BeforeFireWidgets.appex */,
 				F0A0C5EA3089EFBE00BF99E1 /* BeforeFireTests.xctest */,
 				F0A0C5F43089EFBE00BF99E1 /* BeforeFireUITests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
 		};
+		BFAC20261027000000000003 /* BeforeFireWidgets */ = {isa = PBXGroup; children = (BFAC20261027000000000014, BFAC20261027000000000015, BFAC20261027000000000016, BFAC20261027000000000017, BFAC20261027000000000018, BFAC20261027000000000019, BFAC2026102700000000001A, ); name = BeforeFireWidgets; sourceTree = "<group>"; };
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -102,9 +133,11 @@
 				F0A0C5D93089EFBE00BF99E1 /* Sources */,
 				F0A0C5DA3089EFBE00BF99E1 /* Frameworks */,
 				F0A0C5DB3089EFBE00BF99E1 /* Resources */,
+				BFAC20261027000000000008 /* Embed App Extensions */,
 			);
 			buildRules = (
 			);
+			dependencies = (BFAC2026102700000000000A, );
 			fileSystemSynchronizedGroups = (
 				F0A0C5DF3089EFBE00BF99E1 /* BeforeFire */,
 			);
@@ -155,6 +188,17 @@
 			productReference = F0A0C5F43089EFBE00BF99E1 /* BeforeFireUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
+		BFAC20261027000000000001 /* BeforeFireWidgets */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = BFAC20261027000000000007;
+			buildPhases = (BFAC20261027000000000004, BFAC20261027000000000006, BFAC20261027000000000005, );
+			buildRules = ();
+			dependencies = ();
+			name = BeforeFireWidgets;
+			productName = BeforeFireWidgets;
+			productReference = BFAC20261027000000000002;
+			productType = "com.apple.product-type.app-extension";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -192,6 +236,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
+				BFAC20261027000000000001 /* BeforeFireWidgets */,
 				F0A0C5DC3089EFBE00BF99E1 /* BeforeFire */,
 				F0A0C5E93089EFBE00BF99E1 /* BeforeFireTests */,
 				F0A0C5F33089EFBE00BF99E1 /* BeforeFireUITests */,
@@ -216,6 +261,7 @@
 			files = (
 			);
 		};
+		BFAC20261027000000000005 = {isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (BFAC2026102700000000002C, ); runOnlyForDeploymentPostprocessing = 0; };
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
@@ -234,6 +280,7 @@
 			files = (
 			);
 		};
+		BFAC20261027000000000004 = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (BFAC20261027000000000028, BFAC20261027000000000029, BFAC2026102700000000002A, BFAC2026102700000000002B, ); runOnlyForDeploymentPostprocessing = 0; };
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -247,6 +294,7 @@
 			target = F0A0C5DC3089EFBE00BF99E1 /* BeforeFire */;
 			targetProxy = F0A0C5F53089EFBE00BF99E1 /* PBXContainerItemProxy */;
 		};
+		BFAC2026102700000000000A = {isa = PBXTargetDependency; target = BFAC20261027000000000001; targetProxy = BFAC20261027000000000009; };
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
@@ -381,6 +429,7 @@
 				DEVELOPMENT_TEAM = TLC6Y5XJMM;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Configuration/BeforeFire-Info.plist";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -413,6 +462,7 @@
 				DEVELOPMENT_TEAM = TLC6Y5XJMM;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Configuration/BeforeFire-Info.plist";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -519,6 +569,48 @@
 			};
 			name = Release;
 		};
+		BFAC2026102700000000000B = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = TLC6Y5XJMM;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = BeforeFireWidgets/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "BeforeFire Alarm";
+				IPHONEOS_DEPLOYMENT_TARGET = 27.0;
+				LD_RUNPATH_SEARCH_PATHS = ("$(inherited)", "@executable_path/Frameworks", "@executable_path/../../Frameworks", );
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.ibnu.BeforeFire.AlarmWidgets;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		BFAC2026102700000000000C = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = TLC6Y5XJMM;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = BeforeFireWidgets/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "BeforeFire Alarm";
+				IPHONEOS_DEPLOYMENT_TARGET = 27.0;
+				LD_RUNPATH_SEARCH_PATHS = ("$(inherited)", "@executable_path/Frameworks", "@executable_path/../../Frameworks", );
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.ibnu.BeforeFire.AlarmWidgets;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -554,6 +646,7 @@
 			);
 			defaultConfigurationName = Release;
 		};
+		BFAC20261027000000000007 = {isa = XCConfigurationList; buildConfigurations = (BFAC2026102700000000000B, BFAC2026102700000000000C, ); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
 /* End XCConfigurationList section */
 	};
 	rootObject = F0A0C5D53089EFBE00BF99E1 /* Project object */;

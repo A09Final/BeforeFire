@@ -3,7 +3,7 @@ import SwiftUI
 struct MonitorDeveloperSettingsView: View {
     @Binding var isActionGuidanceVisible: Bool
     @Binding var previewCondition: MonitorPreviewCondition
-    @State private var isAlarmPreviewPresented = false
+    @Environment(AlarmPreviewModel.self) private var alarmPreview
     
     var body: some View {
         Form {
@@ -48,7 +48,7 @@ struct MonitorDeveloperSettingsView: View {
                 }
 
                 Button("Preview Alarm") {
-                    isAlarmPreviewPresented = true
+                    alarmPreview.isAlarmPresented = true
                 }
                 .accessibilityIdentifier("settings.previewAlarm")
             } header: {
@@ -56,14 +56,12 @@ struct MonitorDeveloperSettingsView: View {
             } footer: {
                 Text("Preview the status and action text with mock readings. The alarm preview has no sound or device connection. Slide to close the preview. These settings reset when the app restarts.")
             }
+
+            AlarmLiveActivitySettingsSection()
         }
         .navigationTitle("Settings")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar(.visible, for: .navigationBar)
-        .fullScreenCover(isPresented: $isAlarmPreviewPresented) {
-            AlarmView()
-                .presentationBackground(.clear)
-        }
     }
     
 }
@@ -128,4 +126,5 @@ struct EmergencyContactView: View {
     @Previewable @State var isTrue = false
     @Previewable @State var mock = MonitorPreviewCondition.dangerous
     MonitorDeveloperSettingsView(isActionGuidanceVisible: $isTrue, previewCondition: $mock)
+        .environment(AlarmPreviewModel())
 }
