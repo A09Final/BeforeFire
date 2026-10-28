@@ -4,6 +4,7 @@ struct MonitorDeveloperSettingsView: View {
     @Binding var isActionGuidanceVisible: Bool
     @Binding var previewCondition: MonitorPreviewCondition
     @Environment(AlarmPreviewModel.self) private var alarmPreview
+    @State private var showPlacementGuideline = false
     
     var body: some View {
         Form {
@@ -17,11 +18,18 @@ struct MonitorDeveloperSettingsView: View {
                 }
                 .accessibilityIdentifier("settings.hubConnection")
                 
-                NavigationLink {
-                    PlacementGuidelineView()
+                Button {
+                    showPlacementGuideline = true
                 } label: {
-                    Label("Placement Guideline", systemImage: "")
+                    HStack {
+                        Label("Placement Guideline", systemImage: "")
+                        Spacer()
+                        Image(systemName: "chevron.right")
+                            .font(.footnote.weight(.semibold))
+                            .foregroundStyle(Color(.tertiaryLabel))
+                    }
                 }
+                .foregroundStyle(.primary)
                 .accessibilityIdentifier("settings.placementGuideline")
                 
                 NavigationLink {
@@ -79,6 +87,9 @@ struct MonitorDeveloperSettingsView: View {
         .navigationTitle("Settings")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar(.visible, for: .navigationBar)
+        .sheet(isPresented: $showPlacementGuideline) {
+            PlacementGuidelineView()
+        }
     }
     
 }
@@ -100,21 +111,6 @@ struct HubConnectionView: View {
         }
         .navigationTitle("Hub Connection")
         .navigationBarTitleDisplayMode(.inline)
-    }
-}
-
-struct PlacementGuidelineView: View {
-    var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
-                Text("Where to place the monitor")
-                    .font(.headline)
-                Text("Add your placement instructions here.")
-                    .foregroundStyle(.secondary)
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            
-        }
     }
 }
 
