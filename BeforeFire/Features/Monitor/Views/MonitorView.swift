@@ -183,6 +183,7 @@ struct MonitorView: View {
     NavigationStack {
         MonitorView(viewModel: .mock)
     }
+    .environment(AlarmPreviewModel())
 }
 
 #Preview("Large Text") {
@@ -190,4 +191,5 @@ struct MonitorView: View {
         MonitorView(viewModel: .mock)
             .environment(\.dynamicTypeSize, .accessibility3)
     }
+    .environment(AlarmPreviewModel())
 }

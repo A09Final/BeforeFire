@@ -15,7 +15,7 @@ enum MonitorStyle {
     static let readingMinimumScaleFactor: CGFloat = 0.7
     // DESIGN: Posisi nilai dan satuan dalam area di bawah label: .leading, .center, atau .trailing.
     // Gunakan .topLeading, .top, .topTrailing, .bottomLeading, .bottom, atau .bottomTrailing untuk posisi vertikal.
-    static let readingValueAlignment: Alignment = .leading
+    static let readingValueAlignment: Alignment = .topLeading
     // DESIGN: Posisi vertikal satuan terhadap angka: .firstTextBaseline, .center, .top, atau .bottom.
     static let readingUnitAlignment: VerticalAlignment = .firstTextBaseline
     // DESIGN: Jarak angka dan satuan. Gunakan 0 agar keduanya menempel.
