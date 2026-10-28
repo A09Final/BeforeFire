@@ -10,7 +10,7 @@ struct AlarmPreviewFlowView: View {
                     alarmPreview.resumeAlarm()
                 }
             } else {
-                AlarmView { alarmPreview.snooze() }
+                AlarmView(isHubDisconnected: alarmPreview.isHubDisconnected) { alarmPreview.snooze() }
             }
         }
         .background(AlarmStyle.snoozedBackground.ignoresSafeArea())

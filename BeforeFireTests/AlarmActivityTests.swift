@@ -91,4 +91,24 @@ struct AlarmActivityTests {
         #expect(state.resumed().snoozeInterval == nil)
         #expect(AlarmActivityAttributes.ContentState(isSnoozed: true).snoozeInterval == nil)
     }
+
+    @Test func hubOfflineStateSurvivesSnoozeResumeAndEncoding() throws {
+        let offline = AlarmActivityAttributes.ContentState(isHubDisconnected: true)
+        #expect(offline.status == "Hub offline")
+        #expect(offline.message == "Last known status: Alarm active\nLive status unavailable")
+        let snoozed = offline.snoozed(at: Date(timeIntervalSince1970: 1000))
+        #expect(snoozed.isHubOffline)
+        #expect(snoozed.resumed().isHubOffline)
+        let decoded = try JSONDecoder().decode(AlarmActivityAttributes.ContentState.self,
+                                               from: JSONEncoder().encode(snoozed))
+        #expect(decoded == snoozed)
+        #expect(AlarmActivityAttributes.ContentState().isHubOffline == false)
+    }
+
+    @Test func oldPreviewDefaultsToConnectedHub() throws {
+        let state = try JSONDecoder().decode(AlarmActivityAttributes.ContentState.self,
+                                             from: Data(#"{"isSnoozed":false}"#.utf8))
+        #expect(!state.isHubOffline)
+        #expect(state.status == "Alarm active")
+    }
 }

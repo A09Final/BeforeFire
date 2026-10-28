@@ -4,6 +4,8 @@ import Foundation
 nonisolated struct AlarmActivityAttributes: ActivityAttributes {
     struct ContentState: Codable, Hashable {
         var isSnoozed = false
+        var isHubDisconnected: Bool?
+        var isHubOffline: Bool { isHubDisconnected ?? false }
         // Optional fields keep existing preview activities decodable after an app update.
         var snoozeEndsAt: Date?
         var snoozeDurationSeconds: Int?
@@ -52,14 +54,20 @@ nonisolated struct AlarmActivityAttributes: ActivityAttributes {
         }
 
         var message: String {
-            isSnoozed ? "Preview only. No alarm command was sent." : "Check the stove and surrounding area."
+            if isHubOffline {
+                return "\(AlarmActivityAttributes.lastKnownAlarmStatus)\n\(AlarmActivityAttributes.liveStatusUnavailableMessage)"
+            }
+            return isSnoozed ? "Preview only. No alarm command was sent." : "Check the stove and surrounding area."
         }
 
-        var status: String { isSnoozed ? "Snoozed" : "Alarm active" }
-        var symbol: String { isSnoozed ? "bell.slash.fill" : "light.beacon.max" }
+        var status: String { isHubOffline ? AlarmActivityAttributes.hubOfflineLabel : (isSnoozed ? "Snoozed" : "Alarm active") }
+        var symbol: String { isHubOffline ? "wifi.slash" : (isSnoozed ? "bell.slash.fill" : "light.beacon.max") }
     }
 
     let previewID: UUID
+    static let hubOfflineLabel = "Hub offline"
+    static let lastKnownAlarmStatus = "Last known status: Alarm active"
+    static let liveStatusUnavailableMessage = "Live status unavailable"
     static let defaultSnoozeSeconds = 60
     static let minimumSnoozeSeconds = 5
     static let maximumSnoozeSeconds = 3600

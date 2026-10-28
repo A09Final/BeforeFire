@@ -7,6 +7,19 @@ enum AlarmStyle {
     static let foreground = Color("AlarmForeground")
     static let symbol = Color("DangerRed")
     static let sliderIcon = Color("Onyx")
+    static let hubOfflineLabel = AlarmActivityAttributes.hubOfflineLabel
+    static let lastKnownAlarmStatus = AlarmActivityAttributes.lastKnownAlarmStatus
+    static let liveStatusUnavailableMessage = AlarmActivityAttributes.liveStatusUnavailableMessage
+    static let hubOfflineBackground = Color("Onyx")
+    static let hubOfflineTextSize: CGFloat = 16
+    static let hubOfflineIconSize: CGFloat = 22
+    static let hubOfflineContentSpacing: CGFloat = 10
+    static let hubOfflineHorizontalInset: CGFloat = 18
+    static let hubOfflineVerticalInset: CGFloat = 10
+    static let hubOfflineBottomSpacing: CGFloat = 20
+    static let offlineMessageSpacing: CGFloat = 8
+    // DESIGN: Leave room for the offline badge and both status lines above the snooze control.
+    static let offlineEmblemSize: CGFloat = 220
     static let snoozedBackground = Color("Onyx")
     // DESIGN: The view uses dark appearance, so this resolves to Apple's dark system orange.
     static let snoozedAccent = Color(uiColor: .systemOrange)

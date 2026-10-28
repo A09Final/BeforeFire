@@ -42,10 +42,11 @@ struct AlarmSnoozedActivityContent: View {
                     .foregroundStyle(AlarmLiveActivityStyle.snoozedAccent)
                     .lineLimit(1)
                     .minimumScaleFactor(AlarmLiveActivityStyle.minimumTextScale)
-                Text("Check your kitchen now.")
+                Text(state.isHubOffline ? "Hub offline · Status unavailable" : "Check your kitchen now.")
                     .font(.system(size: AlarmLiveActivityStyle.messageSize))
                     .foregroundStyle(AlarmLiveActivityStyle.foreground.opacity(AlarmLiveActivityStyle.snoozedMessageOpacity))
-                    .lineLimit(2)
+                    .lineLimit(1)
+                    .minimumScaleFactor(AlarmLiveActivityStyle.minimumTextScale)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
         }

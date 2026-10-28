@@ -1,18 +1,26 @@
 import SwiftUI
 
 struct AlarmView: View {
+    var isHubDisconnected = false
     let onSnooze: () -> Void
     @Environment(\.dismiss) private var dismiss
     @State private var isDismissing = false
     @ScaledMetric(relativeTo: .title2) private var titleSize = AlarmStyle.titleSize
     @ScaledMetric(relativeTo: .body) private var messageSize = AlarmStyle.messageSize
+    @ScaledMetric(relativeTo: .body) private var offlineTextSize = AlarmStyle.hubOfflineTextSize
+    @ScaledMetric(relativeTo: .body) private var offlineIconSize = AlarmStyle.hubOfflineIconSize
 
     var body: some View {
         GeometryReader { geometry in
             ScrollView {
                 VStack(spacing: 0) {
+                    if isHubDisconnected {
+                        hubOfflineBadge
+                            .padding(.bottom, AlarmStyle.hubOfflineBottomSpacing)
+                    }
+
                     AlarmEmblem()
-                        .frame(width: AlarmStyle.emblemSize, height: AlarmStyle.emblemSize)
+                        .frame(width: emblemSize, height: emblemSize)
                         .accessibilityHidden(true)
 
                     Text("CHECK YOUR KITCHEN NOW!")
@@ -20,8 +28,7 @@ struct AlarmView: View {
                         .accessibilityAddTraits(.isHeader)
                         .padding(.top, AlarmStyle.emblemTextSpacing)
 
-                    Text("Check the stove and surrounding area.")
-                        .font(.system(size: messageSize))
+                    alarmMessage
                         .padding(.top, AlarmStyle.messageSpacing)
 
                     Spacer(minLength: AlarmStyle.minimumSliderSpacing)
@@ -54,6 +61,43 @@ struct AlarmView: View {
         .preferredColorScheme(.dark)
         .accessibilityIdentifier("alarm.preview")
         .accessibilityAction(.escape) { dismiss() }
+    }
+
+    private var emblemSize: CGFloat {
+        isHubDisconnected ? AlarmStyle.offlineEmblemSize : AlarmStyle.emblemSize
+    }
+
+    private var hubOfflineBadge: some View {
+        HStack(spacing: AlarmStyle.hubOfflineContentSpacing) {
+            Image(systemName: "wifi.slash")
+                .font(.system(size: offlineIconSize, weight: .semibold))
+                .symbolRenderingMode(.palette)
+                .foregroundStyle(AlarmStyle.symbol, AlarmStyle.foreground)
+                .accessibilityHidden(true)
+            Text(AlarmStyle.hubOfflineLabel)
+                .font(.system(size: offlineTextSize, weight: .semibold))
+        }
+        .foregroundStyle(AlarmStyle.foreground)
+        .padding(.horizontal, AlarmStyle.hubOfflineHorizontalInset)
+        .padding(.vertical, AlarmStyle.hubOfflineVerticalInset)
+        .glassEffect(.regular.tint(AlarmStyle.hubOfflineBackground), in: .capsule)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(AlarmStyle.hubOfflineLabel)
+        .accessibilityIdentifier("alarm.hubOffline")
+    }
+
+    private var alarmMessage: some View {
+        VStack(spacing: AlarmStyle.offlineMessageSpacing) {
+            if isHubDisconnected {
+                Text(AlarmStyle.lastKnownAlarmStatus)
+                Text(AlarmStyle.liveStatusUnavailableMessage)
+            } else {
+                Text("Check the stove and surrounding area.")
+            }
+        }
+        .font(.system(size: messageSize))
+        .fixedSize(horizontal: false, vertical: true)
+        .accessibilityIdentifier("alarm.statusMessage")
     }
 
     private func snoozePreview() {
@@ -119,5 +163,14 @@ private struct SirenOutline: Shape {
 
 #Preview("Large Text") {
     AlarmView(onSnooze: {})
+        .environment(\.dynamicTypeSize, .accessibility3)
+}
+
+#Preview("Hub offline") {
+    AlarmView(isHubDisconnected: true, onSnooze: {})
+}
+
+#Preview("Hub offline · Large Text") {
+    AlarmView(isHubDisconnected: true, onSnooze: {})
         .environment(\.dynamicTypeSize, .accessibility3)
 }

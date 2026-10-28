@@ -7,11 +7,20 @@ import OSLog
 @Observable
 final class AlarmPreviewModel {
     var isAlarmPresented = false
+    var isHubDisconnected: Bool {
+        get { alarmState.isHubOffline }
+        set {
+            hubDisconnectedOverride = newValue
+            alarmState.isHubDisconnected = newValue
+            publishState()
+        }
+    }
     private(set) var activityMessage: String?
     private(set) var isEndingActivity = false
     var snoozeDurationSeconds = AlarmActivityAttributes.defaultSnoozeSeconds
     private(set) var alarmState = AlarmActivityAttributes.ContentState()
     @ObservationIgnored private var updateTask: Task<Void, Never>?
+    @ObservationIgnored private var hubDisconnectedOverride: Bool?
     private let logger = Logger(subsystem: "com.ibnu.BeforeFire", category: "AlarmPreview")
 
     func open(_ url: URL) {
@@ -42,6 +51,11 @@ final class AlarmPreviewModel {
             $0.activityState == .active || $0.activityState == .stale
         }) {
             alarmState = activity.content.state
+            // A pending ActivityKit update must not undo the current developer setting.
+            if let hubDisconnectedOverride, hubDisconnectedOverride != alarmState.isHubOffline {
+                alarmState.isHubDisconnected = hubDisconnectedOverride
+                publishState()
+            }
             // Older previews did not include a deadline.
             if alarmState.isSnoozed && alarmState.snoozeEndsAt == nil {
                 alarmState = alarmState.snoozed(at: date)

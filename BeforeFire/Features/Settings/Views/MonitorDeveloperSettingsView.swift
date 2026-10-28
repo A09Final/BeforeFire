@@ -47,6 +47,12 @@ struct MonitorDeveloperSettingsView: View {
                     .accessibilityIdentifier("settings.previewCondition")
                 }
 
+                Toggle("Hub disconnected", isOn: Binding(
+                    get: { alarmPreview.isHubDisconnected },
+                    set: { alarmPreview.isHubDisconnected = $0 }
+                ))
+                .accessibilityIdentifier("settings.hubDisconnectedToggle")
+
                 Button("Preview Alarm") {
                     alarmPreview.resumeIfExpired()
                     alarmPreview.isAlarmPresented = true
