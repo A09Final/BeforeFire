@@ -21,7 +21,7 @@ struct AlarmSnoozeSlider: View {
                     lineWidth: AlarmStyle.sliderBorderWidth
                 )
 
-                Text("Slide to Snooze")
+                Text("Silence Phone Alarm")
                     .font(.system(size: textSize, weight: .medium))
                     .foregroundStyle(AlarmStyle.foreground)
                     .lineLimit(1)
@@ -57,7 +57,7 @@ struct AlarmSnoozeSlider: View {
         }
         .frame(height: AlarmStyle.sliderHeight)
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("Slide to Snooze")
+        .accessibilityLabel("Silence Phone Alarm")
         .accessibilityHint("Starts the snooze preview countdown. No alarm command is sent.")
         .accessibilityAddTraits(.isButton)
         .accessibilityAction { completeSlide() }

@@ -8,7 +8,7 @@ final class SettingsIntegrationTests: XCTestCase {
         app.launch()
         defer { app.terminate() }
 
-        let settings = app.buttons["gearshape"]
+        let settings = app.buttons["monitor.settings"]
         XCTAssertTrue(settings.waitForExistence(timeout: 5))
         settings.tap()
 
