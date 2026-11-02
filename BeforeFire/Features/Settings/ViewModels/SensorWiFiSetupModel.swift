@@ -8,13 +8,16 @@ final class SensorWiFiSetupModel {
         case setupCode
         case networks
         case password
+        /// The sensor joined Wi-Fi. The Home setup is not complete yet.
         case connected(wiFiName: String)
+        case addedToHome
     }
 
     enum Activity: Equatable {
         case connecting
         case scanning
         case joining
+        case addingToHome
     }
 
     let sensor: DiscoveredSensor
@@ -29,12 +32,18 @@ final class SensorWiFiSetupModel {
     private(set) var selectedNetwork: SensorWiFiNetwork?
 
     @ObservationIgnored private let connector: any SensorProvisioningConnecting
+    @ObservationIgnored private let homeSetup: any SensorHomeSetupPerforming
     @ObservationIgnored private var session: (any SensorProvisioningSession)?
     @ObservationIgnored private var activityTask: Task<Void, Never>?
 
-    init(sensor: DiscoveredSensor, connector: any SensorProvisioningConnecting) {
+    init(
+        sensor: DiscoveredSensor,
+        connector: any SensorProvisioningConnecting,
+        homeSetup: any SensorHomeSetupPerforming
+    ) {
         self.sensor = sensor
         self.connector = connector
+        self.homeSetup = homeSetup
     }
 
     var isBusy: Bool {
@@ -62,6 +71,15 @@ final class SensorWiFiSetupModel {
         guard !isBusy else { return false }
         if isOtherNetwork, manualWiFiName.isEmpty { return false }
         return !(requiresPassword && password.isEmpty)
+    }
+
+    var isWiFiConnected: Bool {
+        if case .connected = step { return true }
+        return false
+    }
+
+    var canAddToHome: Bool {
+        !isBusy && isWiFiConnected
     }
 
     var canGoBack: Bool {
@@ -129,6 +147,15 @@ final class SensorWiFiSetupModel {
             self.endSession()
             self.password = ""
             self.step = .connected(wiFiName: credentials.wiFiName)
+            // The Home setup starts at once. The firmware restarts while the user scans the HomeKit code.
+            try await self.addSensorToHome()
+        }
+    }
+
+    func addToHome() {
+        guard canAddToHome else { return }
+        perform(.addingToHome) { [weak self] in
+            try await self?.addSensorToHome()
         }
     }
 
@@ -143,7 +170,7 @@ final class SensorWiFiSetupModel {
             endSession()
             networks = []
             step = .setupCode
-        case .setupCode, .connected:
+        case .setupCode, .connected, .addedToHome:
             break
         }
     }
@@ -173,6 +200,18 @@ final class SensorWiFiSetupModel {
             networks = []
             errorMessage = SensorConnectionCopy.message(for: error)
         }
+    }
+
+    private func addSensorToHome() async throws {
+        activity = .addingToHome
+        do {
+            try await homeSetup.addSensorToHome()
+        } catch SensorHomeSetupError.cancelled {
+            // The sensor keeps its Wi-Fi values, so the user can start the Home setup again.
+            return
+        }
+        guard !Task.isCancelled else { return }
+        step = .addedToHome
     }
 
     private func perform(_ newActivity: Activity, operation: @escaping @MainActor () async throws -> Void) {

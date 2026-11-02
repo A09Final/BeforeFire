@@ -18,6 +18,7 @@ final class SensorConnectionModel {
     var selectedSensor: DiscoveredSensor?
     let isSimulated: Bool
     @ObservationIgnored let connector: any SensorProvisioningConnecting
+    @ObservationIgnored let homeSetup: any SensorHomeSetupPerforming
 
     @ObservationIgnored private let scanner: any SensorScanning
     @ObservationIgnored private let scanDuration: Duration
@@ -27,21 +28,32 @@ final class SensorConnectionModel {
     init(
         scanner: any SensorScanning,
         connector: any SensorProvisioningConnecting,
+        homeSetup: any SensorHomeSetupPerforming,
         scanDuration: Duration = SensorProvisioningConfiguration.scanDuration,
         isSimulated: Bool = false
     ) {
         self.scanner = scanner
         self.connector = connector
+        self.homeSetup = homeSetup
         self.scanDuration = scanDuration
         self.isSimulated = isSimulated
     }
 
     static func live() -> SensorConnectionModel {
-        SensorConnectionModel(scanner: BluetoothSensorScanner(), connector: ESPProvisionConnector())
+        SensorConnectionModel(
+            scanner: BluetoothSensorScanner(),
+            connector: ESPProvisionConnector(),
+            homeSetup: HomeKitSensorHomeSetup()
+        )
     }
 
     static func simulated() -> SensorConnectionModel {
-        SensorConnectionModel(scanner: SimulatedSensorScanner(), connector: SimulatedSensorConnector(), isSimulated: true)
+        SensorConnectionModel(
+            scanner: SimulatedSensorScanner(),
+            connector: SimulatedSensorConnector(),
+            homeSetup: SimulatedSensorHomeSetup(),
+            isSimulated: true
+        )
     }
 
     var isScanning: Bool {

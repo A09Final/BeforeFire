@@ -40,7 +40,7 @@ struct SensorConnectionView: View {
         .navigationTitle(SensorConnectionCopy.screenTitle)
         .navigationBarTitleDisplayMode(.inline)
         .sheet(item: $model.selectedSensor) { sensor in
-            SensorWiFiSetupView(sensor: sensor, connector: model.connector) {
+            SensorWiFiSetupView(sensor: sensor, connector: model.connector, homeSetup: model.homeSetup) {
                 model.markConnected(sensor)
             }
         }

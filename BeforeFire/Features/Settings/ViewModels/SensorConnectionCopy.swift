@@ -42,10 +42,18 @@ enum SensorConnectionCopy {
     static let cancelButton = "Cancel"
     static let backButton = "Back"
     static let doneButton = "Done"
-    static let successTitle = "Sensor Connected"
 
-    static func successDescription(sensorName: String, wiFiName: String) -> String {
-        "\(sensorName) is connected to \(wiFiName). The sensor restarts now. Then add it in the Home app with the HomeKit code on the sensor label."
+    static let wiFiConnectedTitle = "Wi-Fi Connected"
+    static let addToHomeButton = "Add to Home"
+    static let addingToHome = "Adding the sensor to Home…"
+    static let addedToHomeTitle = "Sensor Added to Home"
+
+    static func wiFiConnectedDescription(sensorName: String, wiFiName: String) -> String {
+        "\(sensorName) is connected to \(wiFiName). Add the sensor to Home with the HomeKit code on the sensor label. Keep your phone on the same Wi-Fi network."
+    }
+
+    static func addedToHomeDescription(sensorName: String) -> String {
+        "\(sensorName) is in the Home app."
     }
 
     static func networkAccessibilityLabel(for network: SensorWiFiNetwork) -> String {
@@ -58,6 +66,8 @@ enum SensorConnectionCopy {
             message(for: issue)
         case let provisioningError as SensorProvisioningError:
             message(for: provisioningError)
+        case let homeSetupError as SensorHomeSetupError:
+            message(for: homeSetupError)
         default:
             "The operation did not complete. Try again."
         }
@@ -104,6 +114,21 @@ enum SensorConnectionCopy {
             "The sensor cannot find this Wi-Fi network. Check the name and use a 2.4 GHz network."
         case .sensorCouldNotJoinWiFi:
             "The sensor could not connect to the Wi-Fi network. Check the Wi-Fi name and password."
+        }
+    }
+
+    private static func message(for error: SensorHomeSetupError) -> String {
+        switch error {
+        case .cancelled:
+            "The sensor was not added to Home."
+        case .unsupported:
+            "This device cannot add accessories to Home."
+        case .missingEntitlement:
+            "BeforeFire does not have permission to add accessories to Home."
+        case .accessoryNotFound:
+            "Home cannot find the sensor. Make sure that the sensor and your phone use the same Wi-Fi network, then try again."
+        case .failed:
+            "The sensor was not added to Home. Try again."
         }
     }
 }

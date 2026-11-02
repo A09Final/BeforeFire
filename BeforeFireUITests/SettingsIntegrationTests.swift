@@ -36,7 +36,7 @@ final class SettingsIntegrationTests: XCTestCase {
     }
 
     @MainActor
-    func testSimulatedSensorJoinsWiFi() {
+    func testSimulatedSensorJoinsWiFiAndHome() {
         continueAfterFailure = false
         let app = XCUIApplication()
         let status = openSimulatedSensorConnection(in: app)
@@ -59,8 +59,9 @@ final class SettingsIntegrationTests: XCTestCase {
         password.typeText("password1")
         joinButton.tap()
 
-        let success = app.descendants(matching: .any)["sensorWiFi.success"].firstMatch
-        XCTAssertTrue(success.waitForExistence(timeout: 10))
+        // The Home setup starts at once after the sensor joins Wi-Fi.
+        let addedToHome = app.descendants(matching: .any)["sensorWiFi.addedToHome"].firstMatch
+        XCTAssertTrue(addedToHome.waitForExistence(timeout: 10))
         app.buttons["sensorWiFi.doneButton"].tap()
 
         expectSensorStatus(status, label: "Sensor, DAPUR_A1B2C3")
@@ -87,7 +88,7 @@ final class SettingsIntegrationTests: XCTestCase {
         wiFiName.typeText("Hidden Kitchen")
         app.buttons["sensorWiFi.joinButton"].tap()
 
-        XCTAssertTrue(app.descendants(matching: .any)["sensorWiFi.success"].firstMatch.waitForExistence(timeout: 10))
+        XCTAssertTrue(app.descendants(matching: .any)["sensorWiFi.addedToHome"].firstMatch.waitForExistence(timeout: 10))
         app.buttons["sensorWiFi.doneButton"].tap()
 
         expectSensorStatus(status, label: "Sensor, DAPUR_A1B2C3")
@@ -118,7 +119,7 @@ final class SettingsIntegrationTests: XCTestCase {
         app.launch()
         app.buttons["monitor.settings"].tap()
 
-        // The simulation keeps the test independent of Bluetooth hardware and permission prompts.
+        // The simulation keeps the test independent of Bluetooth, HomeKit, and permission prompts.
         let simulationToggle = app.switches["settings.simulateSensorsToggle"]
         XCTAssertTrue(simulationToggle.waitForExistence(timeout: 5))
         simulationToggle.switches.firstMatch.tap()

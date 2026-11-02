@@ -1,7 +1,7 @@
 import Foundation
 
 // Developer simulation for previews, UI tests, and the Simulator, which has no Bluetooth.
-// These types make no Bluetooth connection and send no Wi-Fi values.
+// These types make no Bluetooth connection, send no Wi-Fi values, and change no home.
 
 struct SimulatedSensorScanner: SensorScanning {
     static let sensors = [
@@ -56,4 +56,13 @@ final class SimulatedSensorSession: SensorProvisioningSession {
     }
 
     func disconnect() {}
+}
+
+/// Shows no system UI and adds no accessory to a home.
+struct SimulatedSensorHomeSetup: SensorHomeSetupPerforming {
+    static let setupDuration: Duration = .milliseconds(1000)
+
+    func addSensorToHome() async throws {
+        try await Task.sleep(for: Self.setupDuration)
+    }
 }

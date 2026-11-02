@@ -5,8 +5,13 @@ struct SensorWiFiSetupView: View {
     @Environment(\.dismiss) private var dismiss
     private let onConnected: () -> Void
 
-    init(sensor: DiscoveredSensor, connector: any SensorProvisioningConnecting, onConnected: @escaping () -> Void) {
-        _model = State(initialValue: SensorWiFiSetupModel(sensor: sensor, connector: connector))
+    init(
+        sensor: DiscoveredSensor,
+        connector: any SensorProvisioningConnecting,
+        homeSetup: any SensorHomeSetupPerforming,
+        onConnected: @escaping () -> Void
+    ) {
+        _model = State(initialValue: SensorWiFiSetupModel(sensor: sensor, connector: connector, homeSetup: homeSetup))
         self.onConnected = onConnected
     }
 
@@ -21,13 +26,15 @@ struct SensorWiFiSetupView: View {
                 case .password:
                     SensorWiFiPasswordStep(model: model)
                 case .connected(let wiFiName):
+                    SensorHomeSetupStep(model: model, wiFiName: wiFiName)
+                case .addedToHome:
                     ContentUnavailableView {
-                        Label(SensorConnectionCopy.successTitle, systemImage: "checkmark.circle.fill")
+                        Label(SensorConnectionCopy.addedToHomeTitle, systemImage: "checkmark.circle.fill")
                             .foregroundStyle(.green)
                     } description: {
-                        Text(SensorConnectionCopy.successDescription(sensorName: model.sensor.name, wiFiName: wiFiName))
+                        Text(SensorConnectionCopy.addedToHomeDescription(sensorName: model.sensor.name))
                     }
-                    .accessibilityIdentifier("sensorWiFi.success")
+                    .accessibilityIdentifier("sensorWiFi.addedToHome")
                 }
             }
             .animation(.default, value: model.step)
@@ -42,12 +49,14 @@ struct SensorWiFiSetupView: View {
     @ToolbarContentBuilder
     private var toolbarContent: some ToolbarContent {
         switch model.step {
-        case .connected:
+        case .connected, .addedToHome:
+            // The sensor has Wi-Fi in both steps, so Done also marks it as connected when the user skips Home.
             ToolbarItem(placement: .confirmationAction) {
                 Button(SensorConnectionCopy.doneButton) {
                     onConnected()
                     dismiss()
                 }
+                .disabled(model.isBusy)
                 .accessibilityIdentifier("sensorWiFi.doneButton")
             }
         case .setupCode:
@@ -218,6 +227,30 @@ private struct SensorWiFiPasswordStep: View {
     }
 }
 
+private struct SensorHomeSetupStep: View {
+    let model: SensorWiFiSetupModel
+    let wiFiName: String
+
+    var body: some View {
+        ContentUnavailableView {
+            Label(SensorConnectionCopy.wiFiConnectedTitle, systemImage: "wifi")
+                .accessibilityIdentifier("sensorWiFi.wiFiConnected")
+        } description: {
+            Text(SensorConnectionCopy.wiFiConnectedDescription(sensorName: model.sensor.name, wiFiName: wiFiName))
+        } actions: {
+            if model.activity == .addingToHome {
+                SensorSetupProgressRow(text: SensorConnectionCopy.addingToHome)
+            } else {
+                Button(SensorConnectionCopy.addToHomeButton, systemImage: "house.fill") { model.addToHome() }
+                    .buttonStyle(.borderedProminent)
+                    .disabled(!model.canAddToHome)
+                    .accessibilityIdentifier("sensorWiFi.addToHomeButton")
+            }
+            SensorSetupErrorRow(message: model.errorMessage)
+        }
+    }
+}
+
 private struct SensorSetupProgressRow: View {
     let text: String
 
@@ -245,5 +278,9 @@ private struct SensorSetupErrorRow: View {
 }
 
 #Preview {
-    SensorWiFiSetupView(sensor: SimulatedSensorScanner.sensors[0], connector: SimulatedSensorConnector()) {}
+    SensorWiFiSetupView(
+        sensor: SimulatedSensorScanner.sensors[0],
+        connector: SimulatedSensorConnector(),
+        homeSetup: SimulatedSensorHomeSetup()
+    ) {}
 }
