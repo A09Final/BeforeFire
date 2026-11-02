@@ -18,7 +18,7 @@ struct SnoozedAlarmView: View {
                         .frame(width: min(AlarmStyle.countdownDiameter, geometry.size.width - AlarmStyle.horizontalInset * 2),
                                height: min(AlarmStyle.countdownDiameter, geometry.size.width - AlarmStyle.horizontalInset * 2))
 
-                    Text("Alarm snoozed")
+                    Text("Alarm silenced")
                         .font(.system(size: headingSize, weight: .bold))
                         .foregroundStyle(AlarmStyle.snoozedAccent)
                         .padding(.top, AlarmStyle.snoozedTitleSpacing)

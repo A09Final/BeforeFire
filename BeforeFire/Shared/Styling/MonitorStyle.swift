@@ -1,55 +1,77 @@
 import SwiftUI
 
 enum MonitorStyle {
-    // DESIGN: Use system fonts. Keep the status larger and heavier than its introductory text.
-    static let statusHeadingSize: CGFloat = 30
-    static let statusValueSize: CGFloat = 60
-    static let statusHeadingSpacing: CGFloat = 4
-    static let statusMinimumScaleFactor: CGFloat = 0.6
+    // DESIGN: All typography uses SF Pro. Change width and weight here.
+    static let fontWidth: Font.Width = .compressed
+    static let valueWeight: Font.Weight = .black
+    static let statusHeadingSize: CGFloat = 19
+    static let statusHeadingTracking: CGFloat = 2
+    static let statusValueSize: CGFloat = 132
+    static let statusHeadingSpacing: CGFloat = -8
+    static let statusBottomInset: CGFloat = -14
+    static let statusTracking: CGFloat = -3
+    static let statusMinimumScaleFactor: CGFloat = 0.38
+    static let connectionSize: CGFloat = 14
+    static let connectionDotSize: CGFloat = 16
+    static let connectionSpacing: CGFloat = 8
+    static let settingsIconSize: CGFloat = 21
+    static let settingsButtonSize: CGFloat = 48
 
-    // DESIGN: Labels and icons are smaller and lighter than sensor values.
-    static let sensorLabelSize: CGFloat = 14
-    static let sensorIconSize: CGFloat = 18
-    static let sensorIconColumnWidth: CGFloat = 20
-    static let sensorLabelRowHeight: CGFloat = 32
-    static let readingMinimumScaleFactor: CGFloat = 0.7
-    // DESIGN: Posisi nilai dan satuan dalam area di bawah label: .leading, .center, atau .trailing.
-    // Gunakan .topLeading, .top, .topTrailing, .bottomLeading, .bottom, atau .bottomTrailing untuk posisi vertikal.
-    static let readingValueAlignment: Alignment = .topLeading
-    // DESIGN: Posisi vertikal satuan terhadap angka: .firstTextBaseline, .center, .top, atau .bottom.
+    // DESIGN: Card labels, illustrations, values, and units have independent sizes.
+    static let sensorLabelSize: CGFloat = 18
+    static let sensorLabelTracking: CGFloat = 0.3
+    static let sensorLabelTopInset: CGFloat = 4
+    static let readingTracking: CGFloat = -1.5
+    static let sensorIconSize: CGFloat = 43
+    static let sensorLabelRowHeight: CGFloat = 28
+    static let sensorLabelIconSpacing: CGFloat = 4
+    static let numericValueSize: CGFloat = 116
+    static let textValueSize: CGFloat = 72
+    static let pressureValueSize: CGFloat = 86
+    static let unitSize: CGFloat = 38
+    static let readingMinimumScaleFactor: CGFloat = 0.45
+    // DESIGN: Use .leading, .center, or .trailing; add .top or .bottom for vertical placement.
+    static let readingValueAlignment: Alignment = .bottomLeading
     static let readingUnitAlignment: VerticalAlignment = .firstTextBaseline
-    // DESIGN: Jarak angka dan satuan. Gunakan 0 agar keduanya menempel.
-    static let readingUnitSpacing: CGFloat = 4
-    // DESIGN: Size of the warning/alarm dot beside each sensor label.
+    static let readingUnitSpacing: CGFloat = 3
     static let sensorStatusDotSize: CGFloat = 12
+    static let cardContentSpacing: CGFloat = 0
+    static let cardHorizontalInset: CGFloat = 16
+    static let cardVerticalInset: CGFloat = 16
 
-    // DESIGN: Edit colors in Assets.xcassets/Colors. These aliases assign each color to its UI role.
-    // Named lookups do not require the editor to resolve generated asset symbols.
-    static let background = Color("BonJour")
-    // DESIGN: The card surface follows the native secondary system background.
-    static let card = Color(uiColor: .secondarySystemBackground)
-    static let primaryText = Color("Onyx")
-    static let secondaryText = Color("Aluminium")
+    // DESIGN: Monitor colors are native color assets. Alarm assets remain separate.
+    static let background = Color("MonitorBackground")
+    static let darkCard = Color("MonitorCardDark")
+    static let lightCard = Color("MonitorCardLight")
+    static let primaryText = Color("AlarmForeground")
+    static let secondaryText = Color("MonitorSecondaryOnDark")
+    static let lightCardText = Color("Onyx")
+    static let lightCardSecondaryText = Color("MonitorSecondaryOnLight")
+    static let cyan = Color("MonitorCyan")
+    static let flame = Color("MonitorFlame")
     static let connected = Color("ConnectionGreen")
     static let alarmText = Color("DangerRed")
     static let warningIndicator = Color("WarningYellow")
-    // DESIGN: Base size and line spacing for the action text. The view scales the font for Dynamic Type.
-    static let actionGuidanceTextSize: CGFloat = 20
-    static let actionGuidanceLineSpacing: CGFloat = 4
-    // DESIGN: Gap between the kitchen heading and its action text.
-    static let actionGuidanceTopSpacing: CGFloat = 12
 
-    // DESIGN: spacing dipakai bersama untuk jarak kartu, tepi halaman, dan padding horizontal isi kartu.
-    static let spacing: CGFloat = 16
-    // DESIGN: Fixed gap below the normal status; it does not grow with screen height.
-    static let normalStatusSensorSpacing: CGFloat = 16
-    // DESIGN: Breathing room between the expanded normal grid and the bottom safe area.
+    static let actionGuidanceTextSize: CGFloat = 18
+    static let actionGuidanceLineSpacing: CGFloat = 4
+    static let actionGuidanceTopSpacing: CGFloat = 8
+    static let actionGuidanceBottomSpacing: CGFloat = 12
+
+    // DESIGN: The grid fills the available height. Large text can use the scrolling fallback.
+    static let spacing: CGFloat = 12
+    static let pageHorizontalInset: CGFloat = 16
+    static let pageTopInset: CGFloat = 8
+    static let normalStatusSensorSpacing: CGFloat = 2
     static let normalGridBottomInset: CGFloat = 20
-    // DESIGN: Reduce this inset to move the connection status and cards closer to the bottom safe area.
-    static let sensorSectionBottomInset: CGFloat = 25
-    // DESIGN: Ubah radius dan tinggi dasar kartu di sini. Tinggi ikut membesar dengan Dynamic Type.
     static let cardCornerRadius: CGFloat = 24
-    static let cardHeight: CGFloat = 160
-    // DESIGN: Batas lebar konten pada layar besar; konten tetap berada di tengah.
+    static let cardHeight: CGFloat = 148
     static let maximumContentWidth: CGFloat = 600
+
+    static func usesDarkCard(for kind: MonitorReading.Kind) -> Bool {
+        switch kind {
+        case .stoveHeat, .roomTemperature, .roomHumidity: true
+        case .airQuality, .presence, .areaPressure: false
+        }
+    }
 }

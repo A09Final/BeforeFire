@@ -130,7 +130,7 @@ private struct AlarmActivityActions: View {
                 }
             } else {
                 Button(intent: SnoozeAlarmPreviewIntent(activityID: context.activityID)) {
-                    Label("Snooze", systemImage: "bell.slash")
+                    Label("Silence", systemImage: "bell.slash")
                         .modifier(AlarmActivityActionStyle())
                 }
             }

@@ -37,7 +37,7 @@ struct AlarmSnoozedActivityContent: View {
             .frame(width: diameter, height: diameter)
 
             VStack(alignment: .leading, spacing: AlarmLiveActivityStyle.expandedContentInset) {
-                Text("Alarm snoozed")
+                Text("Alarm silenced")
                     .font(.system(size: AlarmLiveActivityStyle.titleSize, weight: .bold))
                     .foregroundStyle(AlarmLiveActivityStyle.snoozedAccent)
                     .lineLimit(1)

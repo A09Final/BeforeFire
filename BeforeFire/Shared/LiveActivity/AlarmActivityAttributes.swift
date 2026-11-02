@@ -50,7 +50,7 @@ nonisolated struct AlarmActivityAttributes: ActivityAttributes {
         }
 
         var title: String {
-            isSnoozed ? "Alarm snoozed" : "Check your kitchen now"
+            isSnoozed ? "Alarm silenced" : "Check your kitchen now"
         }
 
         var message: String {
@@ -60,7 +60,7 @@ nonisolated struct AlarmActivityAttributes: ActivityAttributes {
             return isSnoozed ? "Preview only. No alarm command was sent." : "Check the stove and surrounding area."
         }
 
-        var status: String { isHubOffline ? AlarmActivityAttributes.hubOfflineLabel : (isSnoozed ? "Snoozed" : "Alarm active") }
+        var status: String { isHubOffline ? AlarmActivityAttributes.hubOfflineLabel : (isSnoozed ? "Silenced" : "Alarm active") }
         var symbol: String { isHubOffline ? "wifi.slash" : (isSnoozed ? "bell.slash.fill" : "light.beacon.max") }
     }
 
