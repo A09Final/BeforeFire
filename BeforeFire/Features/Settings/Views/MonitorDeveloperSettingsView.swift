@@ -5,6 +5,7 @@ struct MonitorDeveloperSettingsView: View {
     @Binding var previewCondition: MonitorPreviewCondition
     @Environment(AlarmPreviewModel.self) private var alarmPreview
     @State private var showPlacementGuideline = false
+    @State private var isSensorSimulationEnabled = false
     
     var body: some View {
         Form {
@@ -17,6 +18,13 @@ struct MonitorDeveloperSettingsView: View {
                     //PLS DONT DELETE
                 }
                 .accessibilityIdentifier("settings.hubConnection")
+
+                NavigationLink {
+                    SensorConnectionView(isSimulated: isSensorSimulationEnabled)
+                } label: {
+                    Label("Sensor Connection", systemImage: "")
+                }
+                .accessibilityIdentifier("settings.sensorConnection")
                 
                 Button {
                     showPlacementGuideline = true
@@ -60,6 +68,9 @@ struct MonitorDeveloperSettingsView: View {
                     set: { alarmPreview.isHubDisconnected = $0 }
                 ))
                 .accessibilityIdentifier("settings.hubDisconnectedToggle")
+
+                Toggle("Simulate sensors", isOn: $isSensorSimulationEnabled)
+                    .accessibilityIdentifier("settings.simulateSensorsToggle")
 
                 Button("Preview Alarm") {
                     alarmPreview.resumeIfExpired()
