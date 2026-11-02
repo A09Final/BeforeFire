@@ -150,7 +150,8 @@ private struct SensorNetworkListStep: View {
                 Text(SensorConnectionCopy.networksFooter)
             }
         }
-        .disabled(model.isBusy && model.activity != .scanning)
+        // The model ignores a selection during a scan. A cancelled scan ends the Bluetooth session.
+        .disabled(model.isBusy)
     }
 }
 

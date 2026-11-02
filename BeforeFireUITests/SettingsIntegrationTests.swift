@@ -36,12 +36,86 @@ final class SettingsIntegrationTests: XCTestCase {
     }
 
     @MainActor
-    func testSimulatedSensorReceivesWiFi() {
+    func testSimulatedSensorJoinsWiFi() {
         continueAfterFailure = false
         let app = XCUIApplication()
-        app.launch()
+        let status = openSimulatedSensorConnection(in: app)
         defer { app.terminate() }
 
+        XCTAssertEqual(status.label, "Sensor, Not connected")
+        selectSimulatedSensorAndEnterSetupCode(in: app)
+
+        // The simulated sensor finds these networks. The secured network needs a password.
+        let kitchenNetwork = app.buttons["sensorWiFi.network.Kitchen WiFi"]
+        XCTAssertTrue(kitchenNetwork.waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["sensorWiFi.network.Guest"].exists)
+        kitchenNetwork.tap()
+
+        let joinButton = app.buttons["sensorWiFi.joinButton"]
+        XCTAssertTrue(joinButton.waitForExistence(timeout: 5))
+        XCTAssertFalse(joinButton.isEnabled)
+        let password = app.secureTextFields["sensorWiFi.passwordField"]
+        password.tap()
+        password.typeText("password1")
+        joinButton.tap()
+
+        let success = app.descendants(matching: .any)["sensorWiFi.success"].firstMatch
+        XCTAssertTrue(success.waitForExistence(timeout: 10))
+        app.buttons["sensorWiFi.doneButton"].tap()
+
+        expectSensorStatus(status, label: "Sensor, DAPUR_A1B2C3")
+    }
+
+    @MainActor
+    func testSimulatedSensorJoinsOtherNetwork() {
+        continueAfterFailure = false
+        let app = XCUIApplication()
+        let status = openSimulatedSensorConnection(in: app)
+        defer { app.terminate() }
+
+        selectSimulatedSensorAndEnterSetupCode(in: app)
+
+        // The button is disabled until the sensor completes its Wi-Fi scan.
+        let otherNetworkButton = app.buttons["sensorWiFi.otherNetworkButton"]
+        let isEnabled = XCTNSPredicateExpectation(predicate: NSPredicate(format: "isEnabled == true"), object: otherNetworkButton)
+        XCTAssertEqual(XCTWaiter.wait(for: [isEnabled], timeout: 5), .completed)
+        otherNetworkButton.tap()
+
+        let wiFiName = app.textFields["sensorWiFi.nameField"]
+        XCTAssertTrue(wiFiName.waitForExistence(timeout: 5))
+        wiFiName.tap()
+        wiFiName.typeText("Hidden Kitchen")
+        app.buttons["sensorWiFi.joinButton"].tap()
+
+        XCTAssertTrue(app.descendants(matching: .any)["sensorWiFi.success"].firstMatch.waitForExistence(timeout: 10))
+        app.buttons["sensorWiFi.doneButton"].tap()
+
+        expectSensorStatus(status, label: "Sensor, DAPUR_A1B2C3")
+    }
+
+    @MainActor
+    func testWrongLengthSetupCodeShowsError() {
+        continueAfterFailure = false
+        let app = XCUIApplication()
+        _ = openSimulatedSensorConnection(in: app)
+        defer { app.terminate() }
+
+        selectSimulatedSensor(in: app)
+        enterSetupCode("abc", in: app)
+
+        XCTAssertTrue(app.descendants(matching: .any)["sensorWiFi.error"].firstMatch.waitForExistence(timeout: 5))
+        XCTAssertTrue(app.textFields["sensorWiFi.setupCodeField"].exists)
+
+        app.buttons["sensorWiFi.cancelButton"].tap()
+        XCTAssertTrue(app.buttons["sensor.connectButton"].waitForExistence(timeout: 5))
+    }
+
+    // MARK: - Steps
+
+    /// Turns on the sensor simulation and opens Sensor Connection. Returns the status row.
+    @MainActor
+    private func openSimulatedSensorConnection(in app: XCUIApplication) -> XCUIElement {
+        app.launch()
         app.buttons["monitor.settings"].tap()
 
         // The simulation keeps the test independent of Bluetooth hardware and permission prompts.
@@ -53,30 +127,35 @@ final class SettingsIntegrationTests: XCTestCase {
         // LabeledContent exposes the label and value as one element.
         let status = app.staticTexts["sensor.status"]
         XCTAssertTrue(status.waitForExistence(timeout: 5))
-        XCTAssertEqual(status.label, "Sensor, Not connected")
-        app.buttons["sensor.connectButton"].tap()
+        return status
+    }
 
+    @MainActor
+    private func selectSimulatedSensor(in app: XCUIApplication) {
+        app.buttons["sensor.connectButton"].tap()
         let sensor = app.buttons["sensor.found.DAPUR_A1B2C3"]
         XCTAssertTrue(sensor.waitForExistence(timeout: 5))
         sensor.tap()
+    }
 
-        let wiFiName = app.textFields["sensorWiFi.nameField"]
-        XCTAssertTrue(wiFiName.waitForExistence(timeout: 5))
-        wiFiName.tap()
-        wiFiName.typeText("Kitchen")
-        let password = app.secureTextFields["sensorWiFi.passwordField"]
-        password.tap()
-        password.typeText("password1")
-        let setupCode = app.textFields["sensorWiFi.setupCodeField"]
-        setupCode.tap()
-        setupCode.typeText("ab3d5fgh")
-        app.buttons["sensorWiFi.sendButton"].tap()
+    @MainActor
+    private func enterSetupCode(_ setupCode: String, in app: XCUIApplication) {
+        let setupCodeField = app.textFields["sensorWiFi.setupCodeField"]
+        XCTAssertTrue(setupCodeField.waitForExistence(timeout: 5))
+        setupCodeField.tap()
+        setupCodeField.typeText(setupCode)
+        app.buttons["sensorWiFi.connectButton"].tap()
+    }
 
-        let doneButton = app.buttons["sensorWiFi.doneButton"]
-        XCTAssertTrue(doneButton.waitForExistence(timeout: 10))
-        doneButton.tap()
+    @MainActor
+    private func selectSimulatedSensorAndEnterSetupCode(in app: XCUIApplication) {
+        selectSimulatedSensor(in: app)
+        enterSetupCode("ab3d5fgh", in: app)
+    }
 
-        let connectedStatus = NSPredicate(format: "label == %@", "Sensor, DAPUR_A1B2C3")
-        XCTAssertEqual(XCTWaiter.wait(for: [XCTNSPredicateExpectation(predicate: connectedStatus, object: status)], timeout: 5), .completed)
+    private func expectSensorStatus(_ status: XCUIElement, label: String) {
+        let expectedStatus = NSPredicate(format: "label == %@", label)
+        let expectation = XCTNSPredicateExpectation(predicate: expectedStatus, object: status)
+        XCTAssertEqual(XCTWaiter.wait(for: [expectation], timeout: 5), .completed)
     }
 }
