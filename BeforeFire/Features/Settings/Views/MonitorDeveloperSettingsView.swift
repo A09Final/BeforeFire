@@ -3,6 +3,8 @@ import SwiftUI
 struct MonitorDeveloperSettingsView: View {
     @Binding var isActionGuidanceVisible: Bool
     @Binding var previewCondition: MonitorPreviewCondition
+    @Environment(AlarmPreviewModel.self) private var alarmPreview
+    @State private var showPlacementGuideline = false
     
     var body: some View {
         Form {
@@ -16,11 +18,18 @@ struct MonitorDeveloperSettingsView: View {
                 }
                 .accessibilityIdentifier("settings.hubConnection")
                 
-                NavigationLink {
-                    PlacementGuidelineView()
+                Button {
+                    showPlacementGuideline = true
                 } label: {
-                    Label("Placement Guideline", systemImage: "")
+                    HStack {
+                        Label("Placement Guideline", systemImage: "")
+                        Spacer()
+                        Image(systemName: "chevron.right")
+                            .font(.footnote.weight(.semibold))
+                            .foregroundStyle(Color(.tertiaryLabel))
+                    }
                 }
+                .foregroundStyle(.primary)
                 .accessibilityIdentifier("settings.placementGuideline")
                 
                 NavigationLink {
@@ -45,15 +54,42 @@ struct MonitorDeveloperSettingsView: View {
                     }
                     .accessibilityIdentifier("settings.previewCondition")
                 }
+
+                Toggle("Hub disconnected", isOn: Binding(
+                    get: { alarmPreview.isHubDisconnected },
+                    set: { alarmPreview.isHubDisconnected = $0 }
+                ))
+                .accessibilityIdentifier("settings.hubDisconnectedToggle")
+
+                Button("Preview Alarm") {
+                    alarmPreview.resumeIfExpired()
+                    alarmPreview.isAlarmPresented = true
+                }
+                .disabled(alarmPreview.isEndingActivity)
+                .accessibilityIdentifier("settings.previewAlarm")
+
+                Stepper(value: Binding(
+                    get: { alarmPreview.snoozeDurationSeconds },
+                    set: { alarmPreview.updateSnoozeDuration($0) }
+                ), in: AlarmActivityAttributes.minimumSnoozeSeconds...AlarmActivityAttributes.maximumSnoozeSeconds,
+                        step: AlarmActivityAttributes.snoozeStepSeconds) {
+                    LabeledContent("Snooze duration", value: "\(alarmPreview.snoozeDurationSeconds) seconds")
+                }
+                .accessibilityIdentifier("settings.snoozeDuration")
             } header: {
                 Text("Developer Settings")
             } footer: {
-                Text("Preview the status and action text with mock readings. These settings reset when the app restarts.")
+                Text("Mock alarm only, with no sound or device connection. Slide to start the snooze countdown. Duration changes apply to the next snooze and reset to 60 seconds when the app restarts.")
             }
+
+            AlarmLiveActivitySettingsSection()
         }
         .navigationTitle("Settings")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar(.visible, for: .navigationBar)
+        .sheet(isPresented: $showPlacementGuideline) {
+            PlacementGuidelineView()
+        }
     }
     
 }
@@ -75,21 +111,6 @@ struct HubConnectionView: View {
         }
         .navigationTitle("Hub Connection")
         .navigationBarTitleDisplayMode(.inline)
-    }
-}
-
-struct PlacementGuidelineView: View {
-    var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
-                Text("Where to place the monitor")
-                    .font(.headline)
-                Text("Add your placement instructions here.")
-                    .foregroundStyle(.secondary)
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            
-        }
     }
 }
 
@@ -118,4 +139,5 @@ struct EmergencyContactView: View {
     @Previewable @State var isTrue = false
     @Previewable @State var mock = MonitorPreviewCondition.dangerous
     MonitorDeveloperSettingsView(isActionGuidanceVisible: $isTrue, previewCondition: $mock)
+        .environment(AlarmPreviewModel())
 }
