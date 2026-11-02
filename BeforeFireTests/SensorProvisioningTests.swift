@@ -512,7 +512,7 @@ struct SensorWiFiSetupModelTests {
         try await waitUntil { model.isWiFiConnected && !model.isBusy }
 
         #expect(model.step == .connected(wiFiName: "Guest"))
-        #expect(model.errorMessage == nil)
+        #expect(model.errorMessage == "The Home setup closed before the sensor was added. Tap Add to Home to try again.")
         #expect(model.canAddToHome)
 
         model.addToHome()
@@ -770,6 +770,21 @@ struct HomeKitSetupErrorMappingTests {
         let error = NSError(domain: HMErrorDomain, code: code.rawValue)
 
         #expect(HomeKitSetupErrorMapping.error(for: error) == expectedError)
+    }
+
+    @Test func mapsClosedSystemSetupToCancelled() {
+        let error = NSError(
+            domain: HomeKitSetupErrorMapping.homeFoundationErrorDomain,
+            code: HomeKitSetupErrorMapping.homeFoundationCancelledCode
+        )
+
+        #expect(HomeKitSetupErrorMapping.error(for: error) == .cancelled)
+    }
+
+    @Test func mapsOtherHomeFoundationCodeToFailure() {
+        let error = NSError(domain: HomeKitSetupErrorMapping.homeFoundationErrorDomain, code: 1)
+
+        #expect(HomeKitSetupErrorMapping.error(for: error) == .failed)
     }
 
     @Test func mapsOtherDomainToFailure() {

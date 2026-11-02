@@ -120,7 +120,7 @@ enum SensorConnectionCopy {
     private static func message(for error: SensorHomeSetupError) -> String {
         switch error {
         case .cancelled:
-            "The sensor was not added to Home."
+            "The Home setup closed before the sensor was added. Tap Add to Home to try again."
         case .unsupported:
             "This device cannot add accessories to Home."
         case .missingEntitlement:

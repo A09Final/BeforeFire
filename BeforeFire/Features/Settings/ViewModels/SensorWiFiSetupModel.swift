@@ -204,12 +204,9 @@ final class SensorWiFiSetupModel {
 
     private func addSensorToHome() async throws {
         activity = .addingToHome
-        do {
-            try await homeSetup.addSensorToHome()
-        } catch SensorHomeSetupError.cancelled {
-            // The sensor keeps its Wi-Fi values, so the user can start the Home setup again.
-            return
-        }
+        // A cancelled setup throws to `perform`, which shows a message. The sensor keeps its Wi-Fi values,
+        // so the user can start the Home setup again.
+        try await homeSetup.addSensorToHome()
         guard !Task.isCancelled else { return }
         step = .addedToHome
     }
