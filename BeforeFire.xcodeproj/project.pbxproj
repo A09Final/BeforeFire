@@ -12,10 +12,11 @@
 		BFAC2026102700000000002A /* BeforeFire/Shared/LiveActivity/AlarmActivityAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFAC20261027000000000016 /* BeforeFire/Shared/LiveActivity/AlarmActivityAttributes.swift */; };
 		BFAC2026102700000000002B /* BeforeFire/Shared/LiveActivity/SnoozeAlarmPreviewIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFAC20261027000000000017 /* BeforeFire/Shared/LiveActivity/SnoozeAlarmPreviewIntent.swift */; };
 		BFAC2026102700000000002C /* BeforeFire/Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = BFAC20261027000000000018 /* BeforeFire/Assets.xcassets */; };
-		BFAC2026102700000000002D /* BeforeFireWidgets.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = BFAC20261027000000000002 /* BeforeFireWidgets.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		BFAC2026102700000000002D /* BeforeFireWidgets.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = BFAC20261027000000000002 /* BeforeFireWidgets.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		BFAC20261028000000000050 /* BeforeFire/Shared/LiveActivity/ResumeAlarmPreviewIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFAC2026102800000000003C /* BeforeFire/Shared/LiveActivity/ResumeAlarmPreviewIntent.swift */; };
+		BFAC20261028000000000051 /* BeforeFireWidgets/AlarmSnoozedActivityContent.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFAC2026102800000000003D /* BeforeFireWidgets/AlarmSnoozedActivityContent.swift */; };
+		BFAC20261102000000000003 /* ESPProvision in Frameworks */ = {isa = PBXBuildFile; productRef = BFAC20261102000000000002 /* ESPProvision */; };
 		F0A0C6093089F00D00BF99E1 /* AGENTS.md in Resources */ = {isa = PBXBuildFile; fileRef = F0A0C6083089F00D00BF99E1 /* AGENTS.md */; };
-		BFAC20261028000000000050 /* ResumeAlarmPreviewIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFAC2026102800000000003C /* ResumeAlarmPreviewIntent.swift */; };
-		BFAC20261028000000000051 /* AlarmSnoozedActivityContent.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFAC2026102800000000003D /* AlarmSnoozedActivityContent.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -43,14 +44,14 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
-		BFAC20261027000000000008 /* Embed App Extensions */ = {
+		BFAC20261027000000000008 /* Embed Foundation Extensions */ = {
 			isa = PBXCopyFilesBuildPhase;
 			dstPath = "";
 			dstSubfolder = PlugIns;
 			files = (
-				BFAC2026102700000000002D /* BeforeFireWidgets.appex in Embed App Extensions */,
+				BFAC2026102700000000002D /* BeforeFireWidgets.appex in Embed Foundation Extensions */,
 			);
-			name = "Embed App Extensions";
+			name = "Embed Foundation Extensions";
 		};
 /* End PBXCopyFilesBuildPhase section */
 
@@ -63,12 +64,12 @@
 		BFAC20261027000000000018 /* BeforeFire/Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = BeforeFire/Assets.xcassets; sourceTree = SOURCE_ROOT; };
 		BFAC20261027000000000019 /* BeforeFireWidgets/Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = BeforeFireWidgets/Info.plist; sourceTree = SOURCE_ROOT; };
 		BFAC2026102700000000001A /* Configuration/BeforeFire-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "Configuration/BeforeFire-Info.plist"; sourceTree = SOURCE_ROOT; };
+		BFAC2026102800000000003C /* BeforeFire/Shared/LiveActivity/ResumeAlarmPreviewIntent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BeforeFire/Shared/LiveActivity/ResumeAlarmPreviewIntent.swift; sourceTree = SOURCE_ROOT; };
+		BFAC2026102800000000003D /* BeforeFireWidgets/AlarmSnoozedActivityContent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BeforeFireWidgets/AlarmSnoozedActivityContent.swift; sourceTree = SOURCE_ROOT; };
 		F0A0C5DD3089EFBE00BF99E1 /* BeforeFire.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = BeforeFire.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		F0A0C5EA3089EFBE00BF99E1 /* BeforeFireTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = BeforeFireTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		F0A0C5F43089EFBE00BF99E1 /* BeforeFireUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = BeforeFireUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		F0A0C6083089F00D00BF99E1 /* AGENTS.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = AGENTS.md; sourceTree = "<group>"; };
-		BFAC2026102800000000003C /* ResumeAlarmPreviewIntent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BeforeFire/Shared/LiveActivity/ResumeAlarmPreviewIntent.swift; sourceTree = SOURCE_ROOT; };
-		BFAC2026102800000000003D /* AlarmSnoozedActivityContent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BeforeFireWidgets/AlarmSnoozedActivityContent.swift; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -98,6 +99,7 @@
 		F0A0C5DA3089EFBE00BF99E1 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			files = (
+				BFAC20261102000000000003 /* ESPProvision in Frameworks */,
 			);
 		};
 		F0A0C5E73089EFBE00BF99E1 /* Frameworks */ = {
@@ -120,8 +122,8 @@
 				BFAC20261027000000000015 /* BeforeFireWidgets/AlarmLiveActivityStyle.swift */,
 				BFAC20261027000000000016 /* BeforeFire/Shared/LiveActivity/AlarmActivityAttributes.swift */,
 				BFAC20261027000000000017 /* BeforeFire/Shared/LiveActivity/SnoozeAlarmPreviewIntent.swift */,
-				BFAC2026102800000000003D /* AlarmSnoozedActivityContent.swift */,
-				BFAC2026102800000000003C /* ResumeAlarmPreviewIntent.swift */,
+				BFAC2026102800000000003D /* BeforeFireWidgets/AlarmSnoozedActivityContent.swift */,
+				BFAC2026102800000000003C /* BeforeFire/Shared/LiveActivity/ResumeAlarmPreviewIntent.swift */,
 				BFAC20261027000000000018 /* BeforeFire/Assets.xcassets */,
 				BFAC20261027000000000019 /* BeforeFireWidgets/Info.plist */,
 				BFAC2026102700000000001A /* Configuration/BeforeFire-Info.plist */,
@@ -177,7 +179,7 @@
 				F0A0C5D93089EFBE00BF99E1 /* Sources */,
 				F0A0C5DA3089EFBE00BF99E1 /* Frameworks */,
 				F0A0C5DB3089EFBE00BF99E1 /* Resources */,
-				BFAC20261027000000000008 /* Embed App Extensions */,
+				BFAC20261027000000000008 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
@@ -188,6 +190,9 @@
 				F0A0C5DF3089EFBE00BF99E1 /* BeforeFire */,
 			);
 			name = BeforeFire;
+			packageProductDependencies = (
+				BFAC20261102000000000002 /* ESPProvision */,
+			);
 			productName = BeforeFire;
 			productReference = F0A0C5DD3089EFBE00BF99E1 /* BeforeFire.app */;
 			productType = "com.apple.product-type.application";
@@ -242,7 +247,7 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
 				LastSwiftUpdateCheck = 2710;
-				LastUpgradeCheck = 2710;
+				LastUpgradeCheck = 2720;
 				TargetAttributes = {
 					F0A0C5DC3089EFBE00BF99E1 = {
 						CreatedOnToolsVersion = 27.1;
@@ -266,6 +271,9 @@
 			);
 			mainGroup = F0A0C5D43089EFBE00BF99E1;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				BFAC20261102000000000001 /* XCRemoteSwiftPackageReference "esp-idf-provisioning-ios" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = F0A0C5DE3089EFBE00BF99E1 /* Products */;
 			projectDirPath = "";
@@ -312,8 +320,8 @@
 				BFAC20261027000000000029 /* BeforeFireWidgets/AlarmLiveActivityStyle.swift in Sources */,
 				BFAC2026102700000000002A /* BeforeFire/Shared/LiveActivity/AlarmActivityAttributes.swift in Sources */,
 				BFAC2026102700000000002B /* BeforeFire/Shared/LiveActivity/SnoozeAlarmPreviewIntent.swift in Sources */,
-				BFAC20261028000000000051 /* AlarmSnoozedActivityContent.swift in Sources */,
-				BFAC20261028000000000050 /* ResumeAlarmPreviewIntent.swift in Sources */,
+				BFAC20261028000000000051 /* BeforeFireWidgets/AlarmSnoozedActivityContent.swift in Sources */,
+				BFAC20261028000000000050 /* BeforeFire/Shared/LiveActivity/ResumeAlarmPreviewIntent.swift in Sources */,
 			);
 		};
 		F0A0C5D93089EFBE00BF99E1 /* Sources */ = {
@@ -461,6 +469,7 @@
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 			};
@@ -518,6 +527,7 @@
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				VALIDATE_PRODUCT = YES;
 			};
@@ -717,6 +727,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		BFAC20261102000000000001 /* XCRemoteSwiftPackageReference "esp-idf-provisioning-ios" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/espressif/esp-idf-provisioning-ios";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 3.2.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		BFAC20261102000000000002 /* ESPProvision */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = BFAC20261102000000000001 /* XCRemoteSwiftPackageReference "esp-idf-provisioning-ios" */;
+			productName = ESPProvision;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = F0A0C5D53089EFBE00BF99E1 /* Project object */;
 	validationLevel = 1;
