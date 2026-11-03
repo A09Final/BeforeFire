@@ -1,7 +1,7 @@
 import Foundation
 
-/// A Wi-Fi network that the sensor unit found during its own scan.
-nonisolated struct SensorWiFiNetwork: Identifiable, Hashable, Sendable {
+/// A Wi-Fi network that the sensor or alarm unit found during its own scan.
+nonisolated struct DeviceWiFiNetwork: Identifiable, Hashable, Sendable {
     // RSSI limits for the signal icon. These are display levels only, not connection rules.
     static let strongSignalMinimum = -55
     static let mediumSignalMinimum = -67
@@ -25,8 +25,8 @@ nonisolated struct SensorWiFiNetwork: Identifiable, Hashable, Sendable {
     }
 
     /// Removes hidden networks, keeps the strongest access point for each name, and puts the strongest signal first.
-    static func displayList(from networks: [SensorWiFiNetwork]) -> [SensorWiFiNetwork] {
-        var strongestNetworkByName: [String: SensorWiFiNetwork] = [:]
+    static func displayList(from networks: [DeviceWiFiNetwork]) -> [DeviceWiFiNetwork] {
+        var strongestNetworkByName: [String: DeviceWiFiNetwork] = [:]
         for network in networks where !network.ssid.isEmpty {
             if let current = strongestNetworkByName[network.ssid], current.signalStrength >= network.signalStrength {
                 continue

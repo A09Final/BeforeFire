@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
     <key>NSBluetoothAlwaysUsageDescription</key>
-    <string>BeforeFire uses Bluetooth to find your sensor and send your Wi-Fi network to it.</string>
+    <string>BeforeFire uses Bluetooth to find your sensor and alarm. It sends your Wi-Fi network to them.</string>
     <key>NSSupportsLiveActivities</key>
     <true/>
     <key>CFBundleURLTypes</key>
