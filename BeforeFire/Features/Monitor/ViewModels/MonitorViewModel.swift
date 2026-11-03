@@ -19,17 +19,10 @@ struct MonitorViewModel {
         self.originalReadings = readings
     }
 
-    private var previewIAQ: Int {
-        switch previewCondition {
-        case .unsafe: 125
-        case .dangerous: 225
-        }
-    }
-
     private var previewAirQualityDescription: String {
         switch previewCondition {
-        case .unsafe: "Lightly polluted"
-        case .dangerous: "Heavily polluted"
+        case .unsafe: "Lightly Polluted"
+        case .dangerous: "Heavily Polluted"
         }
     }
 
@@ -53,9 +46,9 @@ struct MonitorViewModel {
                 return MonitorReading(
                     id: reading.id,
                     title: reading.title,
-                    value: String(previewIAQ),
-                    unit: "IAQ",
-                    spokenValue: "Air quality index \(previewIAQ). \(previewAirQualityDescription)."
+                    value: previewAirQualityDescription,
+                    unit: nil,
+                    spokenValue: previewAirQualityDescription
                 )
 
             case .presence:
@@ -112,9 +105,9 @@ struct MonitorViewModel {
             MonitorReading(
                 id: .airQuality,
                 title: "Air Quality",
-                value: "Normal",
+                value: "Good",
                 unit: nil,
-                spokenValue: "Normal"
+                spokenValue: "Good"
             ),
             MonitorReading(
                 id: .presence,
