@@ -1,9 +1,10 @@
 import Foundation
 import Observation
 
+/// Finds units of one type over Bluetooth and keeps the connection status for the connection screen.
 @MainActor
 @Observable
-final class SensorConnectionModel {
+final class DeviceConnectionModel {
     enum ScanStatus: Equatable {
         case idle
         case scanning
@@ -11,11 +12,13 @@ final class SensorConnectionModel {
         case failed(SensorProvisioningError)
     }
 
+    let kind: ProvisioningDeviceKind
+    let copy: DeviceConnectionCopy
     private(set) var scanStatus: ScanStatus = .idle
-    private(set) var discoveredSensors: [DiscoveredSensor] = []
-    /// Kept in memory only. The app does not yet read the sensor connection from HomeKit.
-    private(set) var connectedSensorName: String?
-    var selectedSensor: DiscoveredSensor?
+    private(set) var discoveredDevices: [DiscoveredSensor] = []
+    /// Kept in memory only. The app does not yet read the unit connection from HomeKit.
+    private(set) var connectedDeviceName: String?
+    var selectedDevice: DiscoveredSensor?
     let isSimulated: Bool
     @ObservationIgnored let connector: any SensorProvisioningConnecting
     @ObservationIgnored let homeSetup: any SensorHomeSetupPerforming
@@ -26,12 +29,15 @@ final class SensorConnectionModel {
     @ObservationIgnored private var scanTimeoutTask: Task<Void, Never>?
 
     init(
+        kind: ProvisioningDeviceKind,
         scanner: any SensorScanning,
         connector: any SensorProvisioningConnecting,
         homeSetup: any SensorHomeSetupPerforming,
         scanDuration: Duration = SensorProvisioningConfiguration.scanDuration,
         isSimulated: Bool = false
     ) {
+        self.kind = kind
+        self.copy = DeviceConnectionCopy(kind: kind)
         self.scanner = scanner
         self.connector = connector
         self.homeSetup = homeSetup
@@ -39,17 +45,19 @@ final class SensorConnectionModel {
         self.isSimulated = isSimulated
     }
 
-    static func live() -> SensorConnectionModel {
-        SensorConnectionModel(
-            scanner: BluetoothSensorScanner(),
+    static func live(kind: ProvisioningDeviceKind) -> DeviceConnectionModel {
+        DeviceConnectionModel(
+            kind: kind,
+            scanner: BluetoothSensorScanner(kind: kind),
             connector: ESPProvisionConnector(),
             homeSetup: HomeKitSensorHomeSetup()
         )
     }
 
-    static func simulated() -> SensorConnectionModel {
-        SensorConnectionModel(
-            scanner: SimulatedSensorScanner(),
+    static func simulated(kind: ProvisioningDeviceKind) -> DeviceConnectionModel {
+        DeviceConnectionModel(
+            kind: kind,
+            scanner: SimulatedSensorScanner(kind: kind),
             connector: SimulatedSensorConnector(),
             homeSetup: SimulatedSensorHomeSetup(),
             isSimulated: true
@@ -62,14 +70,14 @@ final class SensorConnectionModel {
 
     func startScan() {
         cancelScanTasks()
-        discoveredSensors = []
+        discoveredDevices = []
         scanStatus = .scanning
 
-        let sensorStream = scanner.discoverSensors()
+        let deviceStream = scanner.discoverSensors()
         scanTask = Task { [weak self] in
             do {
-                for try await sensor in sensorStream {
-                    self?.add(sensor)
+                for try await device in deviceStream {
+                    self?.add(device)
                 }
                 guard !Task.isCancelled else { return }
                 self?.stopScan()
@@ -95,20 +103,20 @@ final class SensorConnectionModel {
         }
     }
 
-    func select(_ sensor: DiscoveredSensor) {
+    func select(_ device: DiscoveredSensor) {
         // Bluetooth provisioning is more reliable when the phone does not scan at the same time.
         stopScan()
-        selectedSensor = sensor
+        selectedDevice = device
     }
 
-    func markConnected(_ sensor: DiscoveredSensor) {
-        connectedSensorName = sensor.name
-        selectedSensor = nil
+    func markConnected(_ device: DiscoveredSensor) {
+        connectedDeviceName = device.name
+        selectedDevice = nil
     }
 
-    private func add(_ sensor: DiscoveredSensor) {
-        guard !discoveredSensors.contains(where: { $0.id == sensor.id }) else { return }
-        discoveredSensors.append(sensor)
+    private func add(_ device: DiscoveredSensor) {
+        guard !discoveredDevices.contains(where: { $0.id == device.id }) else { return }
+        discoveredDevices.append(device)
     }
 
     private func failScan(with error: Error) {

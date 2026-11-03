@@ -1,8 +1,10 @@
 import Foundation
 
 nonisolated enum SensorProvisioningConfiguration {
-    /// Must match `PROV_PREFIX` in `bme688_ld2410b.ino`. The firmware adds 6 hexadecimal MAC digits.
+    /// Must match `prefixBle` of `PERANGKAT` in `Sensor.ino`. The firmware adds 6 hexadecimal MAC digits.
     static let sensorNamePrefix = "DAPUR_"
+    /// Must match `prefixBle` of `PERANGKAT` in `Alarm.ino`. The firmware adds 6 hexadecimal MAC digits.
+    static let alarmNamePrefix = "DAPUR_ALM_"
     static let scanDuration: Duration = .seconds(10)
 
     // Wi-Fi limits from the 802.11 SSID size and the WPA2 passphrase rules.

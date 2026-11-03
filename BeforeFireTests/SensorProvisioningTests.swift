@@ -123,9 +123,10 @@ struct SensorWiFiNetworkTests {
 // MARK: - Sensor search
 
 @MainActor
-struct SensorConnectionModelTests {
-    private func makeModel(scanner: ControlledSensorScanner, scanDuration: Duration = .seconds(60)) -> SensorConnectionModel {
-        SensorConnectionModel(
+struct DeviceConnectionModelTests {
+    private func makeModel(scanner: ControlledSensorScanner, scanDuration: Duration = .seconds(60)) -> DeviceConnectionModel {
+        DeviceConnectionModel(
+            kind: .sensor,
             scanner: scanner,
             connector: RecordingConnector(),
             homeSetup: RecordingHomeSetup(),
@@ -142,9 +143,9 @@ struct SensorConnectionModelTests {
         scanner.continuation?.yield(Fixture.kitchenSensor)
         scanner.continuation?.yield(Fixture.kitchenSensor)
         scanner.continuation?.yield(Fixture.pantrySensor)
-        try await waitUntil { model.discoveredSensors.count == 2 }
+        try await waitUntil { model.discoveredDevices.count == 2 }
 
-        #expect(model.discoveredSensors == [Fixture.kitchenSensor, Fixture.pantrySensor])
+        #expect(model.discoveredDevices == [Fixture.kitchenSensor, Fixture.pantrySensor])
         #expect(model.isScanning)
     }
 
@@ -178,7 +179,7 @@ struct SensorConnectionModelTests {
         scanner.continuation?.finish()
         try await waitUntil { model.scanStatus == .finished }
 
-        #expect(model.discoveredSensors.isEmpty)
+        #expect(model.discoveredDevices.isEmpty)
     }
 
     @Test func stopsScanAfterScanDuration() async throws {
@@ -188,7 +189,7 @@ struct SensorConnectionModelTests {
         model.startScan()
         try await waitUntil { model.scanStatus == .finished }
 
-        #expect(model.discoveredSensors.isEmpty)
+        #expect(model.discoveredDevices.isEmpty)
         try await waitUntil { scanner.terminationCount == 1 }
     }
 
@@ -217,10 +218,10 @@ struct SensorConnectionModelTests {
 
         model.startScan()
         scanner.continuation?.yield(Fixture.kitchenSensor)
-        try await waitUntil { !model.discoveredSensors.isEmpty }
+        try await waitUntil { !model.discoveredDevices.isEmpty }
         model.select(Fixture.kitchenSensor)
 
-        #expect(model.selectedSensor == Fixture.kitchenSensor)
+        #expect(model.selectedDevice == Fixture.kitchenSensor)
         #expect(model.scanStatus == .finished)
         try await waitUntil { scanner.terminationCount == 1 }
     }
@@ -231,10 +232,10 @@ struct SensorConnectionModelTests {
 
         model.startScan()
         scanner.continuation?.yield(Fixture.kitchenSensor)
-        try await waitUntil { !model.discoveredSensors.isEmpty }
+        try await waitUntil { !model.discoveredDevices.isEmpty }
         model.startScan()
 
-        #expect(model.discoveredSensors.isEmpty)
+        #expect(model.discoveredDevices.isEmpty)
         #expect(model.isScanning)
     }
 
@@ -244,26 +245,27 @@ struct SensorConnectionModelTests {
 
         model.markConnected(Fixture.kitchenSensor)
 
-        #expect(model.connectedSensorName == "DAPUR_000001")
-        #expect(model.selectedSensor == nil)
+        #expect(model.connectedDeviceName == "DAPUR_000001")
+        #expect(model.selectedDevice == nil)
     }
 
     @Test func simulatedModelUsesSimulationMode() {
-        #expect(SensorConnectionModel.simulated().isSimulated)
+        #expect(DeviceConnectionModel.simulated(kind: .sensor).isSimulated)
     }
 }
 
 // MARK: - Wi-Fi and Home setup
 
 @MainActor
-struct SensorWiFiSetupModelTests {
+struct DeviceWiFiSetupModelTests {
     // Default arguments run outside the main actor, so the doubles are created in the body.
     private func makeModel(
         connector: RecordingConnector? = nil,
         homeSetup: RecordingHomeSetup? = nil
-    ) -> SensorWiFiSetupModel {
-        SensorWiFiSetupModel(
-            sensor: Fixture.kitchenSensor,
+    ) -> DeviceWiFiSetupModel {
+        DeviceWiFiSetupModel(
+            device: Fixture.kitchenSensor,
+            kind: .sensor,
             connector: connector ?? RecordingConnector(),
             homeSetup: homeSetup ?? RecordingHomeSetup()
         )
@@ -273,7 +275,7 @@ struct SensorWiFiSetupModelTests {
     private func makeModelOnNetworksStep(
         session: FakeProvisioningSession? = nil,
         homeSetup: RecordingHomeSetup? = nil
-    ) async throws -> SensorWiFiSetupModel {
+    ) async throws -> DeviceWiFiSetupModel {
         let model = makeModel(connector: RecordingConnector(session: session), homeSetup: homeSetup)
         model.setupCode = Fixture.validSetupCode
         model.connect()
@@ -794,21 +796,114 @@ struct HomeKitSetupErrorMappingTests {
     }
 }
 
-struct SensorConnectionCopyTests {
+struct DeviceConnectionCopyTests {
+    private let sensorCopy = DeviceConnectionCopy(kind: .sensor)
+    private let alarmCopy = DeviceConnectionCopy(kind: .alarm)
+
     @Test(arguments: [
         (SensorHomeSetupError.unsupported, "This device cannot add accessories to Home."),
         (SensorHomeSetupError.missingEntitlement, "BeforeFire does not have permission to add accessories to Home."),
         (SensorHomeSetupError.failed, "The sensor was not added to Home. Try again.")
     ])
     func homeSetupErrorsHaveUserMessages(error: SensorHomeSetupError, expectedMessage: String) {
-        #expect(SensorConnectionCopy.message(for: error) == expectedMessage)
+        #expect(sensorCopy.message(for: error) == expectedMessage)
     }
 
     @Test func connectedDescriptionNamesSensorAndNetwork() {
-        let description = SensorConnectionCopy.wiFiConnectedDescription(sensorName: "DAPUR_000001", wiFiName: "Home")
+        let description = sensorCopy.wiFiConnectedDescription(deviceName: "DAPUR_000001", wiFiName: "Home")
 
         #expect(description.contains("DAPUR_000001"))
         #expect(description.contains("Home"))
+    }
+
+    @Test func sensorTextIsUnchanged() {
+        #expect(sensorCopy.screenTitle == "Sensor Connection")
+        #expect(sensorCopy.connectButton == "Connect Sensor")
+        #expect(sensorCopy.noDevicesFound == "No sensors found. Make sure that the sensor light is purple, then try again.")
+        #expect(sensorCopy.message(for: SensorProvisioningError.sensorNotFound)
+            == "The sensor was not found. Move near the sensor and make sure that the sensor light is purple.")
+    }
+
+    @Test func alarmTextNamesTheAlarm() {
+        #expect(alarmCopy.screenTitle == "Alarm Connection")
+        #expect(alarmCopy.unitName == "Alarm")
+        #expect(alarmCopy.connectButton == "Connect Alarm")
+        #expect(alarmCopy.devicesFoundHeader == "Alarms Found")
+        #expect(alarmCopy.devicesFoundFooter == "Tap an alarm to connect it to your Wi-Fi network.")
+        #expect(alarmCopy.noDevicesFound == "No alarms found. Make sure that the alarm screen shows SETUP WIFI, then try again.")
+        #expect(alarmCopy.networksFooter.hasPrefix("The alarm can connect only"))
+    }
+
+    @Test func alarmSetupCodeTextPointsToAlarmScreen() {
+        #expect(alarmCopy.setupCodeFooter.contains("after PIN on the alarm screen"))
+        #expect(alarmCopy.message(for: SensorProvisioningError.setupCodeRejected)
+            == "The app could not make a secure connection to the alarm. Check the setup code after PIN on the alarm screen.")
+    }
+
+    @Test(arguments: [
+        SensorProvisioningError.sensorNotFound, .sensorConnectionFailed, .setupCodeRejected,
+        .wiFiScanUnavailable, .wiFiNetworkNotFound, .sensorCouldNotJoinWiFi
+    ])
+    func alarmProvisioningErrorsDoNotNameTheSensor(error: SensorProvisioningError) {
+        let message = alarmCopy.message(for: error)
+
+        #expect(message.localizedCaseInsensitiveContains("alarm"))
+        #expect(!message.localizedCaseInsensitiveContains("sensor"))
+    }
+
+    @Test(arguments: [SensorHomeSetupError.cancelled, .accessoryNotFound, .failed])
+    func alarmHomeSetupErrorsDoNotNameTheSensor(error: SensorHomeSetupError) {
+        let message = alarmCopy.message(for: error)
+
+        #expect(message.localizedCaseInsensitiveContains("alarm"))
+        #expect(!message.localizedCaseInsensitiveContains("sensor"))
+    }
+}
+
+// MARK: - Unit types
+
+struct ProvisioningDeviceKindTests {
+    @Test(arguments: [
+        ("DAPUR_A1B2C3", true),
+        ("DAPUR_ALM_A1B2C3", false),
+        ("DAPUR", false),
+        ("Other_A1B2C3", false),
+        ("", false)
+    ])
+    func sensorMatchesOnlySensorNames(name: String, isMatch: Bool) {
+        #expect(ProvisioningDeviceKind.sensor.matches(advertisedName: name) == isMatch)
+    }
+
+    @Test(arguments: [
+        ("DAPUR_ALM_A1B2C3", true),
+        ("DAPUR_A1B2C3", false),
+        ("DAPUR_ALM", false),
+        ("", false)
+    ])
+    func alarmMatchesOnlyAlarmNames(name: String, isMatch: Bool) {
+        #expect(ProvisioningDeviceKind.alarm.matches(advertisedName: name) == isMatch)
+    }
+
+    @Test func simulatedDevicesMatchTheirUnitType() {
+        for kind in [ProvisioningDeviceKind.sensor, .alarm] {
+            let devices = SimulatedSensorScanner.devices(for: kind)
+
+            #expect(!devices.isEmpty)
+            #expect(devices.allSatisfy { kind.matches(advertisedName: $0.name) })
+        }
+    }
+
+    @MainActor
+    @Test func simulatedAlarmModelFindsOnlyAlarms() async throws {
+        let model = DeviceConnectionModel.simulated(kind: .alarm)
+
+        model.startScan()
+        try await waitUntil { model.discoveredDevices.count == SimulatedSensorScanner.alarms.count }
+        model.stopScan()
+
+        #expect(model.kind == .alarm)
+        #expect(model.copy.kind == .alarm)
+        #expect(model.discoveredDevices == SimulatedSensorScanner.alarms)
     }
 }
 

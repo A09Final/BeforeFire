@@ -8,12 +8,25 @@ struct SimulatedSensorScanner: SensorScanning {
         DiscoveredSensor(id: UUID(uuidString: "A09F0000-0000-4000-8000-0000000A1B2C")!, name: "DAPUR_A1B2C3"),
         DiscoveredSensor(id: UUID(uuidString: "A09F0000-0000-4000-8000-0000000D4E5F")!, name: "DAPUR_D4E5F6")
     ]
+    static let alarms = [
+        DiscoveredSensor(id: UUID(uuidString: "A09F0000-0000-4000-8000-0000000A1A2B")!, name: "DAPUR_ALM_A1A2B3")
+    ]
     static let discoveryInterval: Duration = .milliseconds(600)
 
+    let kind: ProvisioningDeviceKind
+
+    static func devices(for kind: ProvisioningDeviceKind) -> [DiscoveredSensor] {
+        switch kind {
+        case .sensor: sensors
+        case .alarm: alarms
+        }
+    }
+
     func discoverSensors() -> AsyncThrowingStream<DiscoveredSensor, Error> {
-        AsyncThrowingStream { continuation in
+        let devices = Self.devices(for: kind)
+        return AsyncThrowingStream { continuation in
             let discoveryTask = Task {
-                for sensor in Self.sensors {
+                for sensor in devices {
                     do {
                         try await Task.sleep(for: Self.discoveryInterval)
                     } catch {

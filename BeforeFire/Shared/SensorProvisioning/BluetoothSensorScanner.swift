@@ -1,13 +1,19 @@
 import CoreBluetooth
 import Foundation
 
-/// Finds sensor units that advertise Wi-Fi provisioning over Bluetooth Low Energy.
+/// Finds units of one type that advertise Wi-Fi provisioning over Bluetooth Low Energy.
 final class BluetoothSensorScanner: NSObject, SensorScanning {
+    private let kind: ProvisioningDeviceKind
     // The manager is created on the first scan, so iOS asks for Bluetooth access only when the user starts a search.
     private var centralManager: CBCentralManager?
     private var continuation: AsyncThrowingStream<DiscoveredSensor, Error>.Continuation?
     private var activeScanID: UUID?
     private var reportedSensorIDs: Set<UUID> = []
+
+    init(kind: ProvisioningDeviceKind) {
+        self.kind = kind
+        super.init()
+    }
 
     func discoverSensors() -> AsyncThrowingStream<DiscoveredSensor, Error> {
         stopScan()
@@ -84,7 +90,7 @@ extension BluetoothSensorScanner: CBCentralManagerDelegate {
     ) {
         let advertisedName = advertisementData[CBAdvertisementDataLocalNameKey] as? String
         guard let name = advertisedName ?? peripheral.name,
-              name.hasPrefix(SensorProvisioningConfiguration.sensorNamePrefix),
+              kind.matches(advertisedName: name),
               reportedSensorIDs.insert(peripheral.identifier).inserted
         else { return }
 

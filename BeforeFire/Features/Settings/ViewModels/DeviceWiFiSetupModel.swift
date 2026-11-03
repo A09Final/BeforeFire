@@ -1,14 +1,15 @@
 import Foundation
 import Observation
 
+/// Runs the Wi-Fi and Home setup steps for one unit. The sensor and the alarm use the same steps.
 @MainActor
 @Observable
-final class SensorWiFiSetupModel {
+final class DeviceWiFiSetupModel {
     enum Step: Equatable {
         case setupCode
         case networks
         case password
-        /// The sensor joined Wi-Fi. The Home setup is not complete yet.
+        /// The unit joined Wi-Fi. The Home setup is not complete yet.
         case connected(wiFiName: String)
         case addedToHome
     }
@@ -20,7 +21,8 @@ final class SensorWiFiSetupModel {
         case addingToHome
     }
 
-    let sensor: DiscoveredSensor
+    let device: DiscoveredSensor
+    let copy: DeviceConnectionCopy
     var setupCode = ""
     var manualWiFiName = ""
     var password = ""
@@ -37,11 +39,13 @@ final class SensorWiFiSetupModel {
     @ObservationIgnored private var activityTask: Task<Void, Never>?
 
     init(
-        sensor: DiscoveredSensor,
+        device: DiscoveredSensor,
+        kind: ProvisioningDeviceKind,
         connector: any SensorProvisioningConnecting,
         homeSetup: any SensorHomeSetupPerforming
     ) {
-        self.sensor = sensor
+        self.device = device
+        self.copy = DeviceConnectionCopy(kind: kind)
         self.connector = connector
         self.homeSetup = homeSetup
     }
@@ -92,12 +96,12 @@ final class SensorWiFiSetupModel {
         do {
             validSetupCode = try SensorSetupCode(setupCode)
         } catch {
-            errorMessage = SensorConnectionCopy.message(for: error)
+            errorMessage = copy.message(for: error)
             return
         }
 
-        perform(.connecting) { [weak self, connector, sensor] in
-            let session = try await connector.connect(to: sensor, setupCode: validSetupCode)
+        perform(.connecting) { [weak self, connector, device] in
+            let session = try await connector.connect(to: device, setupCode: validSetupCode)
             guard let self, !Task.isCancelled else {
                 session.disconnect()
                 return
@@ -136,7 +140,7 @@ final class SensorWiFiSetupModel {
                 requiresPassword: requiresPassword
             )
         } catch {
-            errorMessage = SensorConnectionCopy.message(for: error)
+            errorMessage = copy.message(for: error)
             return
         }
 
@@ -148,14 +152,14 @@ final class SensorWiFiSetupModel {
             self.password = ""
             self.step = .connected(wiFiName: credentials.wiFiName)
             // The Home setup starts at once. The firmware restarts while the user scans the HomeKit code.
-            try await self.addSensorToHome()
+            try await self.addDeviceToHome()
         }
     }
 
     func addToHome() {
         guard canAddToHome else { return }
         perform(.addingToHome) { [weak self] in
-            try await self?.addSensorToHome()
+            try await self?.addDeviceToHome()
         }
     }
 
@@ -198,13 +202,13 @@ final class SensorWiFiSetupModel {
         } catch {
             // The user can still type a network name, so a scan failure does not end the setup.
             networks = []
-            errorMessage = SensorConnectionCopy.message(for: error)
+            errorMessage = copy.message(for: error)
         }
     }
 
-    private func addSensorToHome() async throws {
+    private func addDeviceToHome() async throws {
         activity = .addingToHome
-        // A cancelled setup throws to `perform`, which shows a message. The sensor keeps its Wi-Fi values,
+        // A cancelled setup throws to `perform`, which shows a message. The unit keeps its Wi-Fi values,
         // so the user can start the Home setup again.
         try await homeSetup.addSensorToHome()
         guard !Task.isCancelled else { return }
@@ -215,14 +219,14 @@ final class SensorWiFiSetupModel {
         cancelActivity()
         activity = newActivity
         errorMessage = nil
-        activityTask = Task { [weak self] in
+        activityTask = Task { [weak self, copy] in
             do {
                 try await operation()
             } catch is CancellationError {
                 return
             } catch {
                 guard !Task.isCancelled else { return }
-                self?.errorMessage = SensorConnectionCopy.message(for: error)
+                self?.errorMessage = copy.message(for: error)
             }
             guard !Task.isCancelled else { return }
             self?.activity = nil
