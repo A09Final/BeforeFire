@@ -6,94 +6,94 @@ import Testing
 // MARK: - Fixtures
 
 private enum Fixture {
-    static let kitchenSensor = DiscoveredSensor(id: UUID(uuidString: "00000000-0000-4000-8000-000000000001")!, name: "DAPUR_000001")
-    static let pantrySensor = DiscoveredSensor(id: UUID(uuidString: "00000000-0000-4000-8000-000000000002")!, name: "DAPUR_000002")
+    static let kitchenSensor = DiscoveredDevice(id: UUID(uuidString: "00000000-0000-4000-8000-000000000001")!, name: "DAPUR_000001")
+    static let pantrySensor = DiscoveredDevice(id: UUID(uuidString: "00000000-0000-4000-8000-000000000002")!, name: "DAPUR_000002")
     static let validSetupCode = "ab3d5fgh"
-    static let securedNetwork = SensorWiFiNetwork(ssid: "Home", signalStrength: -50, isSecured: true)
-    static let openNetwork = SensorWiFiNetwork(ssid: "Guest", signalStrength: -70, isSecured: false)
+    static let securedNetwork = DeviceWiFiNetwork(ssid: "Home", signalStrength: -50, isSecured: true)
+    static let openNetwork = DeviceWiFiNetwork(ssid: "Guest", signalStrength: -70, isSecured: false)
     static let validPassword = "password1"
 }
 
 // MARK: - Models
 
-struct SensorSetupCodeTests {
+struct DeviceSetupCodeTests {
     @Test func normalizesCaseAndWhitespace() throws {
-        #expect(try SensorSetupCode(" AB3D5FGH \n").value == "ab3d5fgh")
+        #expect(try DeviceSetupCode(" AB3D5FGH \n").value == "ab3d5fgh")
     }
 
     @Test(arguments: ["", "abc", "ab3d5fgh9", "        "])
     func rejectsWrongLength(rawValue: String) {
-        #expect(throws: SensorWiFiCredentialsIssue.invalidSetupCode) {
-            try SensorSetupCode(rawValue)
+        #expect(throws: DeviceWiFiCredentialsIssue.invalidSetupCode) {
+            try DeviceSetupCode(rawValue)
         }
     }
 }
 
-struct SensorWiFiCredentialsTests {
+struct DeviceWiFiCredentialsTests {
     @Test func keepsSpacesInWiFiName() throws {
-        let credentials = try SensorWiFiCredentials(wiFiName: " Kitchen WiFi ", password: "password1", requiresPassword: true)
+        let credentials = try DeviceWiFiCredentials(wiFiName: " Kitchen WiFi ", password: "password1", requiresPassword: true)
 
         #expect(credentials.wiFiName == " Kitchen WiFi ")
         #expect(credentials.password == "password1")
     }
 
     @Test func acceptsEmptyPasswordWhenNotRequired() throws {
-        let credentials = try SensorWiFiCredentials(wiFiName: "Guest", password: "", requiresPassword: false)
+        let credentials = try DeviceWiFiCredentials(wiFiName: "Guest", password: "", requiresPassword: false)
 
         #expect(credentials.password.isEmpty)
     }
 
     @Test func rejectsEmptyPasswordWhenRequired() {
-        #expect(throws: SensorWiFiCredentialsIssue.missingPassword) {
-            try SensorWiFiCredentials(wiFiName: "Home", password: "", requiresPassword: true)
+        #expect(throws: DeviceWiFiCredentialsIssue.missingPassword) {
+            try DeviceWiFiCredentials(wiFiName: "Home", password: "", requiresPassword: true)
         }
     }
 
     @Test func rejectsMissingWiFiName() {
-        #expect(throws: SensorWiFiCredentialsIssue.missingWiFiName) {
-            try SensorWiFiCredentials(wiFiName: "", password: "password1", requiresPassword: true)
+        #expect(throws: DeviceWiFiCredentialsIssue.missingWiFiName) {
+            try DeviceWiFiCredentials(wiFiName: "", password: "password1", requiresPassword: true)
         }
     }
 
     @Test func limitsWiFiNameByBytes() throws {
         // 16 two-byte characters fill the 32-byte limit. One more character is too long.
-        _ = try SensorWiFiCredentials(wiFiName: String(repeating: "é", count: 16), password: "", requiresPassword: false)
+        _ = try DeviceWiFiCredentials(wiFiName: String(repeating: "é", count: 16), password: "", requiresPassword: false)
 
-        #expect(throws: SensorWiFiCredentialsIssue.wiFiNameTooLong) {
-            try SensorWiFiCredentials(wiFiName: String(repeating: "é", count: 17), password: "", requiresPassword: false)
+        #expect(throws: DeviceWiFiCredentialsIssue.wiFiNameTooLong) {
+            try DeviceWiFiCredentials(wiFiName: String(repeating: "é", count: 17), password: "", requiresPassword: false)
         }
     }
 
     @Test func rejectsPasswordOutsideWPALimits() throws {
-        _ = try SensorWiFiCredentials(wiFiName: "Home", password: "12345678", requiresPassword: true)
-        _ = try SensorWiFiCredentials(wiFiName: "Home", password: String(repeating: "a", count: 64), requiresPassword: true)
+        _ = try DeviceWiFiCredentials(wiFiName: "Home", password: "12345678", requiresPassword: true)
+        _ = try DeviceWiFiCredentials(wiFiName: "Home", password: String(repeating: "a", count: 64), requiresPassword: true)
 
-        #expect(throws: SensorWiFiCredentialsIssue.passwordTooShort) {
-            try SensorWiFiCredentials(wiFiName: "Home", password: "1234567", requiresPassword: true)
+        #expect(throws: DeviceWiFiCredentialsIssue.passwordTooShort) {
+            try DeviceWiFiCredentials(wiFiName: "Home", password: "1234567", requiresPassword: true)
         }
-        #expect(throws: SensorWiFiCredentialsIssue.passwordTooLong) {
-            try SensorWiFiCredentials(wiFiName: "Home", password: String(repeating: "a", count: 65), requiresPassword: true)
+        #expect(throws: DeviceWiFiCredentialsIssue.passwordTooLong) {
+            try DeviceWiFiCredentials(wiFiName: "Home", password: String(repeating: "a", count: 65), requiresPassword: true)
         }
     }
 
     @Test func limitsPasswordByBytes() {
         // 33 two-byte characters are 66 bytes, which is more than the 64-byte limit.
-        #expect(throws: SensorWiFiCredentialsIssue.passwordTooLong) {
-            try SensorWiFiCredentials(wiFiName: "Home", password: String(repeating: "é", count: 33), requiresPassword: true)
+        #expect(throws: DeviceWiFiCredentialsIssue.passwordTooLong) {
+            try DeviceWiFiCredentials(wiFiName: "Home", password: String(repeating: "é", count: 33), requiresPassword: true)
         }
     }
 }
 
-struct SensorWiFiNetworkTests {
+struct DeviceWiFiNetworkTests {
     @Test func displayListRemovesHiddenAndDuplicateNetworks() {
         let networks = [
-            SensorWiFiNetwork(ssid: "", signalStrength: -40, isSecured: true),
-            SensorWiFiNetwork(ssid: "Home", signalStrength: -75, isSecured: true),
-            SensorWiFiNetwork(ssid: "Home", signalStrength: -50, isSecured: true),
-            SensorWiFiNetwork(ssid: "Guest", signalStrength: -60, isSecured: false)
+            DeviceWiFiNetwork(ssid: "", signalStrength: -40, isSecured: true),
+            DeviceWiFiNetwork(ssid: "Home", signalStrength: -75, isSecured: true),
+            DeviceWiFiNetwork(ssid: "Home", signalStrength: -50, isSecured: true),
+            DeviceWiFiNetwork(ssid: "Guest", signalStrength: -60, isSecured: false)
         ]
 
-        let displayList = SensorWiFiNetwork.displayList(from: networks)
+        let displayList = DeviceWiFiNetwork.displayList(from: networks)
 
         #expect(displayList.map(\.ssid) == ["Home", "Guest"])
         #expect(displayList.first?.signalStrength == -50)
@@ -101,20 +101,20 @@ struct SensorWiFiNetworkTests {
 
     @Test func displayListSortsEqualSignalsByName() {
         let networks = [
-            SensorWiFiNetwork(ssid: "Network 10", signalStrength: -60, isSecured: true),
-            SensorWiFiNetwork(ssid: "Network 2", signalStrength: -60, isSecured: true)
+            DeviceWiFiNetwork(ssid: "Network 10", signalStrength: -60, isSecured: true),
+            DeviceWiFiNetwork(ssid: "Network 2", signalStrength: -60, isSecured: true)
         ]
 
-        #expect(SensorWiFiNetwork.displayList(from: networks).map(\.ssid) == ["Network 2", "Network 10"])
+        #expect(DeviceWiFiNetwork.displayList(from: networks).map(\.ssid) == ["Network 2", "Network 10"])
     }
 
     @Test func displayListOfEmptyInputIsEmpty() {
-        #expect(SensorWiFiNetwork.displayList(from: []).isEmpty)
+        #expect(DeviceWiFiNetwork.displayList(from: []).isEmpty)
     }
 
     @Test(arguments: [(-55, 1.0), (-56, 0.66), (-67, 0.66), (-68, 0.33), (-80, 0.33), (-81, 0.0)])
     func signalLevelUsesDisplayLimits(signalStrength: Int, expectedLevel: Double) {
-        let network = SensorWiFiNetwork(ssid: "Home", signalStrength: signalStrength, isSecured: true)
+        let network = DeviceWiFiNetwork(ssid: "Home", signalStrength: signalStrength, isSecured: true)
 
         #expect(network.signalLevel == expectedLevel)
     }
@@ -123,9 +123,10 @@ struct SensorWiFiNetworkTests {
 // MARK: - Sensor search
 
 @MainActor
-struct SensorConnectionModelTests {
-    private func makeModel(scanner: ControlledSensorScanner, scanDuration: Duration = .seconds(60)) -> SensorConnectionModel {
-        SensorConnectionModel(
+struct DeviceConnectionModelTests {
+    private func makeModel(scanner: ControlledDeviceScanner, scanDuration: Duration = .seconds(60)) -> DeviceConnectionModel {
+        DeviceConnectionModel(
+            kind: .sensor,
             scanner: scanner,
             connector: RecordingConnector(),
             homeSetup: RecordingHomeSetup(),
@@ -134,7 +135,7 @@ struct SensorConnectionModelTests {
     }
 
     @Test func showsEachDiscoveredSensorOnce() async throws {
-        let scanner = ControlledSensorScanner()
+        let scanner = ControlledDeviceScanner()
         let model = makeModel(scanner: scanner)
 
         model.startScan()
@@ -142,25 +143,25 @@ struct SensorConnectionModelTests {
         scanner.continuation?.yield(Fixture.kitchenSensor)
         scanner.continuation?.yield(Fixture.kitchenSensor)
         scanner.continuation?.yield(Fixture.pantrySensor)
-        try await waitUntil { model.discoveredSensors.count == 2 }
+        try await waitUntil { model.discoveredDevices.count == 2 }
 
-        #expect(model.discoveredSensors == [Fixture.kitchenSensor, Fixture.pantrySensor])
+        #expect(model.discoveredDevices == [Fixture.kitchenSensor, Fixture.pantrySensor])
         #expect(model.isScanning)
     }
 
     @Test func showsBluetoothFailure() async throws {
-        let scanner = ControlledSensorScanner()
+        let scanner = ControlledDeviceScanner()
         let model = makeModel(scanner: scanner)
 
         model.startScan()
-        scanner.continuation?.finish(throwing: SensorProvisioningError.bluetoothPoweredOff)
+        scanner.continuation?.finish(throwing: DeviceProvisioningError.bluetoothPoweredOff)
         try await waitUntil { model.scanStatus != .scanning }
 
         #expect(model.scanStatus == .failed(.bluetoothPoweredOff))
     }
 
     @Test func mapsUnexpectedScanErrorToUnavailableBluetooth() async throws {
-        let scanner = ControlledSensorScanner()
+        let scanner = ControlledDeviceScanner()
         let model = makeModel(scanner: scanner)
 
         model.startScan()
@@ -171,29 +172,29 @@ struct SensorConnectionModelTests {
     }
 
     @Test func finishesWhenScannerEndsStream() async throws {
-        let scanner = ControlledSensorScanner()
+        let scanner = ControlledDeviceScanner()
         let model = makeModel(scanner: scanner)
 
         model.startScan()
         scanner.continuation?.finish()
         try await waitUntil { model.scanStatus == .finished }
 
-        #expect(model.discoveredSensors.isEmpty)
+        #expect(model.discoveredDevices.isEmpty)
     }
 
     @Test func stopsScanAfterScanDuration() async throws {
-        let scanner = ControlledSensorScanner()
+        let scanner = ControlledDeviceScanner()
         let model = makeModel(scanner: scanner, scanDuration: .milliseconds(20))
 
         model.startScan()
         try await waitUntil { model.scanStatus == .finished }
 
-        #expect(model.discoveredSensors.isEmpty)
+        #expect(model.discoveredDevices.isEmpty)
         try await waitUntil { scanner.terminationCount == 1 }
     }
 
     @Test func userCanStopScan() async throws {
-        let scanner = ControlledSensorScanner()
+        let scanner = ControlledDeviceScanner()
         let model = makeModel(scanner: scanner)
 
         model.startScan()
@@ -204,7 +205,7 @@ struct SensorConnectionModelTests {
     }
 
     @Test func stopWithoutScanKeepsIdleStatus() {
-        let model = makeModel(scanner: ControlledSensorScanner())
+        let model = makeModel(scanner: ControlledDeviceScanner())
 
         model.stopScan()
 
@@ -212,58 +213,59 @@ struct SensorConnectionModelTests {
     }
 
     @Test func selectingSensorStopsScan() async throws {
-        let scanner = ControlledSensorScanner()
+        let scanner = ControlledDeviceScanner()
         let model = makeModel(scanner: scanner)
 
         model.startScan()
         scanner.continuation?.yield(Fixture.kitchenSensor)
-        try await waitUntil { !model.discoveredSensors.isEmpty }
+        try await waitUntil { !model.discoveredDevices.isEmpty }
         model.select(Fixture.kitchenSensor)
 
-        #expect(model.selectedSensor == Fixture.kitchenSensor)
+        #expect(model.selectedDevice == Fixture.kitchenSensor)
         #expect(model.scanStatus == .finished)
         try await waitUntil { scanner.terminationCount == 1 }
     }
 
     @Test func restartingScanClearsPreviousResults() async throws {
-        let scanner = ControlledSensorScanner()
+        let scanner = ControlledDeviceScanner()
         let model = makeModel(scanner: scanner)
 
         model.startScan()
         scanner.continuation?.yield(Fixture.kitchenSensor)
-        try await waitUntil { !model.discoveredSensors.isEmpty }
+        try await waitUntil { !model.discoveredDevices.isEmpty }
         model.startScan()
 
-        #expect(model.discoveredSensors.isEmpty)
+        #expect(model.discoveredDevices.isEmpty)
         #expect(model.isScanning)
     }
 
     @Test func markingSensorConnectedUpdatesStatus() {
-        let model = makeModel(scanner: ControlledSensorScanner())
+        let model = makeModel(scanner: ControlledDeviceScanner())
         model.select(Fixture.kitchenSensor)
 
         model.markConnected(Fixture.kitchenSensor)
 
-        #expect(model.connectedSensorName == "DAPUR_000001")
-        #expect(model.selectedSensor == nil)
+        #expect(model.connectedDeviceName == "DAPUR_000001")
+        #expect(model.selectedDevice == nil)
     }
 
     @Test func simulatedModelUsesSimulationMode() {
-        #expect(SensorConnectionModel.simulated().isSimulated)
+        #expect(DeviceConnectionModel.simulated(kind: .sensor).isSimulated)
     }
 }
 
 // MARK: - Wi-Fi and Home setup
 
 @MainActor
-struct SensorWiFiSetupModelTests {
+struct DeviceWiFiSetupModelTests {
     // Default arguments run outside the main actor, so the doubles are created in the body.
     private func makeModel(
         connector: RecordingConnector? = nil,
         homeSetup: RecordingHomeSetup? = nil
-    ) -> SensorWiFiSetupModel {
-        SensorWiFiSetupModel(
-            sensor: Fixture.kitchenSensor,
+    ) -> DeviceWiFiSetupModel {
+        DeviceWiFiSetupModel(
+            device: Fixture.kitchenSensor,
+            kind: .sensor,
             connector: connector ?? RecordingConnector(),
             homeSetup: homeSetup ?? RecordingHomeSetup()
         )
@@ -273,7 +275,7 @@ struct SensorWiFiSetupModelTests {
     private func makeModelOnNetworksStep(
         session: FakeProvisioningSession? = nil,
         homeSetup: RecordingHomeSetup? = nil
-    ) async throws -> SensorWiFiSetupModel {
+    ) async throws -> DeviceWiFiSetupModel {
         let model = makeModel(connector: RecordingConnector(session: session), homeSetup: homeSetup)
         model.setupCode = Fixture.validSetupCode
         model.connect()
@@ -314,13 +316,13 @@ struct SensorWiFiSetupModelTests {
         try await waitUntil { model.step == .networks && !model.isBusy }
 
         #expect(connector.setupCodes == ["ab3d5fgh"])
-        #expect(connector.sensors == [Fixture.kitchenSensor])
+        #expect(connector.devices == [Fixture.kitchenSensor])
         #expect(model.networks == [Fixture.securedNetwork, Fixture.openNetwork])
         #expect(model.errorMessage == nil)
     }
 
     @Test func rejectedSetupCodeStaysOnSetupCodeStep() async throws {
-        let connector = RecordingConnector(error: SensorProvisioningError.setupCodeRejected)
+        let connector = RecordingConnector(error: DeviceProvisioningError.setupCodeRejected)
         let model = makeModel(connector: connector)
         model.setupCode = Fixture.validSetupCode
 
@@ -334,7 +336,7 @@ struct SensorWiFiSetupModelTests {
     // MARK: Network list
 
     @Test func scanFailureKeepsNetworksStepForOtherNetwork() async throws {
-        let session = FakeProvisioningSession(scanResults: [.failure(SensorProvisioningError.wiFiScanUnavailable)])
+        let session = FakeProvisioningSession(scanResults: [.failure(DeviceProvisioningError.wiFiScanUnavailable)])
         let model = try await makeModelOnNetworksStep(session: session)
 
         #expect(model.networks.isEmpty)
@@ -343,7 +345,7 @@ struct SensorWiFiSetupModelTests {
 
     @Test func refreshLoadsNetworksAgain() async throws {
         let session = FakeProvisioningSession(scanResults: [
-            .failure(SensorProvisioningError.wiFiScanUnavailable),
+            .failure(DeviceProvisioningError.wiFiScanUnavailable),
             .success([Fixture.securedNetwork])
         ])
         let model = try await makeModelOnNetworksStep(session: session)
@@ -464,7 +466,7 @@ struct SensorWiFiSetupModelTests {
         #expect(model.activity == .joining)
         try await waitUntil { model.step == .addedToHome }
 
-        #expect(session.sentCredentials == [try SensorWiFiCredentials(wiFiName: "Home", password: "password1", requiresPassword: true)])
+        #expect(session.sentCredentials == [try DeviceWiFiCredentials(wiFiName: "Home", password: "password1", requiresPassword: true)])
         #expect(session.disconnectCount == 1)
         #expect(model.password.isEmpty)
         #expect(homeSetup.callCount == 1)
@@ -487,7 +489,7 @@ struct SensorWiFiSetupModelTests {
     }
 
     @Test func joinFailureKeepsPasswordAndSkipsHomeSetup() async throws {
-        let session = FakeProvisioningSession(sendError: SensorProvisioningError.wiFiPasswordRejected)
+        let session = FakeProvisioningSession(sendError: DeviceProvisioningError.wiFiPasswordRejected)
         let homeSetup = RecordingHomeSetup()
         let model = try await makeModelOnNetworksStep(session: session, homeSetup: homeSetup)
         model.select(Fixture.securedNetwork)
@@ -504,7 +506,7 @@ struct SensorWiFiSetupModelTests {
     }
 
     @Test func cancelledHomeSetupKeepsWiFiAndAllowsRetry() async throws {
-        let homeSetup = RecordingHomeSetup(errors: [SensorHomeSetupError.cancelled, nil])
+        let homeSetup = RecordingHomeSetup(errors: [DeviceHomeSetupError.cancelled, nil])
         let model = try await makeModelOnNetworksStep(homeSetup: homeSetup)
         model.select(Fixture.openNetwork)
 
@@ -523,7 +525,7 @@ struct SensorWiFiSetupModelTests {
     }
 
     @Test func failedHomeSetupShowsMessageAndAllowsRetry() async throws {
-        let homeSetup = RecordingHomeSetup(errors: [SensorHomeSetupError.accessoryNotFound, nil])
+        let homeSetup = RecordingHomeSetup(errors: [DeviceHomeSetupError.accessoryNotFound, nil])
         let model = try await makeModelOnNetworksStep(homeSetup: homeSetup)
         model.select(Fixture.openNetwork)
 
@@ -560,7 +562,7 @@ struct SensorWiFiSetupModelTests {
     }
 
     @Test func goBackIsIgnoredAfterWiFiConnects() async throws {
-        let homeSetup = RecordingHomeSetup(errors: [SensorHomeSetupError.cancelled])
+        let homeSetup = RecordingHomeSetup(errors: [DeviceHomeSetupError.cancelled])
         let model = try await makeModelOnNetworksStep(homeSetup: homeSetup)
         model.select(Fixture.openNetwork)
         model.join()
@@ -619,7 +621,7 @@ struct ESPProvisionConnectorTests {
         let finder = FakeDeviceFinder(result: .success(device))
         let connector = ESPProvisionConnector(finder: finder)
 
-        _ = try await connector.connect(to: Fixture.kitchenSensor, setupCode: try SensorSetupCode(Fixture.validSetupCode))
+        _ = try await connector.connect(to: Fixture.kitchenSensor, setupCode: try DeviceSetupCode(Fixture.validSetupCode))
 
         #expect(finder.requestedNames == ["DAPUR_000001"])
         #expect(finder.requestedSetupCodes == ["ab3d5fgh"])
@@ -628,10 +630,10 @@ struct ESPProvisionConnectorTests {
     }
 
     @Test func missingSensorThrowsNotFound() async throws {
-        let connector = ESPProvisionConnector(finder: FakeDeviceFinder(result: .failure(.sensorNotFound)))
+        let connector = ESPProvisionConnector(finder: FakeDeviceFinder(result: .failure(.deviceNotFound)))
 
-        await #expect(throws: SensorProvisioningError.sensorNotFound) {
-            _ = try await connector.connect(to: Fixture.kitchenSensor, setupCode: try SensorSetupCode(Fixture.validSetupCode))
+        await #expect(throws: DeviceProvisioningError.deviceNotFound) {
+            _ = try await connector.connect(to: Fixture.kitchenSensor, setupCode: try DeviceSetupCode(Fixture.validSetupCode))
         }
     }
 
@@ -639,20 +641,20 @@ struct ESPProvisionConnectorTests {
         let device = FakeProvisioningDevice(openSessionResult: .failure(.setupCodeRejected))
         let connector = ESPProvisionConnector(finder: FakeDeviceFinder(result: .success(device)))
 
-        await #expect(throws: SensorProvisioningError.setupCodeRejected) {
-            _ = try await connector.connect(to: Fixture.kitchenSensor, setupCode: try SensorSetupCode(Fixture.validSetupCode))
+        await #expect(throws: DeviceProvisioningError.setupCodeRejected) {
+            _ = try await connector.connect(to: Fixture.kitchenSensor, setupCode: try DeviceSetupCode(Fixture.validSetupCode))
         }
         #expect(device.disconnectCount == 1)
     }
 }
 
 @MainActor
-struct ESPProvisionSensorSessionTests {
-    private let credentials = try! SensorWiFiCredentials(wiFiName: "Home", password: "password1", requiresPassword: true)
+struct ESPProvisionDeviceSessionTests {
+    private let credentials = try! DeviceWiFiCredentials(wiFiName: "Home", password: "password1", requiresPassword: true)
 
     @Test func firstSendNeedsNoWiFiReset() async throws {
         let device = FakeProvisioningDevice()
-        let session = ESPProvisionSensorSession(device: device)
+        let session = ESPProvisionDeviceSession(device: device)
 
         try await session.sendWiFi(credentials)
 
@@ -663,9 +665,9 @@ struct ESPProvisionSensorSessionTests {
 
     @Test func retryAfterFailedJoinResetsWiFiStatus() async throws {
         let device = FakeProvisioningDevice(sendResults: [.failure(.wiFiPasswordRejected), .success(())])
-        let session = ESPProvisionSensorSession(device: device)
+        let session = ESPProvisionDeviceSession(device: device)
 
-        await #expect(throws: SensorProvisioningError.wiFiPasswordRejected) {
+        await #expect(throws: DeviceProvisioningError.wiFiPasswordRejected) {
             try await session.sendWiFi(credentials)
         }
         try await session.sendWiFi(credentials)
@@ -675,10 +677,10 @@ struct ESPProvisionSensorSessionTests {
     }
 
     @Test func connectionFailureNeedsNoWiFiReset() async throws {
-        let device = FakeProvisioningDevice(sendResults: [.failure(.sensorConnectionFailed), .success(())])
-        let session = ESPProvisionSensorSession(device: device)
+        let device = FakeProvisioningDevice(sendResults: [.failure(.deviceConnectionFailed), .success(())])
+        let session = ESPProvisionDeviceSession(device: device)
 
-        await #expect(throws: SensorProvisioningError.sensorConnectionFailed) {
+        await #expect(throws: DeviceProvisioningError.deviceConnectionFailed) {
             try await session.sendWiFi(credentials)
         }
         try await session.sendWiFi(credentials)
@@ -689,14 +691,14 @@ struct ESPProvisionSensorSessionTests {
     @Test func failedResetStopsSend() async throws {
         let device = FakeProvisioningDevice(
             sendResults: [.failure(.wiFiNetworkNotFound)],
-            resetResult: .failure(.sensorConnectionFailed)
+            resetResult: .failure(.deviceConnectionFailed)
         )
-        let session = ESPProvisionSensorSession(device: device)
+        let session = ESPProvisionDeviceSession(device: device)
 
-        await #expect(throws: SensorProvisioningError.wiFiNetworkNotFound) {
+        await #expect(throws: DeviceProvisioningError.wiFiNetworkNotFound) {
             try await session.sendWiFi(credentials)
         }
-        await #expect(throws: SensorProvisioningError.sensorConnectionFailed) {
+        await #expect(throws: DeviceProvisioningError.deviceConnectionFailed) {
             try await session.sendWiFi(credentials)
         }
 
@@ -705,7 +707,7 @@ struct ESPProvisionSensorSessionTests {
 
     @Test func scanReturnsDeviceNetworks() async throws {
         let device = FakeProvisioningDevice(scanResult: .success([Fixture.securedNetwork]))
-        let session = ESPProvisionSensorSession(device: device)
+        let session = ESPProvisionDeviceSession(device: device)
 
         #expect(try await session.scanWiFiNetworks() == [Fixture.securedNetwork])
     }
@@ -713,7 +715,7 @@ struct ESPProvisionSensorSessionTests {
     @Test func disconnectDisconnectsDevice() {
         let device = FakeProvisioningDevice()
 
-        ESPProvisionSensorSession(device: device).disconnect()
+        ESPProvisionDeviceSession(device: device).disconnect()
 
         #expect(device.disconnectCount == 1)
     }
@@ -724,7 +726,7 @@ struct ProvisioningStepTests {
     @Test func usesOnlyFirstResult() async throws {
         let value: Int = try await awaitProvisioningStep(onCancel: {}) { completion in
             completion(.success(1))
-            completion(.failure(.sensorConnectionFailed))
+            completion(.failure(.deviceConnectionFailed))
             completion(.success(2))
         }
 
@@ -732,9 +734,9 @@ struct ProvisioningStepTests {
     }
 
     @Test func mapsFailureToThrownError() async {
-        await #expect(throws: SensorProvisioningError.sensorConnectionFailed) {
+        await #expect(throws: DeviceProvisioningError.deviceConnectionFailed) {
             let _: Int = try await awaitProvisioningStep(onCancel: {}) { completion in
-                completion(.failure(.sensorConnectionFailed))
+                completion(.failure(.deviceConnectionFailed))
             }
         }
     }
@@ -760,13 +762,13 @@ struct ProvisioningStepTests {
 
 struct HomeKitSetupErrorMappingTests {
     @Test(arguments: [
-        (HMError.Code.operationCancelled, SensorHomeSetupError.cancelled),
-        (HMError.Code.missingEntitlement, SensorHomeSetupError.missingEntitlement),
-        (HMError.Code.accessoryNotReachable, SensorHomeSetupError.accessoryNotFound),
-        (HMError.Code.notFound, SensorHomeSetupError.accessoryNotFound),
-        (HMError.Code.communicationFailure, SensorHomeSetupError.failed)
+        (HMError.Code.operationCancelled, DeviceHomeSetupError.cancelled),
+        (HMError.Code.missingEntitlement, DeviceHomeSetupError.missingEntitlement),
+        (HMError.Code.accessoryNotReachable, DeviceHomeSetupError.accessoryNotFound),
+        (HMError.Code.notFound, DeviceHomeSetupError.accessoryNotFound),
+        (HMError.Code.communicationFailure, DeviceHomeSetupError.failed)
     ])
-    func mapsHomeKitErrorCodes(code: HMError.Code, expectedError: SensorHomeSetupError) {
+    func mapsHomeKitErrorCodes(code: HMError.Code, expectedError: DeviceHomeSetupError) {
         let error = NSError(domain: HMErrorDomain, code: code.rawValue)
 
         #expect(HomeKitSetupErrorMapping.error(for: error) == expectedError)
@@ -794,33 +796,126 @@ struct HomeKitSetupErrorMappingTests {
     }
 }
 
-struct SensorConnectionCopyTests {
+struct DeviceConnectionCopyTests {
+    private let sensorCopy = DeviceConnectionCopy(kind: .sensor)
+    private let alarmCopy = DeviceConnectionCopy(kind: .alarm)
+
     @Test(arguments: [
-        (SensorHomeSetupError.unsupported, "This device cannot add accessories to Home."),
-        (SensorHomeSetupError.missingEntitlement, "BeforeFire does not have permission to add accessories to Home."),
-        (SensorHomeSetupError.failed, "The sensor was not added to Home. Try again.")
+        (DeviceHomeSetupError.unsupported, "This device cannot add accessories to Home."),
+        (DeviceHomeSetupError.missingEntitlement, "BeforeFire does not have permission to add accessories to Home."),
+        (DeviceHomeSetupError.failed, "The sensor was not added to Home. Try again.")
     ])
-    func homeSetupErrorsHaveUserMessages(error: SensorHomeSetupError, expectedMessage: String) {
-        #expect(SensorConnectionCopy.message(for: error) == expectedMessage)
+    func homeSetupErrorsHaveUserMessages(error: DeviceHomeSetupError, expectedMessage: String) {
+        #expect(sensorCopy.message(for: error) == expectedMessage)
     }
 
     @Test func connectedDescriptionNamesSensorAndNetwork() {
-        let description = SensorConnectionCopy.wiFiConnectedDescription(sensorName: "DAPUR_000001", wiFiName: "Home")
+        let description = sensorCopy.wiFiConnectedDescription(deviceName: "DAPUR_000001", wiFiName: "Home")
 
         #expect(description.contains("DAPUR_000001"))
         #expect(description.contains("Home"))
+    }
+
+    @Test func sensorTextIsUnchanged() {
+        #expect(sensorCopy.screenTitle == "Sensor Connection")
+        #expect(sensorCopy.connectButton == "Connect Sensor")
+        #expect(sensorCopy.noDevicesFound == "No sensors found. Make sure that the sensor light is purple, then try again.")
+        #expect(sensorCopy.message(for: DeviceProvisioningError.deviceNotFound)
+            == "The sensor was not found. Move near the sensor and make sure that the sensor light is purple.")
+    }
+
+    @Test func alarmTextNamesTheAlarm() {
+        #expect(alarmCopy.screenTitle == "Alarm Connection")
+        #expect(alarmCopy.unitName == "Alarm")
+        #expect(alarmCopy.connectButton == "Connect Alarm")
+        #expect(alarmCopy.devicesFoundHeader == "Alarms Found")
+        #expect(alarmCopy.devicesFoundFooter == "Tap an alarm to connect it to your Wi-Fi network.")
+        #expect(alarmCopy.noDevicesFound == "No alarms found. Make sure that the alarm screen shows SETUP WIFI, then try again.")
+        #expect(alarmCopy.networksFooter.hasPrefix("The alarm can connect only"))
+    }
+
+    @Test func alarmSetupCodeTextPointsToAlarmScreen() {
+        #expect(alarmCopy.setupCodeFooter.contains("after PIN on the alarm screen"))
+        #expect(alarmCopy.message(for: DeviceProvisioningError.setupCodeRejected)
+            == "The app could not make a secure connection to the alarm. Check the setup code after PIN on the alarm screen.")
+    }
+
+    @Test(arguments: [
+        DeviceProvisioningError.deviceNotFound, .deviceConnectionFailed, .setupCodeRejected,
+        .wiFiScanUnavailable, .wiFiNetworkNotFound, .deviceCouldNotJoinWiFi
+    ])
+    func alarmProvisioningErrorsDoNotNameTheSensor(error: DeviceProvisioningError) {
+        let message = alarmCopy.message(for: error)
+
+        #expect(message.localizedCaseInsensitiveContains("alarm"))
+        #expect(!message.localizedCaseInsensitiveContains("sensor"))
+    }
+
+    @Test(arguments: [DeviceHomeSetupError.cancelled, .accessoryNotFound, .failed])
+    func alarmHomeSetupErrorsDoNotNameTheSensor(error: DeviceHomeSetupError) {
+        let message = alarmCopy.message(for: error)
+
+        #expect(message.localizedCaseInsensitiveContains("alarm"))
+        #expect(!message.localizedCaseInsensitiveContains("sensor"))
+    }
+}
+
+// MARK: - Unit types
+
+struct ProvisioningDeviceKindTests {
+    @Test(arguments: [
+        ("DAPUR_A1B2C3", true),
+        ("DAPUR_ALM_A1B2C3", false),
+        ("DAPUR", false),
+        ("Other_A1B2C3", false),
+        ("", false)
+    ])
+    func sensorMatchesOnlySensorNames(name: String, isMatch: Bool) {
+        #expect(ProvisioningDeviceKind.sensor.matches(advertisedName: name) == isMatch)
+    }
+
+    @Test(arguments: [
+        ("DAPUR_ALM_A1B2C3", true),
+        ("DAPUR_A1B2C3", false),
+        ("DAPUR_ALM", false),
+        ("", false)
+    ])
+    func alarmMatchesOnlyAlarmNames(name: String, isMatch: Bool) {
+        #expect(ProvisioningDeviceKind.alarm.matches(advertisedName: name) == isMatch)
+    }
+
+    @Test func simulatedDevicesMatchTheirUnitType() {
+        for kind in [ProvisioningDeviceKind.sensor, .alarm] {
+            let devices = SimulatedDeviceScanner.devices(for: kind)
+
+            #expect(!devices.isEmpty)
+            #expect(devices.allSatisfy { kind.matches(advertisedName: $0.name) })
+        }
+    }
+
+    @MainActor
+    @Test func simulatedAlarmModelFindsOnlyAlarms() async throws {
+        let model = DeviceConnectionModel.simulated(kind: .alarm)
+
+        model.startScan()
+        try await waitUntil { model.discoveredDevices.count == SimulatedDeviceScanner.alarms.count }
+        model.stopScan()
+
+        #expect(model.kind == .alarm)
+        #expect(model.copy.kind == .alarm)
+        #expect(model.discoveredDevices == SimulatedDeviceScanner.alarms)
     }
 }
 
 // MARK: - Test doubles
 
 @MainActor
-private final class ControlledSensorScanner: SensorScanning {
-    private(set) var continuation: AsyncThrowingStream<DiscoveredSensor, Error>.Continuation?
+private final class ControlledDeviceScanner: DeviceScanning {
+    private(set) var continuation: AsyncThrowingStream<DiscoveredDevice, Error>.Continuation?
     private(set) var terminationCount = 0
 
-    func discoverSensors() -> AsyncThrowingStream<DiscoveredSensor, Error> {
-        let (stream, continuation) = AsyncThrowingStream<DiscoveredSensor, Error>.makeStream()
+    func discoverDevices() -> AsyncThrowingStream<DiscoveredDevice, Error> {
+        let (stream, continuation) = AsyncThrowingStream<DiscoveredDevice, Error>.makeStream()
         continuation.onTermination = { [weak self] _ in
             let scanner = self
             Task { @MainActor in scanner?.terminationCount += 1 }
@@ -831,20 +926,20 @@ private final class ControlledSensorScanner: SensorScanning {
 }
 
 @MainActor
-private final class RecordingConnector: SensorProvisioningConnecting {
+private final class RecordingConnector: DeviceProvisioningConnecting {
     private let session: FakeProvisioningSession
     private let error: Error?
     private(set) var setupCodes: [String] = []
-    private(set) var sensors: [DiscoveredSensor] = []
+    private(set) var devices: [DiscoveredDevice] = []
 
     init(session: FakeProvisioningSession? = nil, error: Error? = nil) {
         self.session = session ?? FakeProvisioningSession()
         self.error = error
     }
 
-    func connect(to sensor: DiscoveredSensor, setupCode: SensorSetupCode) async throws -> any SensorProvisioningSession {
+    func connect(to device: DiscoveredDevice, setupCode: DeviceSetupCode) async throws -> any DeviceProvisioningSession {
         setupCodes.append(setupCode.value)
-        sensors.append(sensor)
+        devices.append(device)
         if let error {
             throw error
         }
@@ -853,17 +948,17 @@ private final class RecordingConnector: SensorProvisioningConnecting {
 }
 
 @MainActor
-private final class FakeProvisioningSession: SensorProvisioningSession {
+private final class FakeProvisioningSession: DeviceProvisioningSession {
     /// Each scan uses the next result. The last result repeats.
-    private var scanResults: [Result<[SensorWiFiNetwork], Error>]
+    private var scanResults: [Result<[DeviceWiFiNetwork], Error>]
     private let sendError: Error?
     private let sendDelay: Duration?
     private(set) var scanCount = 0
-    private(set) var sentCredentials: [SensorWiFiCredentials] = []
+    private(set) var sentCredentials: [DeviceWiFiCredentials] = []
     private(set) var disconnectCount = 0
 
     init(
-        scanResults: [Result<[SensorWiFiNetwork], Error>] = [.success([Fixture.securedNetwork, Fixture.openNetwork])],
+        scanResults: [Result<[DeviceWiFiNetwork], Error>] = [.success([Fixture.securedNetwork, Fixture.openNetwork])],
         sendError: Error? = nil,
         sendDelay: Duration? = nil
     ) {
@@ -872,13 +967,13 @@ private final class FakeProvisioningSession: SensorProvisioningSession {
         self.sendDelay = sendDelay
     }
 
-    func scanWiFiNetworks() async throws -> [SensorWiFiNetwork] {
+    func scanWiFiNetworks() async throws -> [DeviceWiFiNetwork] {
         scanCount += 1
         let result = scanResults.count > 1 ? scanResults.removeFirst() : scanResults[0]
         return try result.get()
     }
 
-    func sendWiFi(_ credentials: SensorWiFiCredentials) async throws {
+    func sendWiFi(_ credentials: DeviceWiFiCredentials) async throws {
         sentCredentials.append(credentials)
         if let sendDelay {
             try await Task.sleep(for: sendDelay)
@@ -894,7 +989,7 @@ private final class FakeProvisioningSession: SensorProvisioningSession {
 }
 
 @MainActor
-private final class RecordingHomeSetup: SensorHomeSetupPerforming {
+private final class RecordingHomeSetup: DeviceHomeSetupPerforming {
     /// Each call uses the next value. `nil` means success. After the list ends, calls succeed.
     private var errors: [Error?]
     private let delay: Duration?
@@ -905,7 +1000,7 @@ private final class RecordingHomeSetup: SensorHomeSetupPerforming {
         self.delay = delay
     }
 
-    func addSensorToHome() async throws {
+    func addDeviceToHome() async throws {
         callCount += 1
         if let delay {
             try await Task.sleep(for: delay)
@@ -918,11 +1013,11 @@ private final class RecordingHomeSetup: SensorHomeSetupPerforming {
 
 @MainActor
 private final class FakeDeviceFinder: ProvisioningDeviceFinding {
-    private let result: Result<any ProvisioningDevice, SensorProvisioningError>
+    private let result: Result<any ProvisioningDevice, DeviceProvisioningError>
     private(set) var requestedNames: [String] = []
     private(set) var requestedSetupCodes: [String] = []
 
-    init(result: Result<any ProvisioningDevice, SensorProvisioningError>) {
+    init(result: Result<any ProvisioningDevice, DeviceProvisioningError>) {
         self.result = result
     }
 
@@ -937,11 +1032,11 @@ private final class FakeDeviceFinder: ProvisioningDeviceFinding {
 
 @MainActor
 private final class FakeProvisioningDevice: ProvisioningDevice {
-    private let openSessionResult: Result<Void, SensorProvisioningError>
-    private let scanResult: Result<[SensorWiFiNetwork], SensorProvisioningError>
+    private let openSessionResult: Result<Void, DeviceProvisioningError>
+    private let scanResult: Result<[DeviceWiFiNetwork], DeviceProvisioningError>
     /// Each send uses the next result. After the list ends, sends succeed.
-    private var sendResults: [Result<Void, SensorProvisioningError>]
-    private let resetResult: Result<Void, SensorProvisioningError>
+    private var sendResults: [Result<Void, DeviceProvisioningError>]
+    private let resetResult: Result<Void, DeviceProvisioningError>
     private(set) var openSessionCount = 0
     private(set) var sentWiFiNames: [String] = []
     private(set) var sentPasswords: [String] = []
@@ -949,10 +1044,10 @@ private final class FakeProvisioningDevice: ProvisioningDevice {
     private(set) var disconnectCount = 0
 
     init(
-        openSessionResult: Result<Void, SensorProvisioningError> = .success(()),
-        scanResult: Result<[SensorWiFiNetwork], SensorProvisioningError> = .success([]),
-        sendResults: [Result<Void, SensorProvisioningError>] = [],
-        resetResult: Result<Void, SensorProvisioningError> = .success(())
+        openSessionResult: Result<Void, DeviceProvisioningError> = .success(()),
+        scanResult: Result<[DeviceWiFiNetwork], DeviceProvisioningError> = .success([]),
+        sendResults: [Result<Void, DeviceProvisioningError>] = [],
+        resetResult: Result<Void, DeviceProvisioningError> = .success(())
     ) {
         self.openSessionResult = openSessionResult
         self.scanResult = scanResult
@@ -965,7 +1060,7 @@ private final class FakeProvisioningDevice: ProvisioningDevice {
         completion(openSessionResult)
     }
 
-    func scanWiFiNetworks(completion: @escaping ProvisioningCompletion<[SensorWiFiNetwork]>) {
+    func scanWiFiNetworks(completion: @escaping ProvisioningCompletion<[DeviceWiFiNetwork]>) {
         completion(scanResult)
     }
 

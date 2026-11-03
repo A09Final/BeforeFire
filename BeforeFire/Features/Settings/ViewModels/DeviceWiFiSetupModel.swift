@@ -1,14 +1,15 @@
 import Foundation
 import Observation
 
+/// Runs the Wi-Fi and Home setup steps for one unit. The sensor and the alarm use the same steps.
 @MainActor
 @Observable
-final class SensorWiFiSetupModel {
+final class DeviceWiFiSetupModel {
     enum Step: Equatable {
         case setupCode
         case networks
         case password
-        /// The sensor joined Wi-Fi. The Home setup is not complete yet.
+        /// The unit joined Wi-Fi. The Home setup is not complete yet.
         case connected(wiFiName: String)
         case addedToHome
     }
@@ -20,28 +21,31 @@ final class SensorWiFiSetupModel {
         case addingToHome
     }
 
-    let sensor: DiscoveredSensor
+    let device: DiscoveredDevice
+    let copy: DeviceConnectionCopy
     var setupCode = ""
     var manualWiFiName = ""
     var password = ""
     private(set) var step: Step = .setupCode
     private(set) var activity: Activity?
     private(set) var errorMessage: String?
-    private(set) var networks: [SensorWiFiNetwork] = []
+    private(set) var networks: [DeviceWiFiNetwork] = []
     /// `nil` on the password step means that the user types the network name.
-    private(set) var selectedNetwork: SensorWiFiNetwork?
+    private(set) var selectedNetwork: DeviceWiFiNetwork?
 
-    @ObservationIgnored private let connector: any SensorProvisioningConnecting
-    @ObservationIgnored private let homeSetup: any SensorHomeSetupPerforming
-    @ObservationIgnored private var session: (any SensorProvisioningSession)?
+    @ObservationIgnored private let connector: any DeviceProvisioningConnecting
+    @ObservationIgnored private let homeSetup: any DeviceHomeSetupPerforming
+    @ObservationIgnored private var session: (any DeviceProvisioningSession)?
     @ObservationIgnored private var activityTask: Task<Void, Never>?
 
     init(
-        sensor: DiscoveredSensor,
-        connector: any SensorProvisioningConnecting,
-        homeSetup: any SensorHomeSetupPerforming
+        device: DiscoveredDevice,
+        kind: ProvisioningDeviceKind,
+        connector: any DeviceProvisioningConnecting,
+        homeSetup: any DeviceHomeSetupPerforming
     ) {
-        self.sensor = sensor
+        self.device = device
+        self.copy = DeviceConnectionCopy(kind: kind)
         self.connector = connector
         self.homeSetup = homeSetup
     }
@@ -88,16 +92,16 @@ final class SensorWiFiSetupModel {
 
     func connect() {
         guard canConnect else { return }
-        let validSetupCode: SensorSetupCode
+        let validSetupCode: DeviceSetupCode
         do {
-            validSetupCode = try SensorSetupCode(setupCode)
+            validSetupCode = try DeviceSetupCode(setupCode)
         } catch {
-            errorMessage = SensorConnectionCopy.message(for: error)
+            errorMessage = copy.message(for: error)
             return
         }
 
-        perform(.connecting) { [weak self, connector, sensor] in
-            let session = try await connector.connect(to: sensor, setupCode: validSetupCode)
+        perform(.connecting) { [weak self, connector, device] in
+            let session = try await connector.connect(to: device, setupCode: validSetupCode)
             guard let self, !Task.isCancelled else {
                 session.disconnect()
                 return
@@ -115,7 +119,7 @@ final class SensorWiFiSetupModel {
         }
     }
 
-    func select(_ network: SensorWiFiNetwork) {
+    func select(_ network: DeviceWiFiNetwork) {
         guard !isBusy else { return }
         showPasswordStep(for: network)
     }
@@ -128,15 +132,15 @@ final class SensorWiFiSetupModel {
 
     func join() {
         guard canJoin, let session else { return }
-        let credentials: SensorWiFiCredentials
+        let credentials: DeviceWiFiCredentials
         do {
-            credentials = try SensorWiFiCredentials(
+            credentials = try DeviceWiFiCredentials(
                 wiFiName: selectedNetwork?.ssid ?? manualWiFiName,
                 password: password,
                 requiresPassword: requiresPassword
             )
         } catch {
-            errorMessage = SensorConnectionCopy.message(for: error)
+            errorMessage = copy.message(for: error)
             return
         }
 
@@ -148,14 +152,14 @@ final class SensorWiFiSetupModel {
             self.password = ""
             self.step = .connected(wiFiName: credentials.wiFiName)
             // The Home setup starts at once. The firmware restarts while the user scans the HomeKit code.
-            try await self.addSensorToHome()
+            try await self.addDeviceToHome()
         }
     }
 
     func addToHome() {
         guard canAddToHome else { return }
         perform(.addingToHome) { [weak self] in
-            try await self?.addSensorToHome()
+            try await self?.addDeviceToHome()
         }
     }
 
@@ -182,31 +186,31 @@ final class SensorWiFiSetupModel {
         password = ""
     }
 
-    private func showPasswordStep(for network: SensorWiFiNetwork?) {
+    private func showPasswordStep(for network: DeviceWiFiNetwork?) {
         selectedNetwork = network
         password = ""
         errorMessage = nil
         step = .password
     }
 
-    private func loadNetworks(using session: any SensorProvisioningSession) async throws {
+    private func loadNetworks(using session: any DeviceProvisioningSession) async throws {
         activity = .scanning
         do {
-            networks = SensorWiFiNetwork.displayList(from: try await session.scanWiFiNetworks())
+            networks = DeviceWiFiNetwork.displayList(from: try await session.scanWiFiNetworks())
         } catch is CancellationError {
             throw CancellationError()
         } catch {
             // The user can still type a network name, so a scan failure does not end the setup.
             networks = []
-            errorMessage = SensorConnectionCopy.message(for: error)
+            errorMessage = copy.message(for: error)
         }
     }
 
-    private func addSensorToHome() async throws {
+    private func addDeviceToHome() async throws {
         activity = .addingToHome
-        // A cancelled setup throws to `perform`, which shows a message. The sensor keeps its Wi-Fi values,
+        // A cancelled setup throws to `perform`, which shows a message. The unit keeps its Wi-Fi values,
         // so the user can start the Home setup again.
-        try await homeSetup.addSensorToHome()
+        try await homeSetup.addDeviceToHome()
         guard !Task.isCancelled else { return }
         step = .addedToHome
     }
@@ -215,14 +219,14 @@ final class SensorWiFiSetupModel {
         cancelActivity()
         activity = newActivity
         errorMessage = nil
-        activityTask = Task { [weak self] in
+        activityTask = Task { [weak self, copy] in
             do {
                 try await operation()
             } catch is CancellationError {
                 return
             } catch {
                 guard !Task.isCancelled else { return }
-                self?.errorMessage = SensorConnectionCopy.message(for: error)
+                self?.errorMessage = copy.message(for: error)
             }
             guard !Task.isCancelled else { return }
             self?.activity = nil

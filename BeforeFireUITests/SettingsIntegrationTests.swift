@@ -21,6 +21,7 @@ final class SettingsIntegrationTests: XCTestCase {
         XCTAssertTrue(guide.waitForExistence(timeout: 5))
         XCTAssertTrue(app.buttons["settings.hubConnection"].exists)
         XCTAssertTrue(app.buttons["settings.sensorConnection"].exists)
+        XCTAssertTrue(app.buttons["settings.alarmConnection"].exists)
         XCTAssertTrue(app.buttons["settings.emergencyContact"].exists)
         XCTAssertTrue(app.switches["settings.actionGuidanceToggle"].exists)
         // SwiftUI exposes the row and its native switch as separate accessibility elements.
@@ -106,6 +107,33 @@ final class SettingsIntegrationTests: XCTestCase {
     }
 
     @MainActor
+    func testSimulatedAlarmJoinsWiFiAndHome() {
+        continueAfterFailure = false
+        let app = XCUIApplication()
+        let status = openSimulatedConnection(.alarm, in: app)
+        defer { app.terminate() }
+
+        XCTAssertEqual(status.label, "Alarm, Not connected")
+        app.buttons["alarm.connectButton"].tap()
+        let alarm = app.buttons["alarm.found.DAPUR_ALM_A1A2B3"]
+        XCTAssertTrue(alarm.waitForExistence(timeout: 5))
+        // The alarm search must not show sensor units.
+        XCTAssertFalse(app.buttons["alarm.found.DAPUR_A1B2C3"].exists)
+        alarm.tap()
+        enterSetupCode("ab3d5fgh", for: .alarm, in: app)
+
+        let guestNetwork = app.buttons["alarmWiFi.network.Guest"]
+        XCTAssertTrue(guestNetwork.waitForExistence(timeout: 5))
+        guestNetwork.tap()
+        app.buttons["alarmWiFi.joinButton"].tap()
+
+        XCTAssertTrue(app.descendants(matching: .any)["alarmWiFi.addedToHome"].firstMatch.waitForExistence(timeout: 10))
+        app.buttons["alarmWiFi.doneButton"].tap()
+
+        expectSensorStatus(status, label: "Alarm, DAPUR_ALM_A1A2B3")
+    }
+
+    @MainActor
     func testWrongLengthSetupCodeShowsError() {
         continueAfterFailure = false
         let app = XCUIApplication()
@@ -124,9 +152,21 @@ final class SettingsIntegrationTests: XCTestCase {
 
     // MARK: - Steps
 
+    /// The accessibility identifier prefix of each connection screen.
+    private enum UnitPrefix: String {
+        case sensor
+        case alarm
+    }
+
     /// Turns on the sensor simulation and opens Sensor Connection. Returns the status row.
     @MainActor
     private func openSimulatedSensorConnection(in app: XCUIApplication) -> XCUIElement {
+        openSimulatedConnection(.sensor, in: app)
+    }
+
+    /// Turns on the device simulation and opens the connection screen of the unit. Returns the status row.
+    @MainActor
+    private func openSimulatedConnection(_ unit: UnitPrefix, in app: XCUIApplication) -> XCUIElement {
         app.launch()
         app.buttons["monitor.settings"].tap()
 
@@ -135,9 +175,9 @@ final class SettingsIntegrationTests: XCTestCase {
         XCTAssertTrue(simulationToggle.waitForExistence(timeout: 5))
         simulationToggle.switches.firstMatch.tap()
 
-        app.buttons["settings.sensorConnection"].tap()
+        app.buttons["settings.\(unit.rawValue)Connection"].tap()
         // LabeledContent exposes the label and value as one element.
-        let status = app.staticTexts["sensor.status"]
+        let status = app.staticTexts["\(unit.rawValue).status"]
         XCTAssertTrue(status.waitForExistence(timeout: 5))
         return status
     }
@@ -151,12 +191,12 @@ final class SettingsIntegrationTests: XCTestCase {
     }
 
     @MainActor
-    private func enterSetupCode(_ setupCode: String, in app: XCUIApplication) {
-        let setupCodeField = app.textFields["sensorWiFi.setupCodeField"]
+    private func enterSetupCode(_ setupCode: String, for unit: UnitPrefix = .sensor, in app: XCUIApplication) {
+        let setupCodeField = app.textFields["\(unit.rawValue)WiFi.setupCodeField"]
         XCTAssertTrue(setupCodeField.waitForExistence(timeout: 5))
         setupCodeField.tap()
         setupCodeField.typeText(setupCode)
-        app.buttons["sensorWiFi.connectButton"].tap()
+        app.buttons["\(unit.rawValue)WiFi.connectButton"].tap()
     }
 
     @MainActor

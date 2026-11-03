@@ -6,7 +6,7 @@ import Foundation
 
 final class ESPProvisionDeviceFinder: ProvisioningDeviceFinding {
     func findDevice(named name: String, setupCode: String, completion: @escaping ProvisioningCompletion<any ProvisioningDevice>) {
-        // The SDK scans for 5 seconds and matches the name as a prefix. Sensor names are unique per board.
+        // The SDK scans for 5 seconds and matches the name as a prefix. Unit names are unique per board.
         ESPProvisionManager.shared.createESPDevice(
             deviceName: name,
             transport: .ble,
@@ -14,7 +14,7 @@ final class ESPProvisionDeviceFinder: ProvisioningDeviceFinding {
             proofOfPossession: setupCode
         ) { @Sendable device, _ in
             guard let device else {
-                completion(.failure(.sensorNotFound))
+                completion(.failure(.deviceNotFound))
                 return
             }
             Task { @MainActor in
@@ -41,7 +41,7 @@ final class ESPProvisionDevice: ProvisioningDevice {
         }
     }
 
-    func scanWiFiNetworks(completion: @escaping ProvisioningCompletion<[SensorWiFiNetwork]>) {
+    func scanWiFiNetworks(completion: @escaping ProvisioningCompletion<[DeviceWiFiNetwork]>) {
         device.scanWifiList { @Sendable networks, error in
             let foundNetworks = networks?.map {
                 ESPProvisionResultMapping.network(ssid: $0.ssid, rssi: $0.rssi, auth: $0.auth)
@@ -59,7 +59,7 @@ final class ESPProvisionDevice: ProvisioningDevice {
 
     func resetWiFiStatus(completion: @escaping ProvisioningCompletion<Void>) {
         device.resetWifiStatus { @Sendable isReset, _ in
-            completion(isReset ? .success(()) : .failure(.sensorConnectionFailed))
+            completion(isReset ? .success(()) : .failure(.deviceConnectionFailed))
         }
     }
 
@@ -69,11 +69,11 @@ final class ESPProvisionDevice: ProvisioningDevice {
 }
 
 nonisolated enum ESPProvisionResultMapping {
-    static func network(ssid: String, rssi: Int32, auth: WifiAuthMode) -> SensorWiFiNetwork {
-        SensorWiFiNetwork(ssid: ssid, signalStrength: Int(rssi), isSecured: auth != .open)
+    static func network(ssid: String, rssi: Int32, auth: WifiAuthMode) -> DeviceWiFiNetwork {
+        DeviceWiFiNetwork(ssid: ssid, signalStrength: Int(rssi), isSecured: auth != .open)
     }
 
-    static func scanResult(networks: [SensorWiFiNetwork]?, error: ESPWiFiScanError?) -> Result<[SensorWiFiNetwork], SensorProvisioningError> {
+    static func scanResult(networks: [DeviceWiFiNetwork]?, error: ESPWiFiScanError?) -> Result<[DeviceWiFiNetwork], DeviceProvisioningError> {
         if let networks {
             return .success(networks)
         }
@@ -85,20 +85,20 @@ nonisolated enum ESPProvisionResultMapping {
         return .failure(.wiFiScanUnavailable)
     }
 
-    static func result(for status: ESPSessionStatus) -> Result<Void, SensorProvisioningError> {
+    static func result(for status: ESPSessionStatus) -> Result<Void, DeviceProvisioningError> {
         switch status {
         case .connected:
             .success(())
         case .failedToConnect(.sessionInitError), .failedToConnect(.noPOP):
-            // With Security 1, the sensor ends the session when the PoP does not match.
+            // With Security 1, the unit ends the session when the PoP does not match.
             .failure(.setupCodeRejected)
         case .failedToConnect, .disconnected:
-            .failure(.sensorConnectionFailed)
+            .failure(.deviceConnectionFailed)
         }
     }
 
     /// Returns `nil` for intermediate statuses. The SDK sends `.configApplied` before the final status.
-    static func result(for status: ESPProvisionStatus) -> Result<Void, SensorProvisioningError>? {
+    static func result(for status: ESPProvisionStatus) -> Result<Void, DeviceProvisioningError>? {
         switch status {
         case .configApplied:
             nil
@@ -109,9 +109,9 @@ nonisolated enum ESPProvisionResultMapping {
         case .failure(.wifiStatusNetworkNotFound):
             .failure(.wiFiNetworkNotFound)
         case .failure(.sessionError):
-            .failure(.sensorConnectionFailed)
+            .failure(.deviceConnectionFailed)
         case .failure:
-            .failure(.sensorCouldNotJoinWiFi)
+            .failure(.deviceCouldNotJoinWiFi)
         }
     }
 }
