@@ -23,7 +23,7 @@ struct AlarmView: View {
                         .frame(width: emblemSize, height: emblemSize)
                         .accessibilityHidden(true)
 
-                    Text("CHECK YOUR KITCHEN NOW!")
+                    Text("TURN OFF THE STOVE NOW IF YOU CAN SAFELY REACH IT!")
                         .font(.system(size: titleSize, weight: .bold))
                         .accessibilityAddTraits(.isHeader)
                         .padding(.top, AlarmStyle.emblemTextSpacing)
@@ -92,7 +92,7 @@ struct AlarmView: View {
                 Text(AlarmStyle.lastKnownAlarmStatus)
                 Text(AlarmStyle.liveStatusUnavailableMessage)
             } else {
-                Text("Check the stove and surrounding area.")
+                Text("The stove area temperature is very high, the air is moderately polluted, and no one is detected.")
             }
         }
         .font(.system(size: messageSize))
