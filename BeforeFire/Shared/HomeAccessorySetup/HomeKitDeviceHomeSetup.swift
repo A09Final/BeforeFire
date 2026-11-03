@@ -4,14 +4,14 @@ import OSLog
 
 // The only file that uses HomeKit. Verified against the iOS 27.2 SDK headers.
 
-/// Adds the HomeSpan sensor to a home with the system accessory setup UI.
-struct HomeKitSensorHomeSetup: SensorHomeSetupPerforming {
+/// Adds a HomeSpan unit (sensor or alarm) to a home with the system accessory setup UI.
+struct HomeKitDeviceHomeSetup: DeviceHomeSetupPerforming {
     private static let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "BeforeFire", category: "HomeSetup")
 
-    func addSensorToHome() async throws {
+    func addDeviceToHome() async throws {
         guard HMAccessorySetupManager.isSupported else {
             Self.logger.error("Home setup is not supported on this device.")
-            throw SensorHomeSetupError.unsupported
+            throw DeviceHomeSetupError.unsupported
         }
 
         // The request has no setup payload, because a payload needs the restricted
@@ -36,7 +36,7 @@ nonisolated enum HomeKitSetupErrorMapping {
     static let homeFoundationErrorDomain = "HMFErrorDomain"
     static let homeFoundationCancelledCode = 12
 
-    static func error(for error: Error) -> SensorHomeSetupError {
+    static func error(for error: Error) -> DeviceHomeSetupError {
         let nsError = error as NSError
         if nsError.domain == homeFoundationErrorDomain, nsError.code == homeFoundationCancelledCode {
             return .cancelled
