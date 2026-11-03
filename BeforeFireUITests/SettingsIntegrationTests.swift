@@ -23,16 +23,27 @@ final class SettingsIntegrationTests: XCTestCase {
         XCTAssertTrue(app.buttons["settings.sensorConnection"].exists)
         XCTAssertTrue(app.buttons["settings.emergencyContact"].exists)
         XCTAssertTrue(app.switches["settings.actionGuidanceToggle"].exists)
-        XCTAssertTrue(app.switches["settings.hubDisconnectedToggle"].exists)
-        XCTAssertTrue(app.buttons["settings.previewAlarm"].exists)
-        XCTAssertTrue(app.descendants(matching: .any).matching(
-            NSPredicate(format: "identifier BEGINSWITH %@", "settings.snoozeDuration")
-        ).firstMatch.exists)
-        XCTAssertTrue(app.buttons["settings.endAlarmActivity"].exists)
-
         // SwiftUI exposes the row and its native switch as separate accessibility elements.
         app.switches["settings.actionGuidanceToggle"].switches.firstMatch.tap()
         XCTAssertTrue(app.descendants(matching: .any)["settings.previewCondition"].waitForExistence(timeout: 5))
+
+        let durationControl = app.descendants(matching: .any).matching(
+            NSPredicate(format: "identifier BEGINSWITH %@", "settings.snoozeDuration")
+        ).firstMatch
+        let controls = [
+            app.switches["settings.hubDisconnectedToggle"],
+            app.buttons["settings.previewAlarm"],
+            durationControl,
+            app.buttons["settings.endAlarmActivity"]
+        ]
+        for control in controls {
+            // The form can load lower rows only after they enter the viewport.
+            for _ in 0..<4 {
+                if control.exists && control.isHittable { break }
+                app.swipeUp()
+            }
+            XCTAssertTrue(control.isHittable, "Expected to reach the Settings control: \(control)")
+        }
     }
 
     @MainActor
