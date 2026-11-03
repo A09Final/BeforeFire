@@ -1,6 +1,6 @@
 import Foundation
 
-nonisolated enum SensorProvisioningConfiguration {
+nonisolated enum DeviceProvisioningConfiguration {
     /// Must match `prefixBle` of `PERANGKAT` in `Sensor.ino`. The firmware adds 6 hexadecimal MAC digits.
     static let sensorNamePrefix = "DAPUR_"
     /// Must match `prefixBle` of `PERANGKAT` in `Alarm.ino`. The firmware adds 6 hexadecimal MAC digits.

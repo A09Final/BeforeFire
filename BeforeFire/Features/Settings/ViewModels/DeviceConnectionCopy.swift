@@ -65,7 +65,7 @@ struct DeviceConnectionCopy {
     var setupCodeHeader: String { "\(unitName) Setup Code" }
     let setupCodePlaceholder = "Setup code"
     var setupCodeFooter: String {
-        "Find the \(SensorProvisioningConfiguration.setupCodeLength)-character setup code \(setupCodeLocation). The app uses it to make a secure Bluetooth connection. It is not the HomeKit code."
+        "Find the \(DeviceProvisioningConfiguration.setupCodeLength)-character setup code \(setupCodeLocation). The app uses it to make a secure Bluetooth connection. It is not the HomeKit code."
     }
     let connectToDeviceButton = "Connect"
     var connectingToDevice: String { "Connecting to \(theUnit)…" }
@@ -107,7 +107,7 @@ struct DeviceConnectionCopy {
         "\(deviceName) is in the Home app."
     }
 
-    func networkAccessibilityLabel(for network: SensorWiFiNetwork) -> String {
+    func networkAccessibilityLabel(for network: DeviceWiFiNetwork) -> String {
         network.isSecured ? "\(network.ssid), \(securedNetworkLabel)" : network.ssid
     }
 
@@ -115,35 +115,35 @@ struct DeviceConnectionCopy {
 
     func message(for error: Error) -> String {
         switch error {
-        case let issue as SensorWiFiCredentialsIssue:
+        case let issue as DeviceWiFiCredentialsIssue:
             message(for: issue)
-        case let provisioningError as SensorProvisioningError:
+        case let provisioningError as DeviceProvisioningError:
             message(for: provisioningError)
-        case let homeSetupError as SensorHomeSetupError:
+        case let homeSetupError as DeviceHomeSetupError:
             message(for: homeSetupError)
         default:
             "The operation did not complete. Try again."
         }
     }
 
-    private func message(for issue: SensorWiFiCredentialsIssue) -> String {
+    private func message(for issue: DeviceWiFiCredentialsIssue) -> String {
         switch issue {
         case .invalidSetupCode:
-            "The setup code must have \(SensorProvisioningConfiguration.setupCodeLength) characters."
+            "The setup code must have \(DeviceProvisioningConfiguration.setupCodeLength) characters."
         case .missingWiFiName:
             "Enter the Wi-Fi name."
         case .wiFiNameTooLong:
-            "The Wi-Fi name is too long. Use a maximum of \(SensorProvisioningConfiguration.maximumWiFiNameBytes) characters."
+            "The Wi-Fi name is too long. Use a maximum of \(DeviceProvisioningConfiguration.maximumWiFiNameBytes) characters."
         case .missingPassword:
             "Enter the Wi-Fi password."
         case .passwordTooShort:
-            "The password must have a minimum of \(SensorProvisioningConfiguration.minimumWiFiPasswordLength) characters."
+            "The password must have a minimum of \(DeviceProvisioningConfiguration.minimumWiFiPasswordLength) characters."
         case .passwordTooLong:
-            "The password is too long. Use a maximum of \(SensorProvisioningConfiguration.maximumWiFiPasswordBytes) characters."
+            "The password is too long. Use a maximum of \(DeviceProvisioningConfiguration.maximumWiFiPasswordBytes) characters."
         }
     }
 
-    private func message(for error: SensorProvisioningError) -> String {
+    private func message(for error: DeviceProvisioningError) -> String {
         switch error {
         case .bluetoothPoweredOff:
             "Bluetooth is off. Turn on Bluetooth and try again."
@@ -153,9 +153,9 @@ struct DeviceConnectionCopy {
             "This device does not support Bluetooth Low Energy."
         case .bluetoothUnavailable:
             "Bluetooth is not available. Try again."
-        case .sensorNotFound:
+        case .deviceNotFound:
             "\(theUnit.capitalizedFirstLetter) was not found. Move near \(theUnit) and make sure that \(setupModeCondition)."
-        case .sensorConnectionFailed:
+        case .deviceConnectionFailed:
             "The connection to \(theUnit) stopped. Move near \(theUnit) and try again."
         case .setupCodeRejected:
             "The app could not make a secure connection to \(theUnit). Check the setup code \(setupCodeLocation)."
@@ -165,12 +165,12 @@ struct DeviceConnectionCopy {
             "The Wi-Fi password is not correct."
         case .wiFiNetworkNotFound:
             "\(theUnit.capitalizedFirstLetter) cannot find this Wi-Fi network. Check the name and use a 2.4 GHz network."
-        case .sensorCouldNotJoinWiFi:
+        case .deviceCouldNotJoinWiFi:
             "\(theUnit.capitalizedFirstLetter) could not connect to the Wi-Fi network. Check the Wi-Fi name and password."
         }
     }
 
-    private func message(for error: SensorHomeSetupError) -> String {
+    private func message(for error: DeviceHomeSetupError) -> String {
         switch error {
         case .cancelled:
             "The Home setup closed before \(theUnit) was added. Tap Add to Home to try again."

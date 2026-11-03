@@ -13,10 +13,10 @@ nonisolated enum ProvisioningDeviceKind: Sendable, Hashable {
         switch self {
         case .sensor:
             // The alarm prefix starts with the sensor prefix, so the sensor search must not show alarm units.
-            advertisedName.hasPrefix(SensorProvisioningConfiguration.sensorNamePrefix)
-                && !advertisedName.hasPrefix(SensorProvisioningConfiguration.alarmNamePrefix)
+            advertisedName.hasPrefix(DeviceProvisioningConfiguration.sensorNamePrefix)
+                && !advertisedName.hasPrefix(DeviceProvisioningConfiguration.alarmNamePrefix)
         case .alarm:
-            advertisedName.hasPrefix(SensorProvisioningConfiguration.alarmNamePrefix)
+            advertisedName.hasPrefix(DeviceProvisioningConfiguration.alarmNamePrefix)
         }
     }
 }

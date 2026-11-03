@@ -21,7 +21,7 @@ final class DeviceWiFiSetupModel {
         case addingToHome
     }
 
-    let device: DiscoveredSensor
+    let device: DiscoveredDevice
     let copy: DeviceConnectionCopy
     var setupCode = ""
     var manualWiFiName = ""
@@ -29,20 +29,20 @@ final class DeviceWiFiSetupModel {
     private(set) var step: Step = .setupCode
     private(set) var activity: Activity?
     private(set) var errorMessage: String?
-    private(set) var networks: [SensorWiFiNetwork] = []
+    private(set) var networks: [DeviceWiFiNetwork] = []
     /// `nil` on the password step means that the user types the network name.
-    private(set) var selectedNetwork: SensorWiFiNetwork?
+    private(set) var selectedNetwork: DeviceWiFiNetwork?
 
-    @ObservationIgnored private let connector: any SensorProvisioningConnecting
-    @ObservationIgnored private let homeSetup: any SensorHomeSetupPerforming
-    @ObservationIgnored private var session: (any SensorProvisioningSession)?
+    @ObservationIgnored private let connector: any DeviceProvisioningConnecting
+    @ObservationIgnored private let homeSetup: any DeviceHomeSetupPerforming
+    @ObservationIgnored private var session: (any DeviceProvisioningSession)?
     @ObservationIgnored private var activityTask: Task<Void, Never>?
 
     init(
-        device: DiscoveredSensor,
+        device: DiscoveredDevice,
         kind: ProvisioningDeviceKind,
-        connector: any SensorProvisioningConnecting,
-        homeSetup: any SensorHomeSetupPerforming
+        connector: any DeviceProvisioningConnecting,
+        homeSetup: any DeviceHomeSetupPerforming
     ) {
         self.device = device
         self.copy = DeviceConnectionCopy(kind: kind)
@@ -92,9 +92,9 @@ final class DeviceWiFiSetupModel {
 
     func connect() {
         guard canConnect else { return }
-        let validSetupCode: SensorSetupCode
+        let validSetupCode: DeviceSetupCode
         do {
-            validSetupCode = try SensorSetupCode(setupCode)
+            validSetupCode = try DeviceSetupCode(setupCode)
         } catch {
             errorMessage = copy.message(for: error)
             return
@@ -119,7 +119,7 @@ final class DeviceWiFiSetupModel {
         }
     }
 
-    func select(_ network: SensorWiFiNetwork) {
+    func select(_ network: DeviceWiFiNetwork) {
         guard !isBusy else { return }
         showPasswordStep(for: network)
     }
@@ -132,9 +132,9 @@ final class DeviceWiFiSetupModel {
 
     func join() {
         guard canJoin, let session else { return }
-        let credentials: SensorWiFiCredentials
+        let credentials: DeviceWiFiCredentials
         do {
-            credentials = try SensorWiFiCredentials(
+            credentials = try DeviceWiFiCredentials(
                 wiFiName: selectedNetwork?.ssid ?? manualWiFiName,
                 password: password,
                 requiresPassword: requiresPassword
@@ -186,17 +186,17 @@ final class DeviceWiFiSetupModel {
         password = ""
     }
 
-    private func showPasswordStep(for network: SensorWiFiNetwork?) {
+    private func showPasswordStep(for network: DeviceWiFiNetwork?) {
         selectedNetwork = network
         password = ""
         errorMessage = nil
         step = .password
     }
 
-    private func loadNetworks(using session: any SensorProvisioningSession) async throws {
+    private func loadNetworks(using session: any DeviceProvisioningSession) async throws {
         activity = .scanning
         do {
-            networks = SensorWiFiNetwork.displayList(from: try await session.scanWiFiNetworks())
+            networks = DeviceWiFiNetwork.displayList(from: try await session.scanWiFiNetworks())
         } catch is CancellationError {
             throw CancellationError()
         } catch {
@@ -210,7 +210,7 @@ final class DeviceWiFiSetupModel {
         activity = .addingToHome
         // A cancelled setup throws to `perform`, which shows a message. The unit keeps its Wi-Fi values,
         // so the user can start the Home setup again.
-        try await homeSetup.addSensorToHome()
+        try await homeSetup.addDeviceToHome()
         guard !Task.isCancelled else { return }
         step = .addedToHome
     }

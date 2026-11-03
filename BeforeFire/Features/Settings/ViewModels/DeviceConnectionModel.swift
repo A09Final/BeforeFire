@@ -9,31 +9,31 @@ final class DeviceConnectionModel {
         case idle
         case scanning
         case finished
-        case failed(SensorProvisioningError)
+        case failed(DeviceProvisioningError)
     }
 
     let kind: ProvisioningDeviceKind
     let copy: DeviceConnectionCopy
     private(set) var scanStatus: ScanStatus = .idle
-    private(set) var discoveredDevices: [DiscoveredSensor] = []
+    private(set) var discoveredDevices: [DiscoveredDevice] = []
     /// Kept in memory only. The app does not yet read the unit connection from HomeKit.
     private(set) var connectedDeviceName: String?
-    var selectedDevice: DiscoveredSensor?
+    var selectedDevice: DiscoveredDevice?
     let isSimulated: Bool
-    @ObservationIgnored let connector: any SensorProvisioningConnecting
-    @ObservationIgnored let homeSetup: any SensorHomeSetupPerforming
+    @ObservationIgnored let connector: any DeviceProvisioningConnecting
+    @ObservationIgnored let homeSetup: any DeviceHomeSetupPerforming
 
-    @ObservationIgnored private let scanner: any SensorScanning
+    @ObservationIgnored private let scanner: any DeviceScanning
     @ObservationIgnored private let scanDuration: Duration
     @ObservationIgnored private var scanTask: Task<Void, Never>?
     @ObservationIgnored private var scanTimeoutTask: Task<Void, Never>?
 
     init(
         kind: ProvisioningDeviceKind,
-        scanner: any SensorScanning,
-        connector: any SensorProvisioningConnecting,
-        homeSetup: any SensorHomeSetupPerforming,
-        scanDuration: Duration = SensorProvisioningConfiguration.scanDuration,
+        scanner: any DeviceScanning,
+        connector: any DeviceProvisioningConnecting,
+        homeSetup: any DeviceHomeSetupPerforming,
+        scanDuration: Duration = DeviceProvisioningConfiguration.scanDuration,
         isSimulated: Bool = false
     ) {
         self.kind = kind
@@ -48,18 +48,18 @@ final class DeviceConnectionModel {
     static func live(kind: ProvisioningDeviceKind) -> DeviceConnectionModel {
         DeviceConnectionModel(
             kind: kind,
-            scanner: BluetoothSensorScanner(kind: kind),
+            scanner: BluetoothDeviceScanner(kind: kind),
             connector: ESPProvisionConnector(),
-            homeSetup: HomeKitSensorHomeSetup()
+            homeSetup: HomeKitDeviceHomeSetup()
         )
     }
 
     static func simulated(kind: ProvisioningDeviceKind) -> DeviceConnectionModel {
         DeviceConnectionModel(
             kind: kind,
-            scanner: SimulatedSensorScanner(kind: kind),
-            connector: SimulatedSensorConnector(),
-            homeSetup: SimulatedSensorHomeSetup(),
+            scanner: SimulatedDeviceScanner(kind: kind),
+            connector: SimulatedDeviceConnector(),
+            homeSetup: SimulatedDeviceHomeSetup(),
             isSimulated: true
         )
     }
@@ -73,7 +73,7 @@ final class DeviceConnectionModel {
         discoveredDevices = []
         scanStatus = .scanning
 
-        let deviceStream = scanner.discoverSensors()
+        let deviceStream = scanner.discoverDevices()
         scanTask = Task { [weak self] in
             do {
                 for try await device in deviceStream {
@@ -103,25 +103,25 @@ final class DeviceConnectionModel {
         }
     }
 
-    func select(_ device: DiscoveredSensor) {
+    func select(_ device: DiscoveredDevice) {
         // Bluetooth provisioning is more reliable when the phone does not scan at the same time.
         stopScan()
         selectedDevice = device
     }
 
-    func markConnected(_ device: DiscoveredSensor) {
+    func markConnected(_ device: DiscoveredDevice) {
         connectedDeviceName = device.name
         selectedDevice = nil
     }
 
-    private func add(_ device: DiscoveredSensor) {
+    private func add(_ device: DiscoveredDevice) {
         guard !discoveredDevices.contains(where: { $0.id == device.id }) else { return }
         discoveredDevices.append(device)
     }
 
     private func failScan(with error: Error) {
         cancelScanTasks()
-        scanStatus = .failed(error as? SensorProvisioningError ?? .bluetoothUnavailable)
+        scanStatus = .failed(error as? DeviceProvisioningError ?? .bluetoothUnavailable)
     }
 
     private func cancelScanTasks() {

@@ -2,26 +2,26 @@ import CoreBluetooth
 import Foundation
 
 /// Finds units of one type that advertise Wi-Fi provisioning over Bluetooth Low Energy.
-final class BluetoothSensorScanner: NSObject, SensorScanning {
+final class BluetoothDeviceScanner: NSObject, DeviceScanning {
     private let kind: ProvisioningDeviceKind
     // The manager is created on the first scan, so iOS asks for Bluetooth access only when the user starts a search.
     private var centralManager: CBCentralManager?
-    private var continuation: AsyncThrowingStream<DiscoveredSensor, Error>.Continuation?
+    private var continuation: AsyncThrowingStream<DiscoveredDevice, Error>.Continuation?
     private var activeScanID: UUID?
-    private var reportedSensorIDs: Set<UUID> = []
+    private var reportedDeviceIDs: Set<UUID> = []
 
     init(kind: ProvisioningDeviceKind) {
         self.kind = kind
         super.init()
     }
 
-    func discoverSensors() -> AsyncThrowingStream<DiscoveredSensor, Error> {
+    func discoverDevices() -> AsyncThrowingStream<DiscoveredDevice, Error> {
         stopScan()
 
-        let (stream, continuation) = AsyncThrowingStream<DiscoveredSensor, Error>.makeStream()
+        let (stream, continuation) = AsyncThrowingStream<DiscoveredDevice, Error>.makeStream()
         let scanID = UUID()
         activeScanID = scanID
-        reportedSensorIDs = []
+        reportedDeviceIDs = []
         self.continuation = continuation
         continuation.onTermination = { [weak self] _ in
             let scanner = self
@@ -62,7 +62,7 @@ final class BluetoothSensorScanner: NSObject, SensorScanning {
         }
     }
 
-    private func finishScan(throwing error: SensorProvisioningError) {
+    private func finishScan(throwing error: DeviceProvisioningError) {
         let continuation = self.continuation
         stopScan()
         continuation?.finish(throwing: error)
@@ -77,7 +77,7 @@ final class BluetoothSensorScanner: NSObject, SensorScanning {
     }
 }
 
-extension BluetoothSensorScanner: CBCentralManagerDelegate {
+extension BluetoothDeviceScanner: CBCentralManagerDelegate {
     func centralManagerDidUpdateState(_ central: CBCentralManager) {
         handle(central.state)
     }
@@ -91,9 +91,9 @@ extension BluetoothSensorScanner: CBCentralManagerDelegate {
         let advertisedName = advertisementData[CBAdvertisementDataLocalNameKey] as? String
         guard let name = advertisedName ?? peripheral.name,
               kind.matches(advertisedName: name),
-              reportedSensorIDs.insert(peripheral.identifier).inserted
+              reportedDeviceIDs.insert(peripheral.identifier).inserted
         else { return }
 
-        continuation?.yield(DiscoveredSensor(id: peripheral.identifier, name: name))
+        continuation?.yield(DiscoveredDevice(id: peripheral.identifier, name: name))
     }
 }

@@ -8,10 +8,10 @@ struct DeviceWiFiSetupView: View {
     private let onConnected: () -> Void
 
     init(
-        device: DiscoveredSensor,
+        device: DiscoveredDevice,
         kind: ProvisioningDeviceKind,
-        connector: any SensorProvisioningConnecting,
-        homeSetup: any SensorHomeSetupPerforming,
+        connector: any DeviceProvisioningConnecting,
+        homeSetup: any DeviceHomeSetupPerforming,
         onConnected: @escaping () -> Void
     ) {
         _model = State(initialValue: DeviceWiFiSetupModel(device: device, kind: kind, connector: connector, homeSetup: homeSetup))
@@ -177,7 +177,7 @@ private struct DeviceNetworkListStep: View {
 }
 
 private struct DeviceNetworkRow: View {
-    let network: SensorWiFiNetwork
+    let network: DeviceWiFiNetwork
 
     var body: some View {
         HStack {
@@ -299,18 +299,18 @@ private struct DeviceSetupErrorRow: View {
 
 #Preview("Sensor") {
     DeviceWiFiSetupView(
-        device: SimulatedSensorScanner.sensors[0],
+        device: SimulatedDeviceScanner.sensors[0],
         kind: .sensor,
-        connector: SimulatedSensorConnector(),
-        homeSetup: SimulatedSensorHomeSetup()
+        connector: SimulatedDeviceConnector(),
+        homeSetup: SimulatedDeviceHomeSetup()
     ) {}
 }
 
 #Preview("Alarm") {
     DeviceWiFiSetupView(
-        device: SimulatedSensorScanner.alarms[0],
+        device: SimulatedDeviceScanner.alarms[0],
         kind: .alarm,
-        connector: SimulatedSensorConnector(),
-        homeSetup: SimulatedSensorHomeSetup()
+        connector: SimulatedDeviceConnector(),
+        homeSetup: SimulatedDeviceHomeSetup()
     ) {}
 }
