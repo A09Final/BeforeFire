@@ -22,7 +22,7 @@ enum MonitorStyle {
     static let sensorLabelTracking: CGFloat = 0.3
     static let sensorLabelTopInset: CGFloat = 4
     static let readingTracking: CGFloat = -1.5
-    static let sensorIconSize: CGFloat = 43
+    static let sensorIconSize: CGFloat = 40
     static let sensorLabelRowHeight: CGFloat = 28
     static let sensorLabelIconSpacing: CGFloat = 4
     static let numericValueSize: CGFloat = 116
@@ -31,7 +31,7 @@ enum MonitorStyle {
     static let unitSize: CGFloat = 38
     static let readingMinimumScaleFactor: CGFloat = 0.45
     // DESIGN: Use .leading, .center, or .trailing; add .top or .bottom for vertical placement.
-    static let readingValueAlignment: Alignment = .bottomLeading
+    static let readingValueAlignment: Alignment = .leading
     static let readingUnitAlignment: VerticalAlignment = .firstTextBaseline
     static let readingUnitSpacing: CGFloat = 3
     static let sensorStatusDotSize: CGFloat = 12

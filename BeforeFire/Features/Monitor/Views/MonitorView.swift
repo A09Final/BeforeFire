@@ -36,10 +36,10 @@ struct MonitorView: View {
                     .padding(.top, MonitorStyle.actionGuidanceTopSpacing)
             }
 
-            connectionStatus
-                .padding(.top, viewModel.isActionGuidanceVisible
-                         ? MonitorStyle.actionGuidanceBottomSpacing : MonitorStyle.normalStatusSensorSpacing)
-                .padding(.bottom, MonitorStyle.spacing)
+            // connectionStatus
+            //     .padding(.top, viewModel.isActionGuidanceVisible
+            //              ? MonitorStyle.actionGuidanceBottomSpacing : MonitorStyle.normalStatusSensorSpacing)
+            //     .padding(.bottom, MonitorStyle.spacing)
 
             if expandsGrid {
                 GeometryReader { geometry in
@@ -126,19 +126,20 @@ struct MonitorView: View {
             .fixedSize(horizontal: false, vertical: true)
             .frame(maxWidth: .infinity, alignment: .leading)
             .accessibilityIdentifier("monitor.actionGuidance")
+            .padding(.bottom, MonitorStyle.actionGuidanceBottomSpacing)
     }
 
-    private var connectionStatus: some View {
-        HStack(spacing: MonitorStyle.connectionSpacing) {
-            Circle()
-                .fill(MonitorStyle.connected)
-                .frame(width: MonitorStyle.connectionDotSize, height: MonitorStyle.connectionDotSize)
-                .accessibilityHidden(true)
-            Text(viewModel.connectionTitle)
-                .font(.system(size: connectionSize))
-                .foregroundStyle(MonitorStyle.secondaryText)
-        }
-    }
+    // private var connectionStatus: some View {
+    //     HStack(spacing: MonitorStyle.connectionSpacing) {
+    //         Circle()
+    //             .fill(MonitorStyle.connected)
+    //             .frame(width: MonitorStyle.connectionDotSize, height: MonitorStyle.connectionDotSize)
+    //             .accessibilityHidden(true)
+    //         Text(viewModel.connectionTitle)
+    //             .font(.system(size: connectionSize))
+    //             .foregroundStyle(MonitorStyle.secondaryText)
+    //     }
+    // }
 
     private var columns: [GridItem] {
         Array(repeating: GridItem(.flexible(), spacing: MonitorStyle.spacing, alignment: .top),
