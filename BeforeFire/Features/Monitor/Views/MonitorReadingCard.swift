@@ -5,6 +5,8 @@ struct MonitorReadingCard: View {
     var alertCondition: MonitorPreviewCondition? = nil
     var height: CGFloat? = nil
 
+    private let statusTextMinimumScaleFactor: CGFloat = 0.2
+
     @ScaledMetric(relativeTo: .caption) private var labelSize = MonitorStyle.sensorLabelSize
     @ScaledMetric(relativeTo: .body) private var iconSize = MonitorStyle.sensorIconSize
     @ScaledMetric(relativeTo: .body) private var labelRowHeight = MonitorStyle.sensorLabelRowHeight
@@ -69,21 +71,42 @@ struct MonitorReadingCard: View {
             }
     }
 
+    @ViewBuilder
     private var readingValue: some View {
-        HStack(alignment: MonitorStyle.readingUnitAlignment, spacing: MonitorStyle.readingUnitSpacing) {
-            Text(reading.value.uppercased())
-                .font(.system(size: valueSize, weight: MonitorStyle.valueWeight))
-                .fontWidth(MonitorStyle.fontWidth)
-                .tracking(MonitorStyle.readingTracking)
+        if reading.id == .presence || reading.id == .airQuality {
+            ViewThatFits {
+                Text(reading.value.uppercased())
+                    .fixedSize()
 
-            if let unit = reading.unit {
-                Text(unit)
-                    .font(.system(size: unitSize, weight: .bold))
-                    .fontWidth(MonitorStyle.fontWidth)
+                // Fit whole words inside the existing card size.
+                VStack(alignment: .leading, spacing: 0) {
+                    ForEach(Array(reading.value.uppercased().split(separator: " ").enumerated()),
+                            id: \.offset) { _, word in
+                        Text(String(word))
+                            .lineLimit(1)
+                            .minimumScaleFactor(statusTextMinimumScaleFactor)
+                    }
+                }
             }
+            .font(.system(size: textValueSize, weight: MonitorStyle.valueWeight))
+            .fontWidth(MonitorStyle.fontWidth)
+            .tracking(MonitorStyle.readingTracking)
+        } else {
+            HStack(alignment: MonitorStyle.readingUnitAlignment, spacing: MonitorStyle.readingUnitSpacing) {
+                Text(reading.value.uppercased())
+                    .font(.system(size: valueSize, weight: MonitorStyle.valueWeight))
+                    .fontWidth(MonitorStyle.fontWidth)
+                    .tracking(MonitorStyle.readingTracking)
+
+                if let unit = reading.unit {
+                    Text(unit)
+                        .font(.system(size: unitSize, weight: .bold))
+                        .fontWidth(MonitorStyle.fontWidth)
+                }
+            }
+            .lineLimit(1)
+            .minimumScaleFactor(MonitorStyle.readingMinimumScaleFactor)
         }
-        .lineLimit(1)
-        .minimumScaleFactor(MonitorStyle.readingMinimumScaleFactor)
     }
 
     private var statusDotColor: Color? {
