@@ -62,6 +62,7 @@ struct MonitorReadingCard: View {
                                 .fill(statusDotColor)
                                 .frame(width: MonitorStyle.sensorStatusDotSize,
                                        height: MonitorStyle.sensorStatusDotSize)
+                                .offset(x: 8, y: -8)
                         }
                     }
                     .accessibilityHidden(true)
@@ -89,7 +90,7 @@ struct MonitorReadingCard: View {
         switch alertCondition {
         case .unsafe: MonitorStyle.warningIndicator
         case .dangerous: MonitorStyle.alarmText
-        case nil: reading.id == .airQuality ? MonitorStyle.cyan : nil
+        case nil: nil
         }
     }
 
