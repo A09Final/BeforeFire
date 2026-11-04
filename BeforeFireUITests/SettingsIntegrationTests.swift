@@ -28,23 +28,32 @@ final class SettingsIntegrationTests: XCTestCase {
         app.switches["settings.actionGuidanceToggle"].switches.firstMatch.tap()
         XCTAssertTrue(app.descendants(matching: .any)["settings.previewCondition"].waitForExistence(timeout: 5))
 
-        let durationControl = app.descendants(matching: .any).matching(
-            NSPredicate(format: "identifier BEGINSWITH %@", "settings.snoozeDuration")
-        ).firstMatch
         let controls = [
             app.switches["settings.hubDisconnectedToggle"],
-            app.buttons["settings.previewAlarm"],
-            durationControl,
-            app.buttons["settings.endAlarmActivity"]
+            app.buttons["settings.previewAlarm"]
         ]
         for control in controls {
-            // The form can load lower rows only after they enter the viewport.
-            for _ in 0..<4 {
-                if control.exists && control.isHittable { break }
-                app.swipeUp()
-            }
-            XCTAssertTrue(control.isHittable, "Expected to reach the Settings control: \(control)")
+            assertCanReach(control, in: app)
         }
+
+        // The Stepper container is not tappable. Use its native buttons.
+        let durationControl = app.steppers["settings.snoozeDuration"]
+        let increaseDuration = app.buttons["settings.snoozeDuration-Increment"]
+        let decreaseDuration = app.buttons["settings.snoozeDuration-Decrement"]
+        assertCanReach(increaseDuration, in: app)
+        increaseDuration.tap()
+        let increasedDuration = XCTNSPredicateExpectation(
+            predicate: NSPredicate(format: "value == %@", "65"), object: durationControl
+        )
+        XCTAssertEqual(XCTWaiter.wait(for: [increasedDuration], timeout: 5), .completed)
+
+        assertCanReach(decreaseDuration, in: app)
+        decreaseDuration.tap()
+        let restoredDuration = XCTNSPredicateExpectation(
+            predicate: NSPredicate(format: "value == %@", "60"), object: durationControl
+        )
+        XCTAssertEqual(XCTWaiter.wait(for: [restoredDuration], timeout: 5), .completed)
+        assertCanReach(app.buttons["settings.endAlarmActivity"], in: app)
     }
 
     @MainActor
@@ -151,6 +160,20 @@ final class SettingsIntegrationTests: XCTestCase {
     }
 
     // MARK: - Steps
+
+    @MainActor
+    private func assertCanReach(
+        _ control: XCUIElement, in app: XCUIApplication,
+        file: StaticString = #filePath, line: UInt = #line
+    ) {
+        // The form can load lower rows only after they enter the viewport.
+        for _ in 0..<4 {
+            if control.exists && control.isHittable { break }
+            app.swipeUp()
+        }
+        XCTAssertTrue(control.isHittable, "Expected to reach the Settings control: \(control)",
+                      file: file, line: line)
+    }
 
     /// The accessibility identifier prefix of each connection screen.
     private enum UnitPrefix: String {
