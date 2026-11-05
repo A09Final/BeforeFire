@@ -474,6 +474,54 @@ struct DeviceWiFiSetupModelTests {
         #expect(model.errorMessage == nil)
     }
 
+    @Test func joinSuccessReportsTheAcceptedSetupCodeOneTime() async throws {
+        var joinedDevices: [String] = []
+        var joinedSetupCodes: [String] = []
+        let model = DeviceWiFiSetupModel(
+            device: Fixture.kitchenSensor,
+            kind: .sensor,
+            connector: RecordingConnector(),
+            homeSetup: RecordingHomeSetup(),
+            onWiFiJoined: { device, setupCode in
+                joinedDevices.append(device.name)
+                joinedSetupCodes.append(setupCode.value)
+            }
+        )
+        // The setup code is normalized before the secure session opens.
+        model.setupCode = " \(Fixture.validSetupCode.uppercased()) "
+        model.connect()
+        try await waitUntil { model.step == .networks && !model.isBusy }
+        model.select(Fixture.openNetwork)
+
+        model.join()
+        try await waitUntil { model.step == .addedToHome }
+
+        #expect(joinedDevices == [Fixture.kitchenSensor.name])
+        #expect(joinedSetupCodes == [try DeviceSetupCode(Fixture.validSetupCode).value])
+    }
+
+    @Test func joinFailureReportsNoJoinedUnit() async throws {
+        var joinCount = 0
+        let session = FakeProvisioningSession(sendError: DeviceProvisioningError.wiFiPasswordRejected)
+        let model = DeviceWiFiSetupModel(
+            device: Fixture.kitchenSensor,
+            kind: .sensor,
+            connector: RecordingConnector(session: session),
+            homeSetup: RecordingHomeSetup(),
+            onWiFiJoined: { _, _ in joinCount += 1 }
+        )
+        model.setupCode = Fixture.validSetupCode
+        model.connect()
+        try await waitUntil { model.step == .networks && !model.isBusy }
+        model.select(Fixture.securedNetwork)
+        model.password = Fixture.validPassword
+
+        model.join()
+        try await waitUntil { model.errorMessage != nil }
+
+        #expect(joinCount == 0)
+    }
+
     @Test func showsWiFiConnectedStepDuringHomeSetup() async throws {
         let homeSetup = RecordingHomeSetup(delay: .seconds(60))
         let model = try await makeModelOnNetworksStep(homeSetup: homeSetup)

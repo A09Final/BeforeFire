@@ -382,6 +382,52 @@ struct SensorBackendSettingsModelTests {
         #expect(model.link == (try exampleLink()))
     }
 
+    @Test func emptyServerAddressUsesTheDefaultServer() throws {
+        let model = SensorBackendSettingsModel(store: InMemorySensorBackendLinkStore())
+
+        try model.save(backendAddress: "  ", deviceID: exampleSerial, setupCode: exampleSetupCode)
+
+        #expect(model.link?.backendAddress == SensorBackendConfiguration.defaultBackendAddress)
+    }
+
+    @Test func connectedSensorIsLinkedToTheDefaultServer() {
+        let store = InMemorySensorBackendLinkStore()
+        let model = SensorBackendSettingsModel(store: store)
+
+        model.linkSensor(deviceID: exampleSerial, setupCode: exampleSetupCode)
+
+        #expect(model.link?.deviceID == exampleSerial)
+        #expect(model.link?.readKey == exampleReadKey)
+        #expect(model.link?.backendAddress == SensorBackendConfiguration.defaultBackendAddress)
+        #expect(store.load() == model.link)
+    }
+
+    @Test func connectedSensorKeepsTheSavedServer() throws {
+        let model = SensorBackendSettingsModel(store: InMemorySensorBackendLinkStore(
+            link: try exampleLink(address: "192.168.1.20:8081")))
+
+        model.linkSensor(deviceID: "DAPUR_D4E5F6", setupCode: "wxyz6789")
+
+        #expect(model.link?.deviceID == "DAPUR_D4E5F6")
+        #expect(model.link?.setupCode == "wxyz6789")
+        #expect(model.link?.backendAddress == "http://192.168.1.20:8081")
+    }
+
+    @Test func invalidConnectedSensorKeepsTheOldLink() throws {
+        let oldLink = try exampleLink()
+        let model = SensorBackendSettingsModel(store: InMemorySensorBackendLinkStore(link: oldLink))
+
+        model.linkSensor(deviceID: "DAPUR_ALM_A1B2C3", setupCode: exampleSetupCode)
+
+        #expect(model.link == oldLink)
+    }
+
+    @Test func defaultServerAddressIsValid() throws {
+        let link = try SensorBackendLink(backendAddress: SensorBackendConfiguration.defaultBackendAddress,
+                                         deviceID: exampleSerial, setupCode: exampleSetupCode)
+        #expect(link.backendAddress == SensorBackendConfiguration.defaultBackendAddress)
+    }
+
     @Test func keychainStoreKeepsTheLink() throws {
         let suiteName = "SensorBackendTests.\(UUID().uuidString)"
         let defaults = try #require(UserDefaults(suiteName: suiteName))
