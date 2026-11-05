@@ -2,10 +2,12 @@ import SwiftUI
 
 struct AlarmView: View {
     var isHubDisconnected = false
+    var guidance: AlarmGuidance = .mock
     let onSnooze: () -> Void
     @Environment(\.dismiss) private var dismiss
     @State private var isDismissing = false
     @ScaledMetric(relativeTo: .title2) private var titleSize = AlarmStyle.titleSize
+    @ScaledMetric(relativeTo: .title2) private var headingSize = AlarmStyle.alarmHeadingSize
     @ScaledMetric(relativeTo: .body) private var messageSize = AlarmStyle.messageSize
     @ScaledMetric(relativeTo: .body) private var offlineTextSize = AlarmStyle.hubOfflineTextSize
     @ScaledMetric(relativeTo: .body) private var offlineIconSize = AlarmStyle.hubOfflineIconSize
@@ -23,30 +25,36 @@ struct AlarmView: View {
                         .frame(width: emblemSize, height: emblemSize)
                         .accessibilityHidden(true)
 
-                    Text("TURN OFF THE STOVE NOW IF YOU CAN SAFELY REACH IT!")
-                        .font(.system(size: titleSize, weight: .bold))
+                    Text(guidance.alarmInstruction)
+                        .font(.system(size: headingSize, weight: .bold))
+                        .fixedSize(horizontal: false, vertical: true)
                         .accessibilityAddTraits(.isHeader)
                         .padding(.top, AlarmStyle.emblemTextSpacing)
 
                     alarmMessage
                         .padding(.top, AlarmStyle.messageSpacing)
-
-                    Spacer(minLength: AlarmStyle.minimumSliderSpacing)
-
-                    // The preview starts a local countdown. It sends no alarm command.
-                    AlarmSnoozeSlider { snoozePreview() }
                 }
                 .multilineTextAlignment(.center)
                 .foregroundStyle(AlarmStyle.foreground)
                 .padding(.horizontal, AlarmStyle.horizontalInset)
                 .padding(.top, AlarmStyle.topInset)
-                .padding(.bottom, AlarmStyle.bottomInset)
                 .frame(maxWidth: AlarmStyle.maximumContentWidth)
-                .frame(minHeight: geometry.size.height)
+                .frame(minHeight: geometry.size.height, alignment: .top)
                 .frame(maxWidth: .infinity)
             }
             .scrollBounceBehavior(.basedOnSize)
             .scrollIndicators(.hidden)
+            .accessibilityIdentifier("alarm.preview")
+        }
+        .safeAreaInset(edge: .bottom, spacing: 0) {
+            // The preview starts a local countdown. It sends no alarm command.
+            AlarmSnoozeSlider { snoozePreview() }
+                .padding(.horizontal, AlarmStyle.horizontalInset)
+                .frame(maxWidth: AlarmStyle.maximumContentWidth)
+                .padding(.top, AlarmStyle.minimumSliderSpacing)
+                .padding(.bottom, AlarmStyle.bottomInset)
+                .frame(maxWidth: .infinity)
+                .accessibilitySortPriority(-1)
         }
         .background {
             LinearGradient(
@@ -59,7 +67,6 @@ struct AlarmView: View {
         .opacity(isDismissing ? 0 : 1)
         .allowsHitTesting(!isDismissing)
         .preferredColorScheme(.dark)
-        .accessibilityIdentifier("alarm.preview")
         .accessibilityAction(.escape) { dismiss() }
     }
 
@@ -92,7 +99,8 @@ struct AlarmView: View {
                 Text(AlarmStyle.lastKnownAlarmStatus)
                 Text(AlarmStyle.liveStatusUnavailableMessage)
             } else {
-                Text("The stove area temperature is very high, the air is moderately polluted, and no one is detected.")
+                Text(guidance.alarmSupportingInstruction)
+                    .font(.system(size: titleSize))
             }
         }
         .font(.system(size: messageSize))

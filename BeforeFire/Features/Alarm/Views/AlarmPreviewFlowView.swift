@@ -6,11 +6,13 @@ struct AlarmPreviewFlowView: View {
     var body: some View {
         Group {
             if alarmPreview.alarmState.isSnoozed {
-                SnoozedAlarmView(state: alarmPreview.alarmState) {
+                SnoozedAlarmView(state: alarmPreview.alarmState, guidance: alarmPreview.guidance) {
                     alarmPreview.resumeAlarm()
                 }
             } else {
-                AlarmView(isHubDisconnected: alarmPreview.isHubDisconnected) { alarmPreview.snooze() }
+                AlarmView(isHubDisconnected: alarmPreview.isHubDisconnected, guidance: alarmPreview.guidance) {
+                    alarmPreview.snooze()
+                }
             }
         }
         .background(AlarmStyle.snoozedBackground.ignoresSafeArea())

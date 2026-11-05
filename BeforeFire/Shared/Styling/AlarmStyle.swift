@@ -31,16 +31,16 @@ enum AlarmStyle {
     static let countdownContentSpacing: CGFloat = 24
     static let countdownContentInset: CGFloat = 36
     static let snoozedTitleSize: CGFloat = 32
-    static let snoozedMessageSize: CGFloat = 20
     static let snoozedTitleSpacing: CGFloat = 24
-    static let snoozedMessageSpacing: CGFloat = 12
-    static let snoozedMessageOpacity: Double = 0.85
+    static let snoozedInstructionSpacing: CGFloat = 32
+    static let resumeButtonHeight: CGFloat = 64
+    static let resumeButtonTextSize: CGFloat = 20
 
     // DESIGN: The symbol and rings scale together. Text follows Dynamic Type.
     static let emblemSize: CGFloat = 140
     static let titleSize: CGFloat = 30
+    static let alarmHeadingSize: CGFloat = 48
     static let messageSize: CGFloat = 21
-    static let sliderTextSize: CGFloat = 24
     static let horizontalInset: CGFloat = 24
     static let topInset: CGFloat = 32
     static let bottomInset: CGFloat = 76
@@ -49,8 +49,6 @@ enum AlarmStyle {
     static let minimumSliderSpacing: CGFloat = 40
     static let maximumContentWidth: CGFloat = 440
 
-    // Keep the resume button size separate from the compact snooze slider.
-    static let sliderHeight: CGFloat = 104
     static let snoozeSliderHeight: CGFloat = 64
     static let snoozeSliderTextSize: CGFloat = 20
     static let thumbInset: CGFloat = 3

@@ -6,6 +6,7 @@ import OSLog
 @MainActor
 @Observable
 final class AlarmPreviewModel {
+    let guidance = AlarmGuidance.mock
     var isAlarmPresented = false
     var isHubDisconnected: Bool {
         get { alarmState.isHubOffline }
