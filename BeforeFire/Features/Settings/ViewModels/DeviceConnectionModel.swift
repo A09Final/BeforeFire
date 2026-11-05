@@ -16,12 +16,14 @@ final class DeviceConnectionModel {
     let copy: DeviceConnectionCopy
     private(set) var scanStatus: ScanStatus = .idle
     private(set) var discoveredDevices: [DiscoveredDevice] = []
-    /// Kept in memory only. The app does not yet read the unit connection from HomeKit.
+    /// The last unit that joined Wi-Fi. The live model keeps it on the phone. It does not tell whether the unit is online now.
     private(set) var connectedDeviceName: String?
     var selectedDevice: DiscoveredDevice?
     let isSimulated: Bool
     @ObservationIgnored let connector: any DeviceProvisioningConnecting
     @ObservationIgnored let homeSetup: any DeviceHomeSetupPerforming
+    /// `nil` keeps the name only in memory, for simulated units and tests.
+    @ObservationIgnored private let connectedDeviceStore: (any ConnectedDeviceStoring)?
 
     @ObservationIgnored private let scanner: any DeviceScanning
     @ObservationIgnored private let scanDuration: Duration
@@ -34,7 +36,8 @@ final class DeviceConnectionModel {
         connector: any DeviceProvisioningConnecting,
         homeSetup: any DeviceHomeSetupPerforming,
         scanDuration: Duration = DeviceProvisioningConfiguration.scanDuration,
-        isSimulated: Bool = false
+        isSimulated: Bool = false,
+        connectedDeviceStore: (any ConnectedDeviceStoring)? = nil
     ) {
         self.kind = kind
         self.copy = DeviceConnectionCopy(kind: kind)
@@ -43,6 +46,8 @@ final class DeviceConnectionModel {
         self.homeSetup = homeSetup
         self.scanDuration = scanDuration
         self.isSimulated = isSimulated
+        self.connectedDeviceStore = connectedDeviceStore
+        connectedDeviceName = connectedDeviceStore?.connectedDeviceName(for: kind)
     }
 
     static func live(kind: ProvisioningDeviceKind) -> DeviceConnectionModel {
@@ -50,7 +55,8 @@ final class DeviceConnectionModel {
             kind: kind,
             scanner: BluetoothDeviceScanner(kind: kind),
             connector: ESPProvisionConnector(),
-            homeSetup: HomeKitDeviceHomeSetup()
+            homeSetup: HomeKitDeviceHomeSetup(),
+            connectedDeviceStore: UserDefaultsConnectedDeviceStore()
         )
     }
 
@@ -109,8 +115,15 @@ final class DeviceConnectionModel {
         selectedDevice = device
     }
 
-    func markConnected(_ device: DiscoveredDevice) {
+    /// Records a unit that joined Wi-Fi. The setup sheet stays open, because the Home setup starts next.
+    func rememberJoined(_ device: DiscoveredDevice) {
         connectedDeviceName = device.name
+        connectedDeviceStore?.saveConnectedDeviceName(device.name, for: kind)
+    }
+
+    /// Records the unit and closes the setup sheet.
+    func markConnected(_ device: DiscoveredDevice) {
+        rememberJoined(device)
         selectedDevice = nil
     }
 
