@@ -8,15 +8,9 @@
       </BuildActionEntries>
    </BuildAction>
    <TestAction buildConfiguration="Debug" selectedDebuggerIdentifier="Xcode.DebuggerFoundation.Debugger.LLDB" selectedLauncherIdentifier="Xcode.DebuggerFoundation.Launcher.LLDB" shouldUseLaunchSchemeArgsEnv="YES">
-      <Testables>
-         <TestableReference skipped="NO" parallelizable="YES">
-            <BuildableReference BuildableIdentifier="primary" BlueprintIdentifier="F0A0C5E93089EFBE00BF99E1" BuildableName="BeforeFireTests.xctest" BlueprintName="BeforeFireTests" ReferencedContainer="container:BeforeFire.xcodeproj"/>
-         </TestableReference>
-         <!-- Run the Settings UI tests and the launch benchmark in sequence on the simulator. -->
-         <TestableReference skipped="NO" parallelizable="NO">
-            <BuildableReference BuildableIdentifier="primary" BlueprintIdentifier="F0A0C5F33089EFBE00BF99E1" BuildableName="BeforeFireUITests.xctest" BlueprintName="BeforeFireUITests" ReferencedContainer="container:BeforeFire.xcodeproj"/>
-         </TestableReference>
-      </Testables>
+      <TestPlans>
+         <TestPlanReference reference="container:BeforeFire.xctestplan" default="YES"/>
+      </TestPlans>
    </TestAction>
    <LaunchAction buildConfiguration="Debug" selectedDebuggerIdentifier="Xcode.DebuggerFoundation.Debugger.LLDB" selectedLauncherIdentifier="Xcode.DebuggerFoundation.Launcher.LLDB" launchStyle="0" useCustomWorkingDirectory="NO" ignoresPersistentStateOnLaunch="NO" debugDocumentVersioning="YES" allowLocationSimulation="YES">
       <BuildableProductRunnable runnableDebuggingMode="0">
