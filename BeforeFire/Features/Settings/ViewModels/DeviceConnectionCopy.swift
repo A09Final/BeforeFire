@@ -69,6 +69,11 @@ struct DeviceConnectionCopy {
     }
     let connectToDeviceButton = "Connect"
     var connectingToDevice: String { "Connecting to \(theUnit)…" }
+    let usingSavedSetupCode = "The app uses the setup code from the last setup of this unit."
+
+    // MARK: Saved units
+
+    let savedDeviceLabel = "Saved"
 
     let networksHeader = "Choose a Wi-Fi Network"
     var networksFooter: String {

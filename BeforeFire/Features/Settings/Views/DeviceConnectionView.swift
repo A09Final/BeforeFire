@@ -38,14 +38,17 @@ struct DeviceConnectionView: View {
             }
 
             if model.scanStatus != .idle {
-                DevicesFoundSection(model: model, presentation: presentation)
+                DevicesFoundSection(model: model, presentation: presentation,
+                                    isSaved: { savedSetupCode(for: $0) != nil })
             }
         }
         .navigationTitle(copy.screenTitle)
         .navigationBarTitleDisplayMode(.inline)
         .sheet(item: $model.selectedDevice) { device in
             DeviceWiFiSetupView(device: device, kind: model.kind, connector: model.connector, homeSetup: model.homeSetup,
-                                onWiFiJoined: handleWiFiJoined) {
+                                savedSetupCode: savedSetupCode(for: device),
+                                onWiFiJoined: handleWiFiJoined,
+                                onSavedSetupCodeRejected: handleSavedSetupCodeRejected) {
                 model.markConnected(device)
             }
         }
@@ -60,24 +63,43 @@ struct DeviceConnectionView: View {
         return sensorBackend.link?.deviceID
     }
 
-    /// Records the unit as soon as it joins Wi-Fi, also when the user later closes the sheet with a swipe.
-    /// Only a real sensor replaces the Monitor values, so the alarm and simulated units are not linked.
+    /// Only a real sensor uses the Monitor link, so the alarm and simulated units do not change it.
+    private var usesSensorLink: Bool {
+        model.kind == .sensor && !model.isSimulated
+    }
+
+    /// The code from an earlier setup. A sensor that the user linked on the Sensor Data screen also has a saved code.
+    private func savedSetupCode(for device: DiscoveredDevice) -> DeviceSetupCode? {
+        if let setupCode = model.savedSetupCode(for: device) { return setupCode }
+        guard usesSensorLink, let link = sensorBackend.link, link.deviceID == device.name else { return nil }
+        return try? DeviceSetupCode(link.setupCode)
+    }
+
+    /// Records the unit and its setup code as soon as it joins Wi-Fi, also when the user later closes the sheet
+    /// with a swipe.
     private var handleWiFiJoined: (DiscoveredDevice, DeviceSetupCode) -> Void {
         let connectionModel = model
         let sensorBackend = sensorBackend
-        let linksSensorToMonitor = model.kind == .sensor && !model.isSimulated
+        let linksSensorToMonitor = usesSensorLink
         return { device, setupCode in
-            connectionModel.rememberJoined(device)
+            connectionModel.rememberJoined(device, setupCode: setupCode)
             if linksSensorToMonitor {
                 sensorBackend.linkSensor(deviceID: device.name, setupCode: setupCode.value)
             }
         }
+    }
+
+    private var handleSavedSetupCodeRejected: (DiscoveredDevice) -> Void {
+        let connectionModel = model
+        return { device in connectionModel.forgetSetupCode(for: device) }
     }
 }
 
 private struct DevicesFoundSection: View {
     let model: DeviceConnectionModel
     let presentation: DeviceConnectionPresentation
+    /// `true` for a unit with a saved setup code. Tapping it goes to the Wi-Fi list with no typed code.
+    let isSaved: (DiscoveredDevice) -> Bool
 
     private var copy: DeviceConnectionCopy { model.copy }
 
@@ -90,6 +112,10 @@ private struct DevicesFoundSection: View {
                     HStack {
                         Label(device.name, systemImage: presentation.unitSymbolName)
                         Spacer()
+                        if isSaved(device) {
+                            Text(copy.savedDeviceLabel)
+                                .foregroundStyle(.secondary)
+                        }
                         Image(systemName: "chevron.right")
                             .font(.footnote.weight(.semibold))
                             .foregroundStyle(Color(.tertiaryLabel))

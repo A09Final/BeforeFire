@@ -255,14 +255,64 @@ struct DeviceConnectionModelTests {
 
     // MARK: Saved connection
 
-    private func makeModel(kind: ProvisioningDeviceKind, store: InMemoryConnectedDeviceStore) -> DeviceConnectionModel {
+    private func makeModel(
+        kind: ProvisioningDeviceKind,
+        store: InMemoryConnectedDeviceStore,
+        setupCodeStore: InMemoryDeviceSetupCodeStore? = nil
+    ) -> DeviceConnectionModel {
         DeviceConnectionModel(
             kind: kind,
             scanner: ControlledDeviceScanner(),
             connector: RecordingConnector(),
             homeSetup: RecordingHomeSetup(),
-            connectedDeviceStore: store
+            connectedDeviceStore: store,
+            setupCodeStore: setupCodeStore
         )
+    }
+
+    @Test func wiFiJoinSavesTheSetupCodeForTheNextSetup() throws {
+        let setupCodes = InMemoryDeviceSetupCodeStore()
+        let setupCode = try DeviceSetupCode(Fixture.validSetupCode)
+        makeModel(kind: .sensor, store: InMemoryConnectedDeviceStore(), setupCodeStore: setupCodes)
+            .rememberJoined(Fixture.kitchenSensor, setupCode: setupCode)
+
+        let reopenedModel = makeModel(kind: .sensor, store: InMemoryConnectedDeviceStore(), setupCodeStore: setupCodes)
+
+        #expect(reopenedModel.savedSetupCode(for: Fixture.kitchenSensor) == setupCode)
+        #expect(reopenedModel.savedSetupCode(for: Fixture.pantrySensor) == nil)
+    }
+
+    @Test func forgetSetupCodeKeepsTheConnectedUnit() throws {
+        let setupCodes = InMemoryDeviceSetupCodeStore()
+        let model = makeModel(kind: .sensor, store: InMemoryConnectedDeviceStore(), setupCodeStore: setupCodes)
+        model.rememberJoined(Fixture.kitchenSensor, setupCode: try DeviceSetupCode(Fixture.validSetupCode))
+
+        model.forgetSetupCode(for: Fixture.kitchenSensor)
+
+        #expect(model.savedSetupCode(for: Fixture.kitchenSensor) == nil)
+        #expect(model.connectedDeviceName == Fixture.kitchenSensor.name)
+    }
+
+    @Test func keychainSetupCodeStoreKeepsOneCodePerUnit() throws {
+        let store = KeychainDeviceSetupCodeStore(service: "DeviceSetupCodeTests.\(UUID().uuidString)")
+        defer {
+            try? store.removeSetupCode(for: Fixture.kitchenSensor.name)
+            try? store.removeSetupCode(for: Fixture.pantrySensor.name)
+        }
+        let kitchenCode = try DeviceSetupCode(Fixture.validSetupCode)
+        let pantryCode = try DeviceSetupCode("zz9y8x7w")
+
+        try store.saveSetupCode(kitchenCode, for: Fixture.kitchenSensor.name)
+        try store.saveSetupCode(pantryCode, for: Fixture.pantrySensor.name)
+        // A second save replaces the code.
+        try store.saveSetupCode(pantryCode, for: Fixture.kitchenSensor.name)
+
+        #expect(store.setupCode(for: Fixture.kitchenSensor.name) == pantryCode)
+        #expect(store.setupCode(for: Fixture.pantrySensor.name) == pantryCode)
+
+        try store.removeSetupCode(for: Fixture.kitchenSensor.name)
+        #expect(store.setupCode(for: Fixture.kitchenSensor.name) == nil)
+        #expect(store.setupCode(for: Fixture.pantrySensor.name) == pantryCode)
     }
 
     @Test func showsTheSavedUnitWhenTheScreenOpensAgain() {
@@ -559,6 +609,82 @@ struct DeviceWiFiSetupModelTests {
 
         #expect(joinedDevices == [Fixture.kitchenSensor.name])
         #expect(joinedSetupCodes == [try DeviceSetupCode(Fixture.validSetupCode).value])
+    }
+
+    // MARK: Saved setup code
+
+    private func makeModelWithSavedCode(
+        connector: RecordingConnector,
+        savedSetupCode: String = Fixture.validSetupCode,
+        onRejected: @escaping (DiscoveredDevice) -> Void = { _ in }
+    ) throws -> DeviceWiFiSetupModel {
+        DeviceWiFiSetupModel(
+            device: Fixture.kitchenSensor,
+            kind: .sensor,
+            connector: connector,
+            homeSetup: RecordingHomeSetup(),
+            savedSetupCode: try DeviceSetupCode(savedSetupCode),
+            onSavedSetupCodeRejected: onRejected
+        )
+    }
+
+    @Test func savedSetupCodeGoesToTheWiFiListWithNoTypedCode() async throws {
+        let connector = RecordingConnector()
+        let model = try makeModelWithSavedCode(connector: connector)
+
+        model.connectWithSavedSetupCode()
+        #expect(model.isUsingSavedSetupCode)
+        try await waitUntil { model.step == .networks && !model.isBusy }
+
+        #expect(connector.setupCodes == [try DeviceSetupCode(Fixture.validSetupCode).value])
+        #expect(!model.isUsingSavedSetupCode)
+        #expect(model.errorMessage == nil)
+    }
+
+    @Test func rejectedSavedSetupCodeAsksForTheCode() async throws {
+        var rejectedDevices: [String] = []
+        let connector = RecordingConnector(error: DeviceProvisioningError.setupCodeRejected)
+        let model = try makeModelWithSavedCode(connector: connector) { rejectedDevices.append($0.name) }
+
+        model.connectWithSavedSetupCode()
+        try await waitUntil { !model.isBusy }
+
+        #expect(model.step == .setupCode)
+        #expect(!model.isUsingSavedSetupCode)
+        #expect(model.setupCode.isEmpty)
+        #expect(model.errorMessage != nil)
+        #expect(rejectedDevices == [Fixture.kitchenSensor.name])
+
+        // The rejected code is used only one time.
+        model.connectWithSavedSetupCode()
+        #expect(connector.setupCodes.count == 1)
+    }
+
+    @Test func otherFailureKeepsTheSavedCodeInTheField() async throws {
+        var rejectionCount = 0
+        let connector = RecordingConnector(error: DeviceProvisioningError.deviceConnectionFailed)
+        let model = try makeModelWithSavedCode(connector: connector) { _ in rejectionCount += 1 }
+
+        model.connectWithSavedSetupCode()
+        try await waitUntil { !model.isBusy }
+
+        // The code can still be correct, so the user can try again with one tap.
+        #expect(model.step == .setupCode)
+        #expect(!model.isUsingSavedSetupCode)
+        #expect(model.setupCode == (try DeviceSetupCode(Fixture.validSetupCode).value))
+        #expect(model.canConnect)
+        #expect(rejectionCount == 0)
+    }
+
+    @Test func noSavedSetupCodeShowsTheField() {
+        let connector = RecordingConnector()
+        let model = makeModel(connector: connector)
+
+        model.connectWithSavedSetupCode()
+
+        #expect(!model.isUsingSavedSetupCode)
+        #expect(!model.isBusy)
+        #expect(connector.setupCodes.isEmpty)
     }
 
     @Test func joinFailureReportsNoJoinedUnit() async throws {
@@ -1211,4 +1337,13 @@ private final class InMemoryConnectedDeviceStore: ConnectedDeviceStoring {
 
     func connectedDeviceName(for kind: ProvisioningDeviceKind) -> String? { names[kind] }
     func saveConnectedDeviceName(_ name: String, for kind: ProvisioningDeviceKind) { names[kind] = name }
+}
+
+/// Keeps setup codes in memory, so the tests do not change the Keychain of the app.
+private final class InMemoryDeviceSetupCodeStore: DeviceSetupCodeStoring {
+    private(set) var codes: [String: DeviceSetupCode] = [:]
+
+    func setupCode(for deviceName: String) -> DeviceSetupCode? { codes[deviceName] }
+    func saveSetupCode(_ setupCode: DeviceSetupCode, for deviceName: String) throws { codes[deviceName] = setupCode }
+    func removeSetupCode(for deviceName: String) throws { codes[deviceName] = nil }
 }
