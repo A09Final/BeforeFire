@@ -98,7 +98,7 @@ struct MonitorDeveloperSettingsView: View {
             } header: {
                 Text("Developer Settings")
             } footer: {
-                Text("Mock alarm only, with no sound or device connection. Slide to start the snooze countdown. Duration changes apply to the next snooze and reset to 60 seconds when the app restarts.")
+                Text("Preview only. Sound and vibration repeat while the alarm screen is open and the app is active. Silence stops both. Resume starts both again. No device command is sent. Duration changes apply to the next snooze and reset to 60 seconds when the app restarts.")
             }
 
             AlarmLiveActivitySettingsSection()
