@@ -1,0 +1,26 @@
+{
+  "aps": {
+    "alert": {
+      "title": "Unsafe",
+      "body": "Check your stove. The stove area is hot, and no one has been detected for 4 minutes. Check your food, then stay nearby while the stove is on."
+    },
+    "sound": "default",
+    "mutable-content": 1
+  },
+  "beforefire": {
+    "version": 2,
+    "type": "condition",
+    "event_id": "test-warning1-001",
+    "device_id": "DAPUR_A1B2C3",
+    "assessment": {
+      "condition": "warning1",
+      "valid": true,
+      "rule_id": 9,
+      "reasons": [
+        "no_presence",
+        "high_heat"
+      ],
+      "absence_duration_seconds": 240
+    }
+  }
+}

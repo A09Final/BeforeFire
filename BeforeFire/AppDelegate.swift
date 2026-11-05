@@ -1,43 +1,44 @@
-//
-//  AppDelegate.swift
-//  BeforeFire
-//
-//  Created by Ibnu Taufick Ahraza on 11/5/26.
-//
-
 import UIKit
 import UserNotifications
 
-class AppDelegate: NSObject, UIApplicationDelegate {
-    
-    func application (
+@MainActor
+final class AppDelegate: NSObject, UIApplicationDelegate {
+    func application(
         _ application: UIApplication,
-        didFinishLaunchingWithOptions launchOption:
-        [UIApplication.LaunchOptionsKey: Any]? = nil
+        didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
     ) -> Bool {
         UNUserNotificationCenter.current().delegate = self
-        
         return true
     }
-    
-    func application(
-        _ application: UIApplication,
-        didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data
-    ) {
-        let token = deviceToken.map {
-            String(format: "%02.2hhx", $0)
-        }.joined()
 
-        print("APNs Device Token: \(token)")
+    func application(_ application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
+        PushNotificationManager.shared.didRegister(deviceToken: deviceToken)
     }
 
-    func application(
-        _ application: UIApplication,
-        didFailToRegisterForRemoteNotificationsWithError error: Error
-    ) {
-        print("APNs registration failed: \(error)")
+    func application(_ application: UIApplication, didFailToRegisterForRemoteNotificationsWithError error: Error) {
+        PushNotificationManager.shared.didFailToRegister(error: error)
     }
 }
 
 extension AppDelegate: UNUserNotificationCenterDelegate {
+    nonisolated func userNotificationCenter(
+        _ center: UNUserNotificationCenter,
+        willPresent notification: UNNotification
+    ) async -> UNNotificationPresentationOptions {
+        KitchenNotificationContent.foregroundOptions(for: notification.request.content.userInfo)
+    }
+
+    nonisolated func userNotificationCenter(
+        _ center: UNUserNotificationCenter,
+        didReceive response: UNNotificationResponse
+    ) async {
+        guard response.actionIdentifier == UNNotificationDefaultActionIdentifier else { return }
+        do {
+            let event = try KitchenPushEvent(userInfo: response.notification.request.content.userInfo)
+            await MainActor.run { PushNotificationManager.shared.receiveTappedEvent(event) }
+        } catch {
+            let payloadError = error as? KitchenPushPayloadError ?? .invalidPayload
+            await MainActor.run { PushNotificationManager.shared.reportPayloadError(payloadError) }
+        }
+    }
 }

@@ -144,10 +144,10 @@ struct MonitorReadingsFormatterTests {
 
     @Test(arguments: [
         (nil, "Unknown", false),
-        (SensorReadingsSnapshot.Condition.normal, "Safe", false),
+        (SensorReadingsSnapshot.Condition.normal, "Normal", false),
         (.warning1, "Unsafe", false),
-        (.warning2, "Unsafe", false),
-        (.alarm, "Dangerous", true)
+        (.warning2, "Dangerous", false),
+        (.alarm, "Alarm", true)
     ])
     func mapsConditionToStatus(condition: SensorReadingsSnapshot.Condition?, status: String, isDangerous: Bool) {
         let content = formatter.content(for: snapshot(condition: condition))
@@ -214,7 +214,7 @@ struct MonitorReadingsFormatterTests {
         var model = MonitorViewModel.mock
         model.show(formatter.content(for: snapshot(condition: .alarm)))
 
-        #expect(model.displayedStatusValue == "Dangerous")
+        #expect(model.displayedStatusValue == "Alarm")
         #expect(model.showsAlarmStatus)
         #expect(model.readings.first?.value == "232")
 

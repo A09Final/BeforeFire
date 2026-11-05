@@ -53,6 +53,13 @@ struct MonitorDeveloperSettingsView: View {
                     Label("Emergency Contact", systemImage: "")
                 }
                 .accessibilityIdentifier("settings.emergencyContact")
+
+                NavigationLink {
+                    PushNotificationSettingsView(notifications: .shared)
+                } label: {
+                    Label("Notifications", systemImage: "bell.badge")
+                }
+                .accessibilityIdentifier("settings.notifications")
             } header: {
                 Text("General")
             }

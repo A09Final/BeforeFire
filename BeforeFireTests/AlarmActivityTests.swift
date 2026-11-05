@@ -10,14 +10,14 @@ struct AlarmActivityTests {
             let encoded = try JSONEncoder().encode(original)
             let decoded = try JSONDecoder().decode(AlarmActivityAttributes.ContentState.self, from: encoded)
             #expect(decoded == original)
-            #expect(decoded.status == (isSnoozed ? "Silenced" : "Alarm active"))
+            #expect(decoded.status == (isSnoozed ? "Snoozed Alarm" : "Active Alarm"))
         }
     }
 
     @Test func snoozedPreviewDoesNotClaimThatTheKitchenIsSafe() {
         let snoozed = AlarmActivityAttributes.ContentState(isSnoozed: true)
-        #expect(snoozed.title == "Alarm silenced")
-        #expect(snoozed.message == "Preview only. No alarm command was sent.")
+        #expect(snoozed.title == "Snoozed Alarm")
+        #expect(snoozed.message == "Turn stove off or call the closest available person")
     }
 
     @Test func previewLinkRoutesOnlyTheSupportedURL() {
@@ -109,6 +109,6 @@ struct AlarmActivityTests {
         let state = try JSONDecoder().decode(AlarmActivityAttributes.ContentState.self,
                                              from: Data(#"{"isSnoozed":false}"#.utf8))
         #expect(!state.isHubOffline)
-        #expect(state.status == "Alarm active")
+        #expect(state.status == "Active Alarm")
     }
 }

@@ -83,7 +83,7 @@ struct MonitorView: View {
         LazyVGrid(columns: columns, spacing: MonitorStyle.spacing) {
             ForEach(viewModel.readings) { reading in
                 MonitorReadingCard(reading: reading,
-                                   alertCondition: viewModel.readingAlertCondition,
+                                   alertCondition: viewModel.readingAlertCondition(for: reading.id),
                                    height: cardHeight)
             }
         }

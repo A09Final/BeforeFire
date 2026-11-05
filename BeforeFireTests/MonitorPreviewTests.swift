@@ -8,7 +8,7 @@ struct MonitorPreviewTests {
 
         #expect(model.actionGuidance == nil)
         #expect(model.statusHeading == "Your Kitchen Is")
-        #expect(model.displayedStatusValue == "Safe")
+        #expect(model.displayedStatusValue == "Normal")
         #expect(model.displayedStatusTitle == model.statusTitle)
         #expect(!model.isAlarmPreview)
         #expect(model.readings.map(\.value) == [
@@ -31,11 +31,11 @@ struct MonitorPreviewTests {
         #expect(unsafeAirQuality?.unit == nil)
         #expect(unsafeAirQuality?.spokenValue == "Lightly Polluted")
 
-        model.previewCondition = .dangerous
+        model.previewCondition = .alarm
 
-        #expect(model.displayedStatusTitle == "Your Kitchen Is\nDangerous")
-        #expect(model.displayedStatusValue == "Dangerous")
-        #expect(model.actionGuidance == MonitorPreviewCondition.dangerous.actionGuidance)
+        #expect(model.displayedStatusTitle == "Your Kitchen Is\nAlarm")
+        #expect(model.displayedStatusValue == "Alarm")
+        #expect(model.actionGuidance == MonitorPreviewCondition.alarm.actionGuidance)
         #expect(model.isAlarmPreview)
         #expect(model.readings.map(\.value) == [
             "180", "Heavily Polluted", "Not Detected", "30", "60", "1,013"
@@ -44,14 +44,14 @@ struct MonitorPreviewTests {
         #expect(dangerousAirQuality?.unit == nil)
         #expect(dangerousAirQuality?.spokenValue == "Heavily Polluted")
         #expect(MonitorPreviewCondition.unsafe.actionGuidance
-                != MonitorPreviewCondition.dangerous.actionGuidance)
+                != MonitorPreviewCondition.alarm.actionGuidance)
     }
 
     @Test func disablingPreviewRestoresStatusAndReadingsAndKeepsSelection() {
         var model = MonitorViewModel.mock
         let originalReadings = model.readings
         model.isActionGuidanceVisible = true
-        model.previewCondition = .dangerous
+        model.previewCondition = .alarm
         model.isActionGuidanceVisible = false
 
         #expect(model.displayedStatusTitle == model.statusTitle)
@@ -75,7 +75,7 @@ struct MonitorPreviewTests {
         model.isActionGuidanceVisible = true
         for condition in MonitorPreviewCondition.allCases {
             model.previewCondition = condition
-            #expect(model.readingAlertCondition == condition)
+            #expect(model.readingAlertCondition == (condition == .normal ? nil : condition))
         }
 
         model.isActionGuidanceVisible = false
