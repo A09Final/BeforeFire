@@ -6,6 +6,14 @@
     <string>BeforeFire uses the camera to scan setup QR codes for your sensor and alarm.</string>
     <key>NSBluetoothAlwaysUsageDescription</key>
     <string>BeforeFire uses Bluetooth to find your sensor and alarm. It sends your Wi-Fi network to them.</string>
+    <key>NSLocalNetworkUsageDescription</key>
+    <string>BeforeFire connects to the BeforeFire server on your home network to show the sensor values.</string>
+    <key>NSAppTransportSecurity</key>
+    <dict>
+        <!-- The BeforeFire server on the home network uses HTTP without TLS. -->
+        <key>NSAllowsLocalNetworking</key>
+        <true/>
+    </dict>
     <key>NSSupportsLiveActivities</key>
     <true/>
     <key>CFBundleURLTypes</key>

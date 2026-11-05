@@ -1,6 +1,6 @@
 import Foundation
 
-struct MonitorReading: Identifiable {
+struct MonitorReading: Identifiable, Equatable {
     enum Kind {
         case stoveHeat
         case airQuality
