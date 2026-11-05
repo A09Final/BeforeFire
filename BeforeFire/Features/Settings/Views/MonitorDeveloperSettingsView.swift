@@ -27,6 +27,13 @@ struct MonitorDeveloperSettingsView: View {
                 .accessibilityIdentifier("settings.sensorConnection")
 
                 NavigationLink {
+                    SensorBackendSettingsView()
+                } label: {
+                    Label(SensorBackendSettingsCopy.screenTitle, systemImage: "")
+                }
+                .accessibilityIdentifier("settings.sensorData")
+
+                NavigationLink {
                     DeviceConnectionView(kind: .alarm, isSimulated: isDeviceSimulationEnabled)
                 } label: {
                     Label(DeviceConnectionCopy(kind: .alarm).screenTitle, systemImage: "")
@@ -159,4 +166,6 @@ struct EmergencyContactView: View {
     @Previewable @State var mock = MonitorPreviewCondition.dangerous
     MonitorDeveloperSettingsView(isActionGuidanceVisible: $isTrue, previewCondition: $mock)
         .environment(AlarmPreviewModel())
+        .environment(SensorBackendSettingsModel.preview())
+        .environment(MonitorLiveReadingsModel.live())
 }
