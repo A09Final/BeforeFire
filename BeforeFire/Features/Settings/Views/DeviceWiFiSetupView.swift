@@ -297,7 +297,8 @@ private struct DeviceHomeSetupStep: View {
     }
 }
 
-private struct DeviceSetupProgressRow: View {
+/// Shared with the sheet that links a sensor that already has Wi-Fi.
+struct DeviceSetupProgressRow: View {
     let text: String
     let presentation: DeviceConnectionPresentation
 
@@ -312,7 +313,8 @@ private struct DeviceSetupProgressRow: View {
     }
 }
 
-private struct DeviceSetupErrorRow: View {
+/// Shared with the sheet that links a sensor that already has Wi-Fi.
+struct DeviceSetupErrorRow: View {
     let message: String?
     let presentation: DeviceConnectionPresentation
 

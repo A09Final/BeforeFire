@@ -7,6 +7,9 @@ struct DeviceConnectionView: View {
     @State private var model: DeviceConnectionModel
     @Environment(SensorBackendSettingsModel.self) private var sensorBackend
     @State private var isDisconnectConfirmationPresented = false
+    @State private var networkSensors = NetworkSensorDiscoveryModel.live()
+    /// Each change starts a new search on the server. 0 means that the user did not search yet.
+    @State private var networkSearchCount = 0
     private let logger = Logger(subsystem: "BeforeFire", category: "DeviceConnection")
 
     init(kind: ProvisioningDeviceKind, isSimulated: Bool) {
@@ -40,6 +43,8 @@ struct DeviceConnectionView: View {
                         model.stopScan()
                     } else {
                         model.startScan()
+                        // A sensor that already has Wi-Fi has no Bluetooth, so the app also asks the server.
+                        if usesSensorLink { networkSearchCount += 1 }
                     }
                 }
                 .accessibilityIdentifier(presentation.screenIdentifier("connectButton"))
@@ -51,6 +56,20 @@ struct DeviceConnectionView: View {
                 DevicesFoundSection(model: model, presentation: presentation,
                                     isSaved: { savedSetupCode(for: $0) != nil })
             }
+
+            if usesSensorLink, networkSensors.status != .idle {
+                NetworkSensorsSection(
+                    discovery: networkSensors,
+                    copy: copy,
+                    presentation: presentation,
+                    isSaved: { savedSetupCode(forDeviceNamed: $0.id) != nil },
+                    makeLinkModel: makeLinkModel
+                )
+            }
+        }
+        .task(id: networkSearchCount) {
+            guard networkSearchCount > 0 else { return }
+            await networkSensors.search(serverAddress: sensorBackend.serverAddress)
         }
         .navigationTitle(copy.screenTitle)
         .navigationBarTitleDisplayMode(.inline)
@@ -86,9 +105,31 @@ struct DeviceConnectionView: View {
 
     /// The code from an earlier setup. A sensor that the user linked on the Sensor Data screen also has a saved code.
     private func savedSetupCode(for device: DiscoveredDevice) -> DeviceSetupCode? {
-        if let setupCode = model.savedSetupCode(for: device) { return setupCode }
-        guard usesSensorLink, let link = sensorBackend.link, link.deviceID == device.name else { return nil }
+        savedSetupCode(forDeviceNamed: device.name)
+    }
+
+    private func savedSetupCode(forDeviceNamed deviceName: String) -> DeviceSetupCode? {
+        if let setupCode = model.savedSetupCode(forDeviceNamed: deviceName) { return setupCode }
+        guard usesSensorLink, let link = sensorBackend.link, link.deviceID == deviceName else { return nil }
         return try? DeviceSetupCode(link.setupCode)
+    }
+
+    /// Links a sensor that already has Wi-Fi. A checked link replaces the Monitor link and records the sensor.
+    private func makeLinkModel(for sensor: NetworkSensor) -> NetworkSensorLinkModel {
+        let connectionModel = model
+        let sensorBackend = sensorBackend
+        return NetworkSensorLinkModel(
+            sensor: sensor,
+            serverAddress: sensorBackend.serverAddress,
+            savedSetupCode: savedSetupCode(forDeviceNamed: sensor.id),
+            client: URLSessionSensorReadingsClient(),
+            onLinked: { link in
+                try sensorBackend.save(backendAddress: link.backendAddress, deviceID: link.deviceID,
+                                       setupCode: link.setupCode)
+                connectionModel.rememberUnit(named: link.deviceID, setupCode: try? DeviceSetupCode(link.setupCode))
+            },
+            onSavedSetupCodeRejected: { connectionModel.forgetSetupCode(forDeviceNamed: sensor.id) }
+        )
     }
 
     /// Records the unit and its setup code as soon as it joins Wi-Fi, also when the user later closes the sheet
@@ -204,4 +245,73 @@ private struct DevicesFoundSection: View {
         DeviceConnectionView(kind: .alarm, isSimulated: true)
     }
     .environment(SensorBackendSettingsModel.preview())
+}
+
+/// Sensors that already have Wi-Fi. The server knows them, because they report to it.
+private struct NetworkSensorsSection: View {
+    let discovery: NetworkSensorDiscoveryModel
+    let copy: DeviceConnectionCopy
+    let presentation: DeviceConnectionPresentation
+    let isSaved: (NetworkSensor) -> Bool
+    let makeLinkModel: (NetworkSensor) -> NetworkSensorLinkModel
+
+    @State private var selectedSensor: NetworkSensor?
+
+    var body: some View {
+        Section {
+            ForEach(discovery.sensors) { sensor in
+                Button {
+                    selectedSensor = sensor
+                } label: {
+                    HStack {
+                        Label(sensor.id, systemImage: "wifi")
+                        Spacer()
+                        if isSaved(sensor) {
+                            Text(copy.savedDeviceLabel)
+                                .foregroundStyle(.secondary)
+                        }
+                        Image(systemName: "chevron.right")
+                            .font(.footnote.weight(.semibold))
+                            .foregroundStyle(Color(.tertiaryLabel))
+                    }
+                }
+                .foregroundStyle(.primary)
+                .accessibilityIdentifier(presentation.screenIdentifier("network.\(sensor.id)"))
+            }
+
+            statusRow
+        } header: {
+            Text(copy.networkSensorsHeader)
+        } footer: {
+            if !discovery.sensors.isEmpty {
+                Text(copy.networkSensorsFooter)
+            }
+        }
+        .sheet(item: $selectedSensor) { sensor in
+            NetworkSensorLinkView(model: makeLinkModel(sensor))
+        }
+    }
+
+    @ViewBuilder
+    private var statusRow: some View {
+        switch discovery.status {
+        case .searching:
+            HStack(spacing: 12) {
+                ProgressView()
+                Text(copy.searchingNetworkSensors)
+                    .foregroundStyle(.secondary)
+            }
+            .accessibilityElement(children: .combine)
+        case .finished where discovery.sensors.isEmpty:
+            Text(copy.noNetworkSensors)
+                .foregroundStyle(.secondary)
+                .accessibilityIdentifier(presentation.screenIdentifier("networkNoneFound"))
+        case .failed(let error):
+            Label(SensorBackendSettingsCopy.message(for: error), systemImage: "exclamationmark.triangle.fill")
+                .foregroundStyle(.red)
+                .accessibilityIdentifier(presentation.screenIdentifier("networkError"))
+        case .idle, .finished:
+            EmptyView()
+        }
+    }
 }
