@@ -27,13 +27,6 @@ struct MonitorDeveloperSettingsView: View {
                 .accessibilityIdentifier("settings.sensorConnection")
 
                 NavigationLink {
-                    SensorBackendSettingsView()
-                } label: {
-                    Label(SensorBackendSettingsCopy.screenTitle, systemImage: "")
-                }
-                .accessibilityIdentifier("settings.sensorData")
-
-                NavigationLink {
                     DeviceConnectionView(kind: .alarm, isSimulated: isDeviceSimulationEnabled)
                 } label: {
                     Label(DeviceConnectionCopy(kind: .alarm).screenTitle, systemImage: "")
@@ -86,6 +79,15 @@ struct MonitorDeveloperSettingsView: View {
                 // The identifier keeps its old name, so the UI tests stay stable. The toggle now also controls the alarm search.
                 Toggle("Simulate sensor and alarm", isOn: $isDeviceSimulationEnabled)
                     .accessibilityIdentifier("settings.simulateSensorsToggle")
+
+                // Sensor Connection links the sensor automatically. This screen is a fallback, for example for a
+                // sensor that already has Wi-Fi or a network that blocks .local names.
+                NavigationLink {
+                    SensorBackendSettingsView()
+                } label: {
+                    Text(SensorBackendSettingsCopy.screenTitle)
+                }
+                .accessibilityIdentifier("settings.sensorData")
 
                 Button("Preview Alarm") {
                     alarmPreview.resumeIfExpired()
