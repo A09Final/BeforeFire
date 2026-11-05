@@ -282,6 +282,20 @@ struct DeviceConnectionModelTests {
         #expect(reopenedModel.savedSetupCode(for: Fixture.pantrySensor) == nil)
     }
 
+    @Test func disconnectForgetsTheUnitAndItsSetupCode() throws {
+        let store = InMemoryConnectedDeviceStore()
+        let setupCodes = InMemoryDeviceSetupCodeStore()
+        let model = makeModel(kind: .sensor, store: store, setupCodeStore: setupCodes)
+        model.rememberJoined(Fixture.kitchenSensor, setupCode: try DeviceSetupCode(Fixture.validSetupCode))
+
+        model.disconnect()
+
+        #expect(model.connectedDeviceName == nil)
+        #expect(store.connectedDeviceName(for: .sensor) == nil)
+        #expect(model.savedSetupCode(for: Fixture.kitchenSensor) == nil)
+        #expect(makeModel(kind: .sensor, store: store, setupCodeStore: setupCodes).connectedDeviceName == nil)
+    }
+
     @Test func forgetSetupCodeKeepsTheConnectedUnit() throws {
         let setupCodes = InMemoryDeviceSetupCodeStore()
         let model = makeModel(kind: .sensor, store: InMemoryConnectedDeviceStore(), setupCodeStore: setupCodes)
@@ -1337,6 +1351,7 @@ private final class InMemoryConnectedDeviceStore: ConnectedDeviceStoring {
 
     func connectedDeviceName(for kind: ProvisioningDeviceKind) -> String? { names[kind] }
     func saveConnectedDeviceName(_ name: String, for kind: ProvisioningDeviceKind) { names[kind] = name }
+    func removeConnectedDeviceName(for kind: ProvisioningDeviceKind) { names[kind] = nil }
 }
 
 /// Keeps setup codes in memory, so the tests do not change the Keychain of the app.

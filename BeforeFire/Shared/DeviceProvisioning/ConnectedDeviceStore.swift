@@ -6,6 +6,7 @@ import Foundation
 protocol ConnectedDeviceStoring {
     func connectedDeviceName(for kind: ProvisioningDeviceKind) -> String?
     func saveConnectedDeviceName(_ name: String, for kind: ProvisioningDeviceKind)
+    func removeConnectedDeviceName(for kind: ProvisioningDeviceKind)
 }
 
 struct UserDefaultsConnectedDeviceStore: ConnectedDeviceStoring {
@@ -21,6 +22,10 @@ struct UserDefaultsConnectedDeviceStore: ConnectedDeviceStoring {
 
     func saveConnectedDeviceName(_ name: String, for kind: ProvisioningDeviceKind) {
         defaults.set(name, forKey: Self.key(for: kind))
+    }
+
+    func removeConnectedDeviceName(for kind: ProvisioningDeviceKind) {
+        defaults.removeObject(forKey: Self.key(for: kind))
     }
 
     private static func key(for kind: ProvisioningDeviceKind) -> String {

@@ -145,6 +145,15 @@ final class DeviceConnectionModel {
         removeSetupCode(for: device.name)
     }
 
+    /// Forgets the connected unit and its setup code. The unit keeps its Wi-Fi network.
+    func disconnect() {
+        if let connectedDeviceName {
+            removeSetupCode(for: connectedDeviceName)
+        }
+        connectedDeviceName = nil
+        connectedDeviceStore?.removeConnectedDeviceName(for: kind)
+    }
+
     private func removeSetupCode(for deviceName: String) {
         do {
             try setupCodeStore?.removeSetupCode(for: deviceName)

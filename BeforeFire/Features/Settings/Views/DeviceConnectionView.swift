@@ -1,10 +1,13 @@
 import SwiftUI
 import UIKit
+import os
 
 /// The connection screen for one unit type. The sensor and the alarm use the same screen.
 struct DeviceConnectionView: View {
     @State private var model: DeviceConnectionModel
     @Environment(SensorBackendSettingsModel.self) private var sensorBackend
+    @State private var isDisconnectConfirmationPresented = false
+    private let logger = Logger(subsystem: "BeforeFire", category: "DeviceConnection")
 
     init(kind: ProvisioningDeviceKind, isSimulated: Bool) {
         _model = State(initialValue: isSimulated ? .simulated(kind: kind) : .live(kind: kind))
@@ -22,6 +25,13 @@ struct DeviceConnectionView: View {
             Section(copy.statusHeader) {
                 LabeledContent(copy.unitName, value: connectedDeviceName ?? copy.notConnected)
                     .accessibilityIdentifier(presentation.screenIdentifier("status"))
+
+                if connectedDeviceName != nil {
+                    Button(copy.disconnectButton, role: .destructive) {
+                        isDisconnectConfirmationPresented = true
+                    }
+                    .accessibilityIdentifier(presentation.screenIdentifier("disconnectButton"))
+                }
             }
 
             Section {
@@ -51,6 +61,12 @@ struct DeviceConnectionView: View {
                                 onSavedSetupCodeRejected: handleSavedSetupCodeRejected) {
                 model.markConnected(device)
             }
+        }
+        .confirmationDialog(copy.disconnectConfirmationTitle, isPresented: $isDisconnectConfirmationPresented,
+                            titleVisibility: .visible) {
+            Button(copy.disconnectConfirmButton, role: .destructive, action: disconnect)
+        } message: {
+            Text(copy.disconnectConfirmationMessage)
         }
         .onDisappear { model.stopScan() }
     }
@@ -92,6 +108,19 @@ struct DeviceConnectionView: View {
     private var handleSavedSetupCodeRejected: (DiscoveredDevice) -> Void {
         let connectionModel = model
         return { device in connectionModel.forgetSetupCode(for: device) }
+    }
+
+    /// Forgets the unit. A linked sensor also stops sending values to the Monitor screen.
+    private func disconnect() {
+        let disconnectedName = connectedDeviceName
+        model.disconnect()
+        guard usesSensorLink, let link = sensorBackend.link, link.deviceID == disconnectedName else { return }
+        do {
+            try sensorBackend.remove()
+        } catch {
+            // The Sensor Data screen in Developer Settings can still remove the link.
+            logger.error("Removing the sensor link failed: \(String(describing: error), privacy: .public)")
+        }
     }
 }
 
