@@ -19,10 +19,12 @@ nonisolated enum SensorBackendConfiguration {
     /// The firmware adds 6 hexadecimal MAC digits to the Bluetooth prefix. See `susunNamaBLE()`.
     static let sensorSerialDigitCount = 6
 
-    /// The firmware sends telemetry every 5 seconds, so a shorter interval gives no new values.
-    static let refreshInterval: Duration = .seconds(5)
-    /// Shorter than `refreshInterval`, so a slow request does not delay the next refresh.
-    static let requestTimeout: TimeInterval = 4
+    /// The firmware sends a changed danger level or presence at once, so a short interval shows it in about
+    /// 1 second. The requests are small and stay on the home network.
+    static let refreshInterval: Duration = .seconds(1)
+    /// A request that takes longer than this fails, and the next refresh starts. On the home network, an answer
+    /// takes much less time.
+    static let requestTimeout: TimeInterval = 2
 
     /// Sensor names in `unavailableSensors`. Must match `backendKirimTelemetri()` in the firmware.
     static let environmentSensorName = "bme"
