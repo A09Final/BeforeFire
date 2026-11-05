@@ -12,9 +12,11 @@ struct DeviceWiFiSetupView: View {
         kind: ProvisioningDeviceKind,
         connector: any DeviceProvisioningConnecting,
         homeSetup: any DeviceHomeSetupPerforming,
+        onWiFiJoined: ((DiscoveredDevice, DeviceSetupCode) -> Void)? = nil,
         onConnected: @escaping () -> Void
     ) {
-        _model = State(initialValue: DeviceWiFiSetupModel(device: device, kind: kind, connector: connector, homeSetup: homeSetup))
+        _model = State(initialValue: DeviceWiFiSetupModel(device: device, kind: kind, connector: connector,
+                                                          homeSetup: homeSetup, onWiFiJoined: onWiFiJoined))
         presentation = DeviceConnectionPresentation(kind: kind)
         self.onConnected = onConnected
     }

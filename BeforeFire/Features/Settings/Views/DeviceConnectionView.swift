@@ -4,6 +4,7 @@ import UIKit
 /// The connection screen for one unit type. The sensor and the alarm use the same screen.
 struct DeviceConnectionView: View {
     @State private var model: DeviceConnectionModel
+    @Environment(SensorBackendSettingsModel.self) private var sensorBackend
 
     init(kind: ProvisioningDeviceKind, isSimulated: Bool) {
         _model = State(initialValue: isSimulated ? .simulated(kind: kind) : .live(kind: kind))
@@ -43,11 +44,20 @@ struct DeviceConnectionView: View {
         .navigationTitle(copy.screenTitle)
         .navigationBarTitleDisplayMode(.inline)
         .sheet(item: $model.selectedDevice) { device in
-            DeviceWiFiSetupView(device: device, kind: model.kind, connector: model.connector, homeSetup: model.homeSetup) {
+            DeviceWiFiSetupView(device: device, kind: model.kind, connector: model.connector, homeSetup: model.homeSetup,
+                                onWiFiJoined: linkSensorToMonitor) {
                 model.markConnected(device)
             }
         }
         .onDisappear { model.stopScan() }
+    }
+
+    /// `nil` for the alarm and for simulated units, so only a real sensor replaces the Monitor values.
+    private var linkSensorToMonitor: ((DiscoveredDevice, DeviceSetupCode) -> Void)? {
+        guard model.kind == .sensor, !model.isSimulated else { return nil }
+        return { [sensorBackend] device, setupCode in
+            sensorBackend.linkSensor(deviceID: device.name, setupCode: setupCode.value)
+        }
     }
 }
 
@@ -117,10 +127,12 @@ private struct DevicesFoundSection: View {
     NavigationStack {
         DeviceConnectionView(kind: .sensor, isSimulated: true)
     }
+    .environment(SensorBackendSettingsModel.preview())
 }
 
 #Preview("Simulated alarm") {
     NavigationStack {
         DeviceConnectionView(kind: .alarm, isSimulated: true)
     }
+    .environment(SensorBackendSettingsModel.preview())
 }

@@ -37,17 +37,23 @@ final class DeviceWiFiSetupModel {
     @ObservationIgnored private let homeSetup: any DeviceHomeSetupPerforming
     @ObservationIgnored private var session: (any DeviceProvisioningSession)?
     @ObservationIgnored private var activityTask: Task<Void, Never>?
+    /// The setup code that opened the secure session. The unit accepts only its own code, so this code is correct.
+    @ObservationIgnored private var acceptedSetupCode: DeviceSetupCode?
+    /// Called one time when the unit joins Wi-Fi, with the setup code that the unit accepted.
+    @ObservationIgnored private let onWiFiJoined: ((DiscoveredDevice, DeviceSetupCode) -> Void)?
 
     init(
         device: DiscoveredDevice,
         kind: ProvisioningDeviceKind,
         connector: any DeviceProvisioningConnecting,
-        homeSetup: any DeviceHomeSetupPerforming
+        homeSetup: any DeviceHomeSetupPerforming,
+        onWiFiJoined: ((DiscoveredDevice, DeviceSetupCode) -> Void)? = nil
     ) {
         self.device = device
         self.copy = DeviceConnectionCopy(kind: kind)
         self.connector = connector
         self.homeSetup = homeSetup
+        self.onWiFiJoined = onWiFiJoined
     }
 
     var isBusy: Bool {
@@ -107,6 +113,7 @@ final class DeviceWiFiSetupModel {
                 return
             }
             self.session = session
+            self.acceptedSetupCode = validSetupCode
             self.step = .networks
             try await self.loadNetworks(using: session)
         }
@@ -151,6 +158,9 @@ final class DeviceWiFiSetupModel {
             self.endSession()
             self.password = ""
             self.step = .connected(wiFiName: credentials.wiFiName)
+            if let acceptedSetupCode = self.acceptedSetupCode {
+                self.onWiFiJoined?(self.device, acceptedSetupCode)
+            }
             // The Home setup starts at once. The firmware restarts while the user scans the HomeKit code.
             try await self.addDeviceToHome()
         }
