@@ -80,6 +80,15 @@ struct MonitorDeveloperSettingsView: View {
                 Toggle("Simulate sensor and alarm", isOn: $isDeviceSimulationEnabled)
                     .accessibilityIdentifier("settings.simulateSensorsToggle")
 
+                // Sensor Connection links the sensor automatically. This screen is a fallback, for example for a
+                // sensor that already has Wi-Fi or a network that blocks .local names.
+                NavigationLink {
+                    SensorBackendSettingsView()
+                } label: {
+                    Text(SensorBackendSettingsCopy.screenTitle)
+                }
+                .accessibilityIdentifier("settings.sensorData")
+
                 Button("Preview Alarm") {
                     alarmPreview.resumeIfExpired()
                     alarmPreview.isAlarmPresented = true
@@ -159,4 +168,6 @@ struct EmergencyContactView: View {
     @Previewable @State var mock = MonitorPreviewCondition.dangerous
     MonitorDeveloperSettingsView(isActionGuidanceVisible: $isTrue, previewCondition: $mock)
         .environment(AlarmPreviewModel())
+        .environment(SensorBackendSettingsModel.preview())
+        .environment(MonitorLiveReadingsModel.live())
 }

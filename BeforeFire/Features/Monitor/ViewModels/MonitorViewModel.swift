@@ -1,11 +1,13 @@
 import Foundation
 
 struct MonitorViewModel {
-    let connectionTitle: String
-    let statusValue: String
+    private(set) var connectionTitle: String
+    private(set) var statusValue: String
     let statusHeading = "Your Kitchen Is"
 
-    private let originalReadings: [MonitorReading]
+    private var originalReadings: [MonitorReading]
+    /// `true` when the live sensor values report the alarm condition.
+    private var isLiveDangerous = false
     private let previewStoveTemperatureC = 180
     private let previewAbsenceDurationSeconds = 240
 
@@ -17,6 +19,19 @@ struct MonitorViewModel {
         self.connectionTitle = connectionTitle
         self.statusValue = statusValue
         self.originalReadings = readings
+    }
+
+    init(content: MonitorContent) {
+        self.init(connectionTitle: content.connectionTitle, statusValue: content.statusValue, readings: content.readings)
+        isLiveDangerous = content.isDangerous
+    }
+
+    /// Shows new status and sensor values. The developer preview still replaces them while it is on.
+    mutating func show(_ content: MonitorContent) {
+        connectionTitle = content.connectionTitle
+        statusValue = content.statusValue
+        originalReadings = content.readings
+        isLiveDangerous = content.isDangerous
     }
 
     private var previewAirQualityDescription: String {
@@ -86,14 +101,23 @@ struct MonitorViewModel {
         isActionGuidanceVisible && previewCondition == .dangerous
     }
 
+    /// Shows the status in the alarm color for the preview or for a live alarm condition.
+    var showsAlarmStatus: Bool {
+        isActionGuidanceVisible ? isAlarmPreview : isLiveDangerous
+    }
+
     var readingAlertCondition: MonitorPreviewCondition? {
         // The indicator shows the preview condition, not a sensor threshold.
         isActionGuidanceVisible ? previewCondition : nil
     }
 
-    static let mock = MonitorViewModel(
+    static let mock = MonitorViewModel(content: mockContent)
+
+    /// Example values. The Monitor screen shows them when no sensor is linked.
+    static let mockContent = MonitorContent(
         connectionTitle: "Hub connected",
         statusValue: "Safe",
+        isDangerous: false,
         readings: [
             MonitorReading(
                 id: .stoveHeat,
