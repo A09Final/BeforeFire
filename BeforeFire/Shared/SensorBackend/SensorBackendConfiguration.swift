@@ -5,6 +5,12 @@ nonisolated enum SensorBackendConfiguration {
     /// The first line of the read key message. Must match `readKeyVersion` in `internal/telemetry/readkey.go`.
     static let readKeyVersion = "beforefire-read-v1"
 
+    /// The server that the app uses when the user did not type an address. The `.local` name of the Mac that runs
+    /// BeforeFire-Backend stays the same when the Mac changes its IP address or Wi-Fi network.
+    /// Must use the same host as `BACKEND_MQTT_URI` in the firmware (`Sensor/KirimBackend.cpp`).
+    /// TODO: Change this value when the server runs on a different Mac or moves to a server with a fixed domain.
+    static let defaultBackendAddress = "http://Dericks-MacBook-Pro.local:8080"
+
     /// The backend HTTP port in `docker-compose.yml`. The app adds it when the user types an address without a port.
     static let defaultPort = 8080
     static let defaultScheme = "http"

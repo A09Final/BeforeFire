@@ -6,8 +6,8 @@ enum SensorBackendSettingsCopy {
 
     static let serverHeader = "Server"
     static let backendAddressLabel = "Server address"
-    static let backendAddressPlaceholder = "http://192.168.1.10:8080"
-    static let serverFooter = "Use the address of the BeforeFire server on your home Wi-Fi. Your phone must be on the same Wi-Fi network."
+    static let backendAddressPlaceholder = SensorBackendConfiguration.defaultBackendAddress
+    static let serverFooter = "Leave the address empty to use the default BeforeFire server. Your phone must be on the same Wi-Fi network as the server."
 
     static let sensorHeader = "Sensor"
     static let serialLabel = "Serial"
@@ -15,7 +15,7 @@ enum SensorBackendSettingsCopy {
     static let setupCodeLabel = "Setup code"
     static let setupCodePlaceholder = "8 characters"
     static let savedSetupCodePlaceholder = "Saved"
-    static let sensorFooter = "Find the serial and the setup code on the sensor label."
+    static let sensorFooter = "The app fills in these values when you connect the sensor in Sensor Connection. You can also find them on the sensor label."
 
     static let saveButton = "Save"
     static let removeButton = "Remove Sensor Link"
@@ -33,7 +33,7 @@ enum SensorBackendSettingsCopy {
     static func message(for issue: SensorBackendLinkIssue) -> String {
         switch issue {
         case .invalidBackendAddress:
-            "Enter a server address, for example \(backendAddressPlaceholder)."
+            "Enter a server address, for example http://192.168.1.10:8080, or leave it empty."
         case .invalidSensorSerial:
             "Enter the sensor serial from the label, for example \(serialPlaceholder)."
         case .invalidSetupCode:
