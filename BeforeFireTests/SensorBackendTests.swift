@@ -253,11 +253,13 @@ private final class StubURLProtocol: URLProtocol {
 @MainActor
 @Suite(.serialized)
 struct SensorReadingsClientTests {
-    private let client: URLSessionSensorReadingsClient = {
+    private static let stubSession: URLSession = {
         let configuration = URLSessionConfiguration.ephemeral
         configuration.protocolClasses = [StubURLProtocol.self]
-        return URLSessionSensorReadingsClient(session: URLSession(configuration: configuration))
+        return URLSession(configuration: configuration)
     }()
+    private let client = URLSessionSensorReadingsClient(session: stubSession)
+    private let discoveryClient = URLSessionSensorDiscoveryClient(session: stubSession)
 
     @Test func sendsReadKeyAndDecodesResponse() async throws {
         var receivedRequest: URLRequest?
@@ -285,6 +287,32 @@ struct SensorReadingsClientTests {
         let link = try exampleLink()
         await #expect(throws: expected) {
             try await client.fetchReadings(for: link)
+        }
+    }
+
+    @Test func readsTheDeviceList() async throws {
+        var receivedURL: String?
+        StubURLProtocol.handler = { request in
+            receivedURL = request.url?.absoluteString
+            return (200, Data(#"{"devices":[{"deviceId":"DAPUR_020F3C","connection":"online","updatedAt":"2026-11-05T08:54:20.5Z"},{"deviceId":"DAPUR_FFFFFF","connection":"offline"}]}"#.utf8))
+        }
+
+        let devices = try await discoveryClient.fetchDevices(serverURL: try exampleLink().backendURL)
+
+        #expect(receivedURL == "http://192.168.1.10:8080/v1/devices")
+        #expect(devices == [BackendDevice(deviceID: "DAPUR_020F3C", isOnline: true),
+                            BackendDevice(deviceID: "DAPUR_FFFFFF", isOnline: false)])
+    }
+
+    @Test func deviceListErrors() async throws {
+        let serverURL = try exampleLink().backendURL
+        StubURLProtocol.handler = { _ in (500, Data()) }
+        await #expect(throws: SensorReadingsFetchError.unexpectedResponse) {
+            try await discoveryClient.fetchDevices(serverURL: serverURL)
+        }
+        StubURLProtocol.handler = { _ in throw URLError(.cannotConnectToHost) }
+        await #expect(throws: SensorReadingsFetchError.backendUnreachable) {
+            try await discoveryClient.fetchDevices(serverURL: serverURL)
         }
     }
 
@@ -456,5 +484,168 @@ struct SensorBackendSettingsModelTests {
 
         try store.remove()
         #expect(store.load() == nil)
+    }
+}
+
+// MARK: - Sensors that already have Wi-Fi
+
+private final class FixedDiscoveryClient: SensorDiscovering {
+    let result: Result<[BackendDevice], Error>
+    private(set) var serverURLs: [URL] = []
+
+    init(result: Result<[BackendDevice], Error>) {
+        self.result = result
+    }
+
+    func fetchDevices(serverURL: URL) async throws -> [BackendDevice] {
+        serverURLs.append(serverURL)
+        return try result.get()
+    }
+}
+
+@MainActor
+struct NetworkSensorDiscoveryModelTests {
+    @Test func showsOnlyOnlineSensors() async {
+        let client = FixedDiscoveryClient(result: .success([
+            BackendDevice(deviceID: "DAPUR_020F3C", isOnline: true),
+            BackendDevice(deviceID: "DAPUR_FFFFFF", isOnline: false),
+            BackendDevice(deviceID: "DAPUR_ALM_A1B2C3", isOnline: true)
+        ]))
+        let model = NetworkSensorDiscoveryModel(client: client)
+
+        await model.search(serverAddress: "192.168.1.10")
+
+        #expect(model.status == .finished)
+        #expect(model.sensors == [NetworkSensor(id: "DAPUR_020F3C")])
+        #expect(client.serverURLs.map(\.absoluteString) == ["http://192.168.1.10:8080"])
+    }
+
+    @Test func showsTheServerError() async {
+        let model = NetworkSensorDiscoveryModel(
+            client: FixedDiscoveryClient(result: .failure(SensorReadingsFetchError.backendUnreachable)))
+
+        await model.search(serverAddress: "192.168.1.10")
+
+        #expect(model.status == .failed(.backendUnreachable))
+        #expect(model.sensors.isEmpty)
+    }
+
+    @Test func invalidServerAddressFailsWithoutARequest() async {
+        let client = FixedDiscoveryClient(result: .success([]))
+        let model = NetworkSensorDiscoveryModel(client: client)
+
+        await model.search(serverAddress: "ftp://server")
+
+        #expect(model.status == .failed(.backendUnreachable))
+        #expect(client.serverURLs.isEmpty)
+    }
+}
+
+@MainActor
+struct NetworkSensorLinkModelTests {
+    private let sensor = NetworkSensor(id: exampleSerial)
+
+    private func makeModel(
+        results: [Result<SensorReadingsSnapshot, Error>],
+        savedSetupCode: String? = nil,
+        onLinked: @escaping (SensorBackendLink) throws -> Void = { _ in },
+        onRejected: @escaping () -> Void = {}
+    ) throws -> (NetworkSensorLinkModel, ScriptedReadingsClient) {
+        let client = ScriptedReadingsClient(results: results)
+        let model = NetworkSensorLinkModel(
+            sensor: sensor,
+            serverAddress: "192.168.1.10",
+            savedSetupCode: try savedSetupCode.map { try DeviceSetupCode($0) },
+            client: client,
+            onLinked: onLinked,
+            onSavedSetupCodeRejected: onRejected
+        )
+        return (model, client)
+    }
+
+    @Test func correctSetupCodeLinksTheSensor() async throws {
+        var linked: [SensorBackendLink] = []
+        let (model, _) = try makeModel(results: [.success(SensorReadingsSnapshot(deviceID: exampleSerial))],
+                                       onLinked: { linked.append($0) })
+        model.setupCode = " ABCD2345 "
+
+        model.link()
+        try await waitUntilLinkEnds(model)
+
+        #expect(model.isLinked)
+        #expect(model.errorMessage == nil)
+        #expect(linked == [try exampleLink()])
+    }
+
+    @Test func wrongSetupCodeShowsAMessage() async throws {
+        var linkCount = 0
+        let (model, _) = try makeModel(results: [.failure(SensorReadingsFetchError.invalidReadKey)],
+                                       onLinked: { _ in linkCount += 1 })
+        model.setupCode = "zzzz2345"
+
+        model.link()
+        try await waitUntilLinkEnds(model)
+
+        #expect(!model.isLinked)
+        #expect(model.errorMessage == SensorBackendSettingsCopy.linkMessage(for: .invalidReadKey))
+        #expect(linkCount == 0)
+        #expect(model.canLink)
+    }
+
+    @Test func shortSetupCodeFailsWithoutARequest() throws {
+        let (model, client) = try makeModel(results: [])
+        model.setupCode = "abc"
+
+        model.link()
+
+        #expect(model.errorMessage == SensorBackendSettingsCopy.message(for: .invalidSetupCode))
+        #expect(client.requestCount == 0)
+    }
+
+    @Test func savedSetupCodeLinksWithNoTypedCode() async throws {
+        var linked: [SensorBackendLink] = []
+        let (model, _) = try makeModel(results: [.success(SensorReadingsSnapshot(deviceID: exampleSerial))],
+                                       savedSetupCode: exampleSetupCode, onLinked: { linked.append($0) })
+
+        model.linkWithSavedSetupCode()
+        #expect(model.isUsingSavedSetupCode)
+        try await waitUntilLinkEnds(model)
+
+        #expect(model.isLinked)
+        #expect(linked.first?.readKey == exampleReadKey)
+    }
+
+    @Test func rejectedSavedSetupCodeAsksForTheCode() async throws {
+        var rejectionCount = 0
+        let (model, _) = try makeModel(results: [.failure(SensorReadingsFetchError.invalidReadKey)],
+                                       savedSetupCode: exampleSetupCode, onRejected: { rejectionCount += 1 })
+
+        model.linkWithSavedSetupCode()
+        try await waitUntilLinkEnds(model)
+
+        #expect(!model.isUsingSavedSetupCode)
+        #expect(model.setupCode.isEmpty)
+        #expect(rejectionCount == 1)
+        #expect(model.errorMessage != nil)
+    }
+
+    @Test func storageFailureShowsAMessage() async throws {
+        let (model, _) = try makeModel(results: [.success(SensorReadingsSnapshot(deviceID: exampleSerial))],
+                                       onLinked: { _ in throw SensorBackendLinkIssue.storageFailed })
+        model.setupCode = exampleSetupCode
+
+        model.link()
+        try await waitUntilLinkEnds(model)
+
+        #expect(!model.isLinked)
+        #expect(model.errorMessage == SensorBackendSettingsCopy.message(for: .storageFailed))
+    }
+
+    private func waitUntilLinkEnds(_ model: NetworkSensorLinkModel) async throws {
+        for _ in 0..<200 {
+            if !model.isLinking { return }
+            try await Task.sleep(for: .milliseconds(10))
+        }
+        Issue.record("The link did not end")
     }
 }

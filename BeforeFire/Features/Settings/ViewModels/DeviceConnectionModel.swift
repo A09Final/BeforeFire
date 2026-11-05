@@ -125,11 +125,16 @@ final class DeviceConnectionModel {
     /// Records a unit that joined Wi-Fi. The setup sheet stays open, because the Home setup starts next.
     /// The setup code is saved, so the next Wi-Fi setup of this unit needs no typed code.
     func rememberJoined(_ device: DiscoveredDevice, setupCode: DeviceSetupCode? = nil) {
-        connectedDeviceName = device.name
-        connectedDeviceStore?.saveConnectedDeviceName(device.name, for: kind)
+        rememberUnit(named: device.name, setupCode: setupCode)
+    }
+
+    /// Records a unit by its name, for example a sensor that the app linked through the server without Bluetooth.
+    func rememberUnit(named deviceName: String, setupCode: DeviceSetupCode?) {
+        connectedDeviceName = deviceName
+        connectedDeviceStore?.saveConnectedDeviceName(deviceName, for: kind)
         guard let setupCode else { return }
         do {
-            try setupCodeStore?.saveSetupCode(setupCode, for: device.name)
+            try setupCodeStore?.saveSetupCode(setupCode, for: deviceName)
         } catch {
             // The setup still works. The user only types the code again next time.
             logger.error("Saving the setup code failed: \(String(describing: error), privacy: .public)")
@@ -137,12 +142,20 @@ final class DeviceConnectionModel {
     }
 
     func savedSetupCode(for device: DiscoveredDevice) -> DeviceSetupCode? {
-        setupCodeStore?.setupCode(for: device.name)
+        savedSetupCode(forDeviceNamed: device.name)
+    }
+
+    func savedSetupCode(forDeviceNamed deviceName: String) -> DeviceSetupCode? {
+        setupCodeStore?.setupCode(for: deviceName)
     }
 
     /// Removes a saved code that the unit did not accept, for example after the unit made a new setup code.
     func forgetSetupCode(for device: DiscoveredDevice) {
-        removeSetupCode(for: device.name)
+        forgetSetupCode(forDeviceNamed: device.name)
+    }
+
+    func forgetSetupCode(forDeviceNamed deviceName: String) {
+        removeSetupCode(for: deviceName)
     }
 
     /// Forgets the connected unit and its setup code. The unit keeps its Wi-Fi network.

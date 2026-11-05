@@ -24,6 +24,11 @@ final class SensorBackendSettingsModel {
         SensorBackendSettingsModel(store: InMemorySensorBackendLinkStore(link: link))
     }
 
+    /// The saved server address, or the default server when no sensor is linked.
+    var serverAddress: String {
+        link?.backendAddress ?? SensorBackendConfiguration.defaultBackendAddress
+    }
+
     /// Links a sensor after its Wi-Fi setup, so the Monitor screen shows its values with no typed values.
     /// It keeps the saved server address, or it uses the default server.
     /// A failure does not stop the Wi-Fi setup. The user can link the sensor on the Sensor Data screen.

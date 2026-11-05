@@ -20,7 +20,7 @@ struct SensorBackendLink: Equatable, Sendable {
     /// - Parameters:
     ///   - backendAddress: For example `192.168.1.10`, `192.168.1.10:8080`, or `http://192.168.1.10:8080`.
     init(backendAddress: String, deviceID: String, setupCode: String) throws {
-        backendURL = try Self.backendURL(from: backendAddress)
+        backendURL = try Self.serverURL(from: backendAddress)
         self.deviceID = try Self.sensorSerial(from: deviceID)
         do {
             self.setupCode = try DeviceSetupCode(setupCode).value
@@ -42,7 +42,8 @@ struct SensorBackendLink: Equatable, Sendable {
         backendURL.absoluteString
     }
 
-    private static func backendURL(from rawAddress: String) throws -> URL {
+    /// Validates a typed server address. It adds the scheme and the default port when they are missing.
+    static func serverURL(from rawAddress: String) throws -> URL {
         var address = rawAddress.trimmingCharacters(in: .whitespacesAndNewlines)
         if !address.contains("://") {
             address = "\(SensorBackendConfiguration.defaultScheme)://\(address)"

@@ -43,6 +43,18 @@ enum SensorBackendSettingsCopy {
         }
     }
 
+    /// Messages when the app links a sensor that already has Wi-Fi.
+    static func linkMessage(for error: SensorReadingsFetchError) -> String {
+        switch error {
+        case .invalidReadKey:
+            "The setup code is not correct. Check the setup code on the sensor label."
+        case .noReadings:
+            "The sensor has sent no values yet. Wait a few seconds, then try again."
+        case .backendUnreachable, .unknownDevice, .unexpectedResponse:
+            message(for: error)
+        }
+    }
+
     static func message(for error: SensorReadingsFetchError) -> String {
         switch error {
         case .backendUnreachable:

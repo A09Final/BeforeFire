@@ -34,6 +34,9 @@ nonisolated enum SensorBackendConfiguration {
     /// The error code in a 404 response when the sensor has not sent readings yet.
     static let noReadingsErrorCode = "no_readings"
 
+    /// Lists each device that sent a status. The app uses it to find sensors that already have Wi-Fi.
+    static let devicesPath = "v1/devices"
+
     static func readingsPath(deviceID: String) -> String {
         "v1/devices/\(deviceID)/readings"
     }
