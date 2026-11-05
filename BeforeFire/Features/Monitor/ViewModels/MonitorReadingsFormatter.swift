@@ -35,6 +35,8 @@ struct MonitorReadingsFormatter {
     }
 
     /// The Bosch BSEC IAQ classes. Each limit is the highest index of the class.
+    /// The app uses all 7 classes on purpose. The firmware (`iaqKeHomeKit()`) puts every index above 200 in
+    /// "Poor", because HomeKit has only 5 levels. Thus the Home app can show a different label for the same index.
     private static let airQualityClasses: [(upperLimit: Double, label: String)] = [
         (50, "Excellent"),
         (100, "Good"),

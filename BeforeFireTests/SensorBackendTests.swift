@@ -174,6 +174,22 @@ struct MonitorReadingsFormatterTests {
         #expect(content.readings.last?.value == "1005")
     }
 
+    /// The Bosch IAQ classes, with 7 levels.
+    @Test(arguments: [
+        (0.0, "Excellent"), (50, "Excellent"),
+        (51, "Good"), (100, "Good"),
+        (101, "Lightly Polluted"), (150, "Lightly Polluted"),
+        (151, "Moderately Polluted"), (200, "Moderately Polluted"),
+        (201, "Heavily Polluted"), (220, "Heavily Polluted"), (250, "Heavily Polluted"),
+        (251, "Severely Polluted"), (350, "Severely Polluted"),
+        (351, "Extremely Polluted"), (500, "Extremely Polluted")
+    ])
+    func airQualityUsesTheBoschClasses(index: Double, label: String) {
+        var values = snapshot()
+        values.readings.iaq = index
+        #expect(formatter.content(for: values).readings[1].value == label)
+    }
+
     @Test func showsCalibrationBeforeAirQualityIsStable() {
         let content = formatter.content(for: snapshot(iaqAccuracy: 0))
         #expect(content.readings[1].value == "Calibrating")
