@@ -1,0 +1,29 @@
+{
+  "configurations": [
+    {
+      "id": "03EC6CBD-28CC-43A2-BC89-854EF4DCF6A5",
+      "name": "Test Scheme Action",
+      "options": {}
+    }
+  ],
+  "defaultOptions": {},
+  "testTargets": [
+    {
+      "parallelizable": true,
+      "target": {
+        "containerPath": "container:BeforeFire.xcodeproj",
+        "identifier": "F0A0C5E93089EFBE00BF99E1",
+        "name": "BeforeFireTests"
+      }
+    },
+    {
+      "parallelizable": false,
+      "target": {
+        "containerPath": "container:BeforeFire.xcodeproj",
+        "identifier": "F0A0C5F33089EFBE00BF99E1",
+        "name": "BeforeFireUITests"
+      }
+    }
+  ],
+  "version": 1
+}

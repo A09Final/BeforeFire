@@ -5,6 +5,7 @@ struct MonitorDeveloperSettingsView: View {
     @Binding var previewCondition: MonitorPreviewCondition
     @Environment(AlarmPreviewModel.self) private var alarmPreview
     @State private var showPlacementGuideline = false
+    @State private var isDeviceSimulationEnabled = false
     
     var body: some View {
         Form {
@@ -17,6 +18,20 @@ struct MonitorDeveloperSettingsView: View {
                     //PLS DONT DELETE
                 }
                 .accessibilityIdentifier("settings.hubConnection")
+
+                NavigationLink {
+                    DeviceConnectionView(kind: .sensor, isSimulated: isDeviceSimulationEnabled)
+                } label: {
+                    Label(DeviceConnectionCopy(kind: .sensor).screenTitle, systemImage: "")
+                }
+                .accessibilityIdentifier("settings.sensorConnection")
+
+                NavigationLink {
+                    DeviceConnectionView(kind: .alarm, isSimulated: isDeviceSimulationEnabled)
+                } label: {
+                    Label(DeviceConnectionCopy(kind: .alarm).screenTitle, systemImage: "")
+                }
+                .accessibilityIdentifier("settings.alarmConnection")
                 
                 Button {
                     showPlacementGuideline = true
@@ -60,6 +75,10 @@ struct MonitorDeveloperSettingsView: View {
                     set: { alarmPreview.isHubDisconnected = $0 }
                 ))
                 .accessibilityIdentifier("settings.hubDisconnectedToggle")
+
+                // The identifier keeps its old name, so the UI tests stay stable. The toggle now also controls the alarm search.
+                Toggle("Simulate sensor and alarm", isOn: $isDeviceSimulationEnabled)
+                    .accessibilityIdentifier("settings.simulateSensorsToggle")
 
                 Button("Preview Alarm") {
                     alarmPreview.resumeIfExpired()

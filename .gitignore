@@ -29,9 +29,6 @@ Build/
 .swiftpm/
 Packages/
 
-# This app vendors LiteRT-LM locally, so stale SwiftPM resolution should not be committed.
-Package.resolved
-
 # Dependency managers, if they are ever used locally
 Pods/
 Carthage/Build/

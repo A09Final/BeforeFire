@@ -2,6 +2,10 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+    <key>NSCameraUsageDescription</key>
+    <string>BeforeFire uses the camera to scan setup QR codes for your sensor and alarm.</string>
+    <key>NSBluetoothAlwaysUsageDescription</key>
+    <string>BeforeFire uses Bluetooth to find your sensor and alarm. It sends your Wi-Fi network to them.</string>
     <key>NSSupportsLiveActivities</key>
     <true/>
     <key>CFBundleURLTypes</key>
