@@ -15,6 +15,17 @@ struct AlarmPreviewFlowView: View {
                 }
             }
         }
+        .safeAreaInset(edge: .top) {
+            if let message = alarmPreview.feedbackMessage {
+                Text(message)
+                    .font(.footnote)
+                    .foregroundStyle(AlarmStyle.foreground)
+                    .padding()
+                    .frame(maxWidth: .infinity)
+                    .background(AlarmStyle.snoozedBackground)
+                    .accessibilityIdentifier("alarm.feedbackMessage")
+            }
+        }
         .background(AlarmStyle.snoozedBackground.ignoresSafeArea())
         .preferredColorScheme(.dark)
     }

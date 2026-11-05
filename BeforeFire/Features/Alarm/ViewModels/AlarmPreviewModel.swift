@@ -7,7 +7,9 @@ import OSLog
 @Observable
 final class AlarmPreviewModel {
     let guidance = AlarmGuidance.mock
-    var isAlarmPresented = false
+    var isAlarmPresented = false {
+        didSet { updateFeedback() }
+    }
     var isHubDisconnected: Bool {
         get { alarmState.isHubOffline }
         set {
@@ -17,12 +19,42 @@ final class AlarmPreviewModel {
         }
     }
     private(set) var activityMessage: String?
+    private(set) var feedbackMessage: String?
     private(set) var isEndingActivity = false
     var snoozeDurationSeconds = AlarmActivityAttributes.defaultSnoozeSeconds
-    private(set) var alarmState = AlarmActivityAttributes.ContentState()
+    private(set) var alarmState = AlarmActivityAttributes.ContentState() {
+        didSet { updateFeedback() }
+    }
+    @ObservationIgnored private let feedback: any AlarmFeedbackPlaying
+    @ObservationIgnored private var isApplicationActive = false
+    @ObservationIgnored private var isFeedbackRequested = false
     @ObservationIgnored private var updateTask: Task<Void, Never>?
     @ObservationIgnored private var hubDisconnectedOverride: Bool?
     private let logger = Logger(subsystem: "com.ibnu.BeforeFire", category: "AlarmPreview")
+
+    convenience init() {
+        self.init(feedback: AlarmFeedbackPlayer())
+    }
+
+    init(feedback: any AlarmFeedbackPlaying) {
+        self.feedback = feedback
+        feedback.onFailure = { [weak self] failure in
+            self?.feedbackMessage = failure?.message
+        }
+    }
+
+    func setApplicationActive(_ isActive: Bool) {
+        isApplicationActive = isActive
+        updateFeedback()
+    }
+
+    private func updateFeedback() {
+        let shouldPlay = isApplicationActive && isAlarmPresented && !alarmState.isSnoozed
+        guard shouldPlay != isFeedbackRequested else { return }
+        isFeedbackRequested = shouldPlay
+        feedbackMessage = nil
+        feedback.setPlaying(shouldPlay)
+    }
 
     func open(_ url: URL) {
         guard AlarmActivityAttributes.matchesPreviewURL(url) else { return }
@@ -117,6 +149,7 @@ final class AlarmPreviewModel {
 
     func endLiveActivities() async {
         guard !isEndingActivity else { return }
+        isAlarmPresented = false
         isEndingActivity = true
         updateTask?.cancel()
         defer { isEndingActivity = false }

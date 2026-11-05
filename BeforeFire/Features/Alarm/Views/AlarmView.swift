@@ -112,7 +112,6 @@ struct AlarmView: View {
         guard !isDismissing else { return }
         withAnimation(.easeOut(duration: AlarmStyle.dismissalFadeDuration)) {
             isDismissing = true
-        } completion: {
             onSnooze()
         }
     }
