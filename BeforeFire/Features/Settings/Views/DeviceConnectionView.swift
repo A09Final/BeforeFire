@@ -20,7 +20,7 @@ struct DeviceConnectionView: View {
     var body: some View {
         Form {
             Section(copy.statusHeader) {
-                LabeledContent(copy.unitName, value: model.connectedDeviceName ?? copy.notConnected)
+                LabeledContent(copy.unitName, value: connectedDeviceName ?? copy.notConnected)
                     .accessibilityIdentifier(presentation.screenIdentifier("status"))
             }
 
@@ -45,18 +45,32 @@ struct DeviceConnectionView: View {
         .navigationBarTitleDisplayMode(.inline)
         .sheet(item: $model.selectedDevice) { device in
             DeviceWiFiSetupView(device: device, kind: model.kind, connector: model.connector, homeSetup: model.homeSetup,
-                                onWiFiJoined: linkSensorToMonitor) {
+                                onWiFiJoined: handleWiFiJoined) {
                 model.markConnected(device)
             }
         }
         .onDisappear { model.stopScan() }
     }
 
-    /// `nil` for the alarm and for simulated units, so only a real sensor replaces the Monitor values.
-    private var linkSensorToMonitor: ((DiscoveredDevice, DeviceSetupCode) -> Void)? {
+    /// A sensor that the user linked on the Sensor Data screen, for example a sensor that already had Wi-Fi,
+    /// is also connected.
+    private var connectedDeviceName: String? {
+        if let name = model.connectedDeviceName { return name }
         guard model.kind == .sensor, !model.isSimulated else { return nil }
-        return { [sensorBackend] device, setupCode in
-            sensorBackend.linkSensor(deviceID: device.name, setupCode: setupCode.value)
+        return sensorBackend.link?.deviceID
+    }
+
+    /// Records the unit as soon as it joins Wi-Fi, also when the user later closes the sheet with a swipe.
+    /// Only a real sensor replaces the Monitor values, so the alarm and simulated units are not linked.
+    private var handleWiFiJoined: (DiscoveredDevice, DeviceSetupCode) -> Void {
+        let connectionModel = model
+        let sensorBackend = sensorBackend
+        let linksSensorToMonitor = model.kind == .sensor && !model.isSimulated
+        return { device, setupCode in
+            connectionModel.rememberJoined(device)
+            if linksSensorToMonitor {
+                sensorBackend.linkSensor(deviceID: device.name, setupCode: setupCode.value)
+            }
         }
     }
 }
