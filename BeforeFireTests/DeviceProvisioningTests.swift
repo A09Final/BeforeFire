@@ -252,6 +252,67 @@ struct DeviceConnectionModelTests {
     @Test func simulatedModelUsesSimulationMode() {
         #expect(DeviceConnectionModel.simulated(kind: .sensor).isSimulated)
     }
+
+    // MARK: Saved connection
+
+    private func makeModel(kind: ProvisioningDeviceKind, store: InMemoryConnectedDeviceStore) -> DeviceConnectionModel {
+        DeviceConnectionModel(
+            kind: kind,
+            scanner: ControlledDeviceScanner(),
+            connector: RecordingConnector(),
+            homeSetup: RecordingHomeSetup(),
+            connectedDeviceStore: store
+        )
+    }
+
+    @Test func showsTheSavedUnitWhenTheScreenOpensAgain() {
+        let store = InMemoryConnectedDeviceStore()
+        makeModel(kind: .sensor, store: store).markConnected(Fixture.kitchenSensor)
+
+        let reopenedModel = makeModel(kind: .sensor, store: store)
+
+        #expect(reopenedModel.connectedDeviceName == Fixture.kitchenSensor.name)
+    }
+
+    @Test func wiFiJoinSavesTheUnitAndKeepsTheSetupOpen() {
+        let store = InMemoryConnectedDeviceStore()
+        let model = makeModel(kind: .sensor, store: store)
+        model.select(Fixture.kitchenSensor)
+
+        model.rememberJoined(Fixture.kitchenSensor)
+
+        #expect(model.connectedDeviceName == Fixture.kitchenSensor.name)
+        #expect(store.connectedDeviceName(for: .sensor) == Fixture.kitchenSensor.name)
+        // The Home setup step still needs the sheet.
+        #expect(model.selectedDevice == Fixture.kitchenSensor)
+    }
+
+    @Test func sensorAndAlarmHaveSeparateSavedUnits() {
+        let store = InMemoryConnectedDeviceStore()
+        makeModel(kind: .sensor, store: store).markConnected(Fixture.kitchenSensor)
+
+        #expect(makeModel(kind: .alarm, store: store).connectedDeviceName == nil)
+    }
+
+    @Test func simulatedUnitsAreNotSaved() {
+        let model = DeviceConnectionModel.simulated(kind: .sensor)
+        model.markConnected(Fixture.kitchenSensor)
+
+        #expect(DeviceConnectionModel.simulated(kind: .sensor).connectedDeviceName == nil)
+    }
+
+    @Test func userDefaultsStoreKeepsTheNamePerUnitType() throws {
+        let suiteName = "ConnectedDeviceStoreTests.\(UUID().uuidString)"
+        let defaults = try #require(UserDefaults(suiteName: suiteName))
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+        let store = UserDefaultsConnectedDeviceStore(defaults: defaults)
+
+        store.saveConnectedDeviceName("DAPUR_020F3C", for: .sensor)
+        store.saveConnectedDeviceName("DAPUR_ALM_A1A2B3", for: .alarm)
+
+        #expect(store.connectedDeviceName(for: .sensor) == "DAPUR_020F3C")
+        #expect(store.connectedDeviceName(for: .alarm) == "DAPUR_ALM_A1A2B3")
+    }
 }
 
 // MARK: - Wi-Fi and Home setup
@@ -1142,4 +1203,12 @@ private func waitUntil(timeout: Duration = .seconds(2), _ condition: () -> Bool)
         guard ContinuousClock.now < deadline else { throw ConditionTimeout() }
         try await Task.sleep(for: .milliseconds(5))
     }
+}
+
+/// Keeps saved unit names in memory, so the tests do not change the app settings.
+private final class InMemoryConnectedDeviceStore: ConnectedDeviceStoring {
+    private var names: [ProvisioningDeviceKind: String] = [:]
+
+    func connectedDeviceName(for kind: ProvisioningDeviceKind) -> String? { names[kind] }
+    func saveConnectedDeviceName(_ name: String, for kind: ProvisioningDeviceKind) { names[kind] = name }
 }
