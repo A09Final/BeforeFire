@@ -1,15 +1,10 @@
 import Foundation
-import Security
 
 protocol SensorBackendLinkStoring {
     /// Returns `nil` when no complete link is saved.
     func load() -> SensorBackendLink?
     func save(_ link: SensorBackendLink) throws
     func remove() throws
-}
-
-nonisolated enum SensorBackendLinkStoreError: Error, Equatable {
-    case keychain(OSStatus)
 }
 
 /// Keeps the backend address and the sensor serial in `UserDefaults`, and the setup code in the Keychain.
@@ -22,17 +17,17 @@ final class KeychainSensorBackendLinkStore: SensorBackendLinkStoring {
     }
 
     private let defaults: UserDefaults
-    private let keychainService: String
+    private let setupCodes: KeychainPasswordStore
 
     init(defaults: UserDefaults = .standard, keychainService: String = Key.setupCodeService) {
         self.defaults = defaults
-        self.keychainService = keychainService
+        self.setupCodes = KeychainPasswordStore(service: keychainService)
     }
 
     func load() -> SensorBackendLink? {
         guard let backendAddress = defaults.string(forKey: Key.backendAddress),
               let deviceID = defaults.string(forKey: Key.deviceID),
-              let setupCode = readSetupCode(deviceID: deviceID)
+              let setupCode = setupCodes.read(account: deviceID)
         else {
             return nil
         }
@@ -41,9 +36,9 @@ final class KeychainSensorBackendLinkStore: SensorBackendLinkStoring {
     }
 
     func save(_ link: SensorBackendLink) throws {
-        // Remove the code of a different sensor, so only one setup code stays on the phone.
-        try deleteSetupCodes()
-        try writeSetupCode(link.setupCode, deviceID: link.deviceID)
+        // Remove the code of a different sensor, so only one linked sensor stays on the phone.
+        try setupCodes.deleteAll()
+        try setupCodes.write(link.setupCode, account: link.deviceID)
         defaults.set(link.backendAddress, forKey: Key.backendAddress)
         defaults.set(link.deviceID, forKey: Key.deviceID)
     }
@@ -51,49 +46,7 @@ final class KeychainSensorBackendLinkStore: SensorBackendLinkStoring {
     func remove() throws {
         defaults.removeObject(forKey: Key.backendAddress)
         defaults.removeObject(forKey: Key.deviceID)
-        try deleteSetupCodes()
-    }
-
-    // MARK: Keychain
-
-    private func baseQuery() -> [String: Any] {
-        [kSecClass as String: kSecClassGenericPassword,
-         kSecAttrService as String: keychainService]
-    }
-
-    private func readSetupCode(deviceID: String) -> String? {
-        var query = baseQuery()
-        query[kSecAttrAccount as String] = deviceID
-        query[kSecReturnData as String] = true
-        query[kSecMatchLimit as String] = kSecMatchLimitOne
-
-        var result: CFTypeRef?
-        guard SecItemCopyMatching(query as CFDictionary, &result) == errSecSuccess,
-              let data = result as? Data
-        else {
-            return nil
-        }
-        return String(data: data, encoding: .utf8)
-    }
-
-    private func writeSetupCode(_ setupCode: String, deviceID: String) throws {
-        var item = baseQuery()
-        item[kSecAttrAccount as String] = deviceID
-        item[kSecValueData as String] = Data(setupCode.utf8)
-        // The sensor values are not needed while the phone is locked before the first unlock.
-        item[kSecAttrAccessible as String] = kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
-
-        let status = SecItemAdd(item as CFDictionary, nil)
-        guard status == errSecSuccess else {
-            throw SensorBackendLinkStoreError.keychain(status)
-        }
-    }
-
-    private func deleteSetupCodes() throws {
-        let status = SecItemDelete(baseQuery() as CFDictionary)
-        guard status == errSecSuccess || status == errSecItemNotFound else {
-            throw SensorBackendLinkStoreError.keychain(status)
-        }
+        try setupCodes.deleteAll()
     }
 }
 
