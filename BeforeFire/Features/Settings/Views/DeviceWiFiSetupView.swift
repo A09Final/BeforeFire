@@ -12,9 +12,16 @@ struct DeviceWiFiSetupView: View {
         kind: ProvisioningDeviceKind,
         connector: any DeviceProvisioningConnecting,
         homeSetup: any DeviceHomeSetupPerforming,
+        savedSetupCode: DeviceSetupCode? = nil,
+        onWiFiJoined: ((DiscoveredDevice, DeviceSetupCode) -> Void)? = nil,
+        onSavedSetupCodeRejected: ((DiscoveredDevice) -> Void)? = nil,
         onConnected: @escaping () -> Void
     ) {
-        _model = State(initialValue: DeviceWiFiSetupModel(device: device, kind: kind, connector: connector, homeSetup: homeSetup))
+        _model = State(initialValue: DeviceWiFiSetupModel(
+            device: device, kind: kind, connector: connector, homeSetup: homeSetup,
+            savedSetupCode: savedSetupCode, onWiFiJoined: onWiFiJoined,
+            onSavedSetupCodeRejected: onSavedSetupCodeRejected
+        ))
         presentation = DeviceConnectionPresentation(kind: kind)
         self.onConnected = onConnected
     }
@@ -49,6 +56,7 @@ struct DeviceWiFiSetupView: View {
             .toolbar { toolbarContent }
         }
         .interactiveDismissDisabled(model.isBusy)
+        .task { model.connectWithSavedSetupCode() }
         .onDisappear { model.close() }
     }
 
@@ -97,6 +105,26 @@ private struct DeviceSetupCodeStep: View {
     private var copy: DeviceConnectionCopy { model.copy }
 
     var body: some View {
+        if model.isUsingSavedSetupCode {
+            savedSetupCodeProgress
+        } else {
+            setupCodeForm
+        }
+    }
+
+    /// The unit was set up before, so the app uses the saved code and shows no field.
+    private var savedSetupCodeProgress: some View {
+        Form {
+            Section {
+                DeviceSetupProgressRow(text: copy.connectingToDevice, presentation: presentation)
+            } footer: {
+                Text(copy.usingSavedSetupCode)
+            }
+        }
+        .accessibilityIdentifier(presentation.setupIdentifier("savedSetupCodeProgress"))
+    }
+
+    private var setupCodeForm: some View {
         Form {
             Section {
                 TextField(copy.setupCodePlaceholder, text: $model.setupCode)
@@ -269,7 +297,8 @@ private struct DeviceHomeSetupStep: View {
     }
 }
 
-private struct DeviceSetupProgressRow: View {
+/// Shared with the sheet that links a sensor that already has Wi-Fi.
+struct DeviceSetupProgressRow: View {
     let text: String
     let presentation: DeviceConnectionPresentation
 
@@ -284,7 +313,8 @@ private struct DeviceSetupProgressRow: View {
     }
 }
 
-private struct DeviceSetupErrorRow: View {
+/// Shared with the sheet that links a sensor that already has Wi-Fi.
+struct DeviceSetupErrorRow: View {
     let message: String?
     let presentation: DeviceConnectionPresentation
 
