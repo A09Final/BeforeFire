@@ -11,6 +11,10 @@ nonisolated enum KitchenGuidance {
 
     static func monitorMessage(for assessment: KitchenAssessment) -> String? {
         guard let condition = assessment.validCondition, condition != .normal else { return nil }
+        if condition == .warning1 || condition == .warning2,
+           let message = ruleMessage(for: assessment, condition: condition) {
+            return message
+        }
         let reasons = assessment.reasons.map { reason in
             switch (condition, reason) {
             case (.warning2, .poorAirQuality): "Concerning Air Quality Detected"
@@ -32,10 +36,7 @@ nonisolated enum KitchenGuidance {
 
     static func notificationBody(for assessment: KitchenAssessment) -> String? {
         guard let condition = assessment.validCondition, condition != .normal else { return nil }
-        if let ruleID = assessment.ruleID, let rule = KitchenRuleMessages.rules[ruleID],
-           rule.condition == condition, let template = rule.notificationTemplate {
-            return render(template, duration: assessment.absenceDurationSeconds)
-        }
+        if let message = ruleMessage(for: assessment, condition: condition) { return message }
         // Do not guess a rule or a temperature/IAQ class when the sender omitted metadata.
         let reasons = assessment.reasons.map(\.displayName).joined(separator: ", ")
         let reasonText = reasons.isEmpty ? "" : " \(reasons)."
@@ -48,6 +49,12 @@ nonisolated enum KitchenGuidance {
         case .alarm:
             return "Turn off the stove now if you can safely reach it.\(reasonText)"
         }
+    }
+
+    private static func ruleMessage(for assessment: KitchenAssessment, condition: KitchenCondition) -> String? {
+        guard let ruleID = assessment.ruleID, let rule = KitchenRuleMessages.rules[ruleID],
+              rule.condition == condition, let template = rule.notificationTemplate else { return nil }
+        return render(template, duration: assessment.absenceDurationSeconds)
     }
 
     private static func render(_ template: String, duration: Int?) -> String {

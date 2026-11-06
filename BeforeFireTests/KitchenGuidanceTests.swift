@@ -85,9 +85,33 @@ struct KitchenGuidanceTests {
         #expect(!body.contains("minutes"))
     }
 
+    @Test(arguments: [(3, "The air is lightly polluted"), (9, "The stove area is hot")])
+    func monitorShowsDifferentRuleMessagesWithinTheSameLevel(_ ruleID: Int, _ expectedReason: String) throws {
+        let json = """
+        {
+          "deviceId": "DAPUR_F0A123", "condition": "warning1", "readings": {},
+          "connection": "online", "isStale": false,
+          "assessment": {"condition": "warning1", "valid": true, "rule_id": \(ruleID), "absence_duration_seconds": 480}
+        }
+        """
+        let snapshot = try JSONDecoder().decode(SensorReadingsSnapshot.self, from: Data(json.utf8))
+        let model = MonitorViewModel(content: MonitorReadingsFormatter().content(for: snapshot))
+        #expect(model.displayedStatusValue == "Unsafe")
+        let guidance = try #require(model.actionGuidance)
+        #expect(guidance.contains(expectedReason))
+        #expect(guidance.contains("8 minutes"))
+    }
+
+    @Test func alarmMonitorKeepsItsUrgentInstructionsWhenARuleIsReported() {
+        let assessment = KitchenAssessment(condition: .alarm, isValid: true, ruleID: 27)
+        #expect(KitchenGuidance.monitorMessage(for: assessment) ==
+                "Turn stove off NOW\nCall closest available person if you are not able to reach the stove")
+    }
+
     @Test func mismatchedRuleDoesNotOverrideTheFinalCondition() {
         let assessment = KitchenAssessment(condition: .warning1, isValid: true, ruleID: 32)
         #expect(KitchenGuidance.notificationBody(for: assessment)?.hasPrefix("Check your kitchen.") == true)
+        #expect(KitchenGuidance.monitorMessage(for: assessment) == "Check your kitchen.")
         #expect(assessment.validCondition == .warning1)
     }
 
