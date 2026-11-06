@@ -52,6 +52,14 @@ struct KitchenGuidanceTests {
         #expect(KitchenGuidance.notificationBody(for: assessment)?.contains("Poor Air Quality") == false)
     }
 
+    @Test func warningTwoUsesItsOwnMonitorReasonLabels() {
+        let assessment = KitchenAssessment(condition: .warning2, isValid: true,
+                                            reasons: [.poorAirQuality, .noPresence, .highHeat])
+        #expect(KitchenGuidance.monitorMessage(for: assessment) ==
+                "Concerning Air Quality Detected, No Presence Detected, Abnormally High Heat Detected. " +
+                "Check your kitchen now. Turn off the stove if you can do so safely.")
+    }
+
     @Test func warningsBecomeMoreUrgentWithoutReclassifyingThem() {
         let first = KitchenAssessment(condition: .warning1, isValid: true)
         let second = KitchenAssessment(condition: .warning2, isValid: true)
@@ -129,7 +137,7 @@ struct KitchenGuidanceTests {
     }
 
     @Test func serviceExtensionUsesTheSameWarningMessage() throws {
-        let original = notification(condition: "warning2", ruleID: 20)
+        let original = notification(condition: "warning2")
         let event = try KitchenPushEvent(userInfo: original.userInfo)
         let mapped = KitchenNotificationContent.mapped(original)
         #expect(mapped.title == "Dangerous")
@@ -139,7 +147,7 @@ struct KitchenGuidanceTests {
     }
 
     @Test func normalIsSilentAndDoesNotHaveActionText() {
-        let original = notification(condition: "normal", ruleID: 6)
+        let original = notification(condition: "normal")
         let mapped = KitchenNotificationContent.mapped(original)
         #expect(mapped.title == "Normal")
         #expect(mapped.body.isEmpty)
@@ -147,7 +155,7 @@ struct KitchenGuidanceTests {
         #expect(KitchenNotificationContent.foregroundOptions(for: original.userInfo).isEmpty)
     }
 
-    @Test(arguments: ["normal", "warning1", "warning2", "future-level"])
+    @Test(arguments: ["normal", "warning1", "warning2"])
     func onlyAnAlarmLabelCanOpenTheAlarmPopup(_ condition: String) throws {
         let event = try KitchenPushEvent(userInfo: notification(condition: condition).userInfo)
         let model = AlarmPreviewModel()
@@ -170,8 +178,8 @@ struct KitchenGuidanceTests {
     }
 
     @Test func invalidOrUnknownConditionDoesNotPresentAnAlarm() {
-        for condition in ["normal", "alarm", "future-level"] {
-            let original = notification(condition: condition, valid: false)
+        for condition in ["", "future-level"] {
+            let original = notification(condition: condition)
             let mapped = KitchenNotificationContent.mapped(original)
             #expect(mapped.title == "Status unavailable")
             #expect(mapped.sound == nil)
@@ -186,14 +194,12 @@ struct KitchenGuidanceTests {
         #expect(assessment.reasons.isEmpty)
     }
 
-    private func notification(condition: String, valid: Bool = true, ruleID: Int? = nil) -> UNMutableNotificationContent {
+    private func notification(condition: String) -> UNMutableNotificationContent {
         let content = UNMutableNotificationContent()
         content.title = "Fallback"
         content.body = "Fallback message"
-        var assessment: [String: Any] = ["condition": condition, "valid": valid]
-        if let ruleID { assessment["rule_id"] = ruleID }
-        content.userInfo = ["beforefire": ["version": 2, "type": "condition", "event_id": "event-001",
-                                            "device_id": "DAPUR_A1B2C3", "assessment": assessment]]
+        content.userInfo = ["beforefire": ["alertId": "event-001", "deviceId": "DAPUR_A1B2C3",
+                                            "condition": condition, "issuedAt": 1730700000]]
         return content
     }
 }

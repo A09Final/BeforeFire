@@ -28,6 +28,7 @@ final class AlarmPreviewModel {
     @ObservationIgnored private let feedback: any AlarmFeedbackPlaying
     @ObservationIgnored private var isApplicationActive = false
     @ObservationIgnored private var isFeedbackRequested = false
+    @ObservationIgnored private var handledLiveAlarmDeviceID: String?
     @ObservationIgnored private var updateTask: Task<Void, Never>?
     @ObservationIgnored private var hubDisconnectedOverride: Bool?
     @ObservationIgnored private var shouldKeepLocalStateOnActivityStart = false
@@ -59,6 +60,23 @@ final class AlarmPreviewModel {
 
     func open(_ url: URL) {
         guard AlarmActivityAttributes.matchesPreviewURL(url) else { return }
+        synchronizeFromLiveActivity()
+        isAlarmPresented = true
+    }
+
+    func handleLiveReading(_ snapshot: SensorReadingsSnapshot, linkedDeviceID: String) {
+        guard isApplicationActive, !isEndingActivity, snapshot.deviceID == linkedDeviceID,
+              snapshot.connection == .online, !snapshot.isStale,
+              let condition = snapshot.assessment.validCondition else { return }
+
+        // A current non-alarm reading lets the next alarm open again.
+        guard condition == .alarm else {
+            if handledLiveAlarmDeviceID == linkedDeviceID { handledLiveAlarmDeviceID = nil }
+            return
+        }
+        guard handledLiveAlarmDeviceID != linkedDeviceID else { return }
+        handledLiveAlarmDeviceID = linkedDeviceID
+        guard !isAlarmPresented else { return }
         synchronizeFromLiveActivity()
         isAlarmPresented = true
     }

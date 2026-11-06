@@ -11,7 +11,13 @@ nonisolated enum KitchenGuidance {
 
     static func monitorMessage(for assessment: KitchenAssessment) -> String? {
         guard let condition = assessment.validCondition, condition != .normal else { return nil }
-        let reasons = assessment.reasons.map(\.displayName).joined(separator: ", ")
+        let reasons = assessment.reasons.map { reason in
+            switch (condition, reason) {
+            case (.warning2, .poorAirQuality): "Concerning Air Quality Detected"
+            case (.warning2, .highHeat): "Abnormally High Heat Detected"
+            default: reason.displayName
+            }
+        }.joined(separator: ", ")
         switch condition {
         case .normal: return nil
         case .warning1:

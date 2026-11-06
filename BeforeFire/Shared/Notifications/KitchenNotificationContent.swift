@@ -17,7 +17,7 @@ nonisolated enum KitchenNotificationContent {
         content.title = condition.displayName
         content.subtitle = ""
         content.body = KitchenGuidance.notificationBody(for: event.assessment) ?? ""
-        // Normal is informational. The provider must not send a Normal alert push.
+        // Normal is informational. Keep its mapped content silent.
         content.sound = condition == .normal ? nil : .default
         content.interruptionLevel = condition == .normal ? .passive : .active
         if condition == .normal { content.badge = nil }

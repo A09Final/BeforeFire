@@ -30,15 +30,31 @@ extension AppDelegate: UNUserNotificationCenterDelegate {
 
     nonisolated func userNotificationCenter(
         _ center: UNUserNotificationCenter,
-        didReceive response: UNNotificationResponse
-    ) async {
-        guard response.actionIdentifier == UNNotificationDefaultActionIdentifier else { return }
-        do {
-            let event = try KitchenPushEvent(userInfo: response.notification.request.content.userInfo)
-            await MainActor.run { PushNotificationManager.shared.receiveTappedEvent(event) }
-        } catch {
-            let payloadError = error as? KitchenPushPayloadError ?? .invalidPayload
-            await MainActor.run { PushNotificationManager.shared.reportPayloadError(payloadError) }
+        didReceive response: UNNotificationResponse,
+        withCompletionHandler completionHandler: @escaping @Sendable () -> Void
+    ) {
+        let result: Result<KitchenPushEvent, KitchenPushPayloadError>?
+        if response.actionIdentifier == UNNotificationDefaultActionIdentifier {
+            do {
+                result = .success(try KitchenPushEvent(userInfo: response.notification.request.content.userInfo))
+            } catch {
+                result = .failure(error as? KitchenPushPayloadError ?? .invalidPayload)
+            }
+        } else {
+            result = nil
+        }
+
+        Task { @MainActor in
+            // UIKit completes the app launch on this thread after a notification tap.
+            defer { completionHandler() }
+            switch result {
+            case .success(let event):
+                PushNotificationManager.shared.receiveTappedEvent(event)
+            case .failure(let error):
+                PushNotificationManager.shared.reportPayloadError(error)
+            case nil:
+                break
+            }
         }
     }
 }

@@ -147,33 +147,73 @@ struct PushNotificationTests {
 
     @Test(arguments: [
         "{}",
-        #"{"version":2,"type":"condition"}"#,
-        #"{"version":true,"type":"condition","event_id":"alarm-001"}"#,
-        #"{"version":2,"type":"condition","event_id":42}"#,
-        #"{"version":2,"type":"condition","event_id":null}"#,
-        #"{"version":2,"type":"condition","event_id":""}"#,
-        #"{"version":2,"type":"condition","event_id":" alarm-001 "}"#
+        #"{"alertId":42}"#,
+        #"{"alertId":null}"#,
+        #"{"alertId":""}"#,
+        #"{"alertId":" alarm-001 "}"#,
+        #"{"alertId":"alarm.001"}"#,
+        #"{"alertId":"alarm-001\n"}"#
     ])
     func malformedAlarmPayloadIsRejected(_ json: String) throws {
         var fields = try #require(JSONSerialization.jsonObject(with: Data(json.utf8)) as? [String: Any])
-        fields["device_id"] = "DAPUR_A1B2C3"
-        fields["assessment"] = ["condition": "alarm", "valid": true]
+        fields["deviceId"] = "DAPUR_A1B2C3"
+        fields["condition"] = "alarm"
+        fields["issuedAt"] = 1730700000
         #expect(throws: KitchenPushPayloadError.invalidPayload) {
             try KitchenPushEvent(userInfo: ["beforefire": fields])
         }
     }
 
-    @Test func unsupportedVersionAndTypeAreRejected() {
-        for fields in [
-            ["version": 3, "type": "condition", "event_id": "alarm-001"],
-            ["version": 2, "type": "unexpected", "event_id": "alarm-001"]
-        ] as [[String: Any]] {
-            #expect(throws: KitchenPushPayloadError.unsupportedEvent) {
-                var payload = fields
-                payload["device_id"] = "DAPUR_A1B2C3"
-                payload["assessment"] = ["condition": "alarm", "valid": true]
-                return try KitchenPushEvent(userInfo: ["beforefire": payload])
+    @Test(arguments: KitchenCondition.allCases)
+    func backendConditionIsPreservedWithoutInventingMetadata(_ condition: KitchenCondition) throws {
+        let event = try KitchenPushEvent(userInfo: ["beforefire": [
+            "deviceId": "DAPUR_A1B2C3", "alertId": "b3-000127",
+            "condition": condition.rawValue, "score": 87.5, "issuedAt": 1730700000
+        ]])
+        #expect(event.id == "b3-000127")
+        #expect(event.deviceID == "DAPUR_A1B2C3")
+        #expect(event.score == 87.5)
+        #expect(event.issuedAt == 1730700000)
+        #expect(event.assessment.validCondition == condition)
+        #expect(event.assessment.reasons.isEmpty)
+        #expect(event.assessment.ruleID == nil)
+        #expect(event.assessment.absenceDurationSeconds == nil)
+    }
+
+    @Test func scoreIsOptional() throws {
+        #expect(try alarmEvent(id: "alarm-001").score == nil)
+    }
+
+    @Test func malformedBackendFieldsAreRejected() {
+        let valid: [String: Any] = ["deviceId": "DAPUR_A1B2C3", "alertId": "alarm-001",
+                                    "condition": "alarm", "issuedAt": 1730700000]
+        let invalidFields: [(String, Any)] = [
+            ("deviceId", ""), ("deviceId", "another-device"), ("deviceId", "DAPUR_A1B2C3\n"),
+            ("condition", "future-level"), ("condition", NSNull()),
+            ("issuedAt", true), ("issuedAt", "1730700000"), ("issuedAt", 1.5),
+            ("score", "87.5"), ("score", true)
+        ]
+        for (key, value) in invalidFields {
+            var fields = valid
+            fields[key] = value
+            #expect(throws: KitchenPushPayloadError.invalidPayload) {
+                try KitchenPushEvent(userInfo: ["beforefire": fields])
             }
+        }
+        for key in ["deviceId", "alertId", "condition", "issuedAt"] {
+            var fields = valid
+            fields.removeValue(forKey: key)
+            #expect(throws: KitchenPushPayloadError.invalidPayload) {
+                try KitchenPushEvent(userInfo: ["beforefire": fields])
+            }
+        }
+    }
+
+    @Test func previousProposedPayloadIsRejected() {
+        #expect(throws: KitchenPushPayloadError.invalidPayload) {
+            try KitchenPushEvent(userInfo: ["beforefire": ["version": 2, "type": "condition",
+                "event_id": "alarm-001", "device_id": "DAPUR_A1B2C3",
+                "assessment": ["condition": "alarm", "valid": true]]])
         }
     }
 
@@ -182,7 +222,7 @@ struct PushNotificationTests {
             try KitchenPushEvent(userInfo: ["beforefire": "alarm"])
         }
         #expect(throws: KitchenPushPayloadError.invalidPayload) {
-            try alarmEvent(id: String(repeating: "a", count: 129))
+            try alarmEvent(id: String(repeating: "a", count: 65))
         }
     }
 
@@ -238,9 +278,8 @@ struct PushNotificationTests {
     }
 
     private func alarmEvent(id: String) throws -> KitchenPushEvent {
-        try KitchenPushEvent(userInfo: ["beforefire": ["version": 2, "type": "condition", "event_id": id,
-                                                       "device_id": "DAPUR_A1B2C3",
-                                                       "assessment": ["condition": "alarm", "valid": true]]])
+        try KitchenPushEvent(userInfo: ["beforefire": ["alertId": id, "deviceId": "DAPUR_A1B2C3",
+                                                       "condition": "alarm", "issuedAt": 1730700000]])
     }
 }
 

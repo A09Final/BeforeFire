@@ -12,16 +12,30 @@ struct ContentView: View {
     @State private var sensorBackend = SensorBackendSettingsModel.live()
     @State private var liveReadings = MonitorLiveReadingsModel.live()
     @State private var pushNotifications = PushNotificationManager.shared
-    @State private var notificationDetails: KitchenPushEvent?
+    @State private var navigationPath = NavigationPath()
     @Environment(\.scenePhase) private var scenePhase
 
+    private struct LiveReadingsTaskID: Equatable {
+        let link: SensorBackendLink?
+        let isActive: Bool
+    }
+
     var body: some View {
-        NavigationStack {
+        NavigationStack(path: $navigationPath) {
             MonitorView(viewModel: .mock)
         }
         .environment(alarmPreview)
         .environment(sensorBackend)
         .environment(liveReadings)
+        .task(id: LiveReadingsTaskID(link: sensorBackend.link, isActive: scenePhase == .active)) {
+            guard scenePhase == .active else { return }
+            await liveReadings.refreshRepeatedly(for: sensorBackend.link)
+        }
+        .onChange(of: liveReadings.lastUpdatedAt) { _, _ in
+            guard scenePhase == .active, let deviceID = sensorBackend.link?.deviceID,
+                  case .updated(let snapshot) = liveReadings.status else { return }
+            alarmPreview.handleLiveReading(snapshot, linkedDeviceID: deviceID)
+        }
         .onOpenURL { alarmPreview.open($0) }
         .onChange(of: alarmPreview.isAlarmPresented) { _, isPresented in
             if isPresented { alarmPreview.startLiveActivity() }
@@ -30,9 +44,6 @@ struct ContentView: View {
             AlarmPreviewFlowView()
                 .environment(alarmPreview)
                 .presentationBackground(.clear)
-        }
-        .sheet(item: $notificationDetails, onDismiss: presentPendingPushEvent) { event in
-            KitchenNotificationDetailsView(event: event)
         }
         .task(id: alarmPreview.alarmState.snoozeEndsAt) {
             guard let deadline = alarmPreview.alarmState.snoozeEndsAt else { return }
@@ -75,20 +86,16 @@ struct ContentView: View {
             return
         }
         switch event.assessment.validCondition {
-        case .normal:
-            // Normal does not create a CTA or clear a previous alarm locally.
+        case .normal, .warning1, .warning2:
+            // Keep an active alarm visible. Route the notification when it closes.
+            guard !alarmPreview.isAlarmPresented else { return }
             _ = pushNotifications.takePendingEvent()
-            notificationDetails = nil
+            navigationPath = NavigationPath()
         case .alarm:
-            if notificationDetails != nil {
-                notificationDetails = nil
-                return
-            }
             _ = pushNotifications.takePendingEvent()
             alarmPreview.openPushAlarm(event)
-        case .warning1, .warning2, nil:
-            guard !alarmPreview.isAlarmPresented else { return }
-            notificationDetails = pushNotifications.takePendingEvent()
+        case nil:
+            _ = pushNotifications.takePendingEvent()
         }
     }
 }

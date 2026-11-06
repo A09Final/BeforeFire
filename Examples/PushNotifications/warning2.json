@@ -1,26 +1,19 @@
 {
   "aps": {
     "alert": {
-      "title": "Dangerous",
-      "body": "Check your stove now. The stove area temperature is high, and no one has been detected for 8 minutes. Turn off the stove if you cannot stay nearby."
+      "title": "Kitchen warning",
+      "body": "The stove is hot and nobody is near it. Check the kitchen soon."
     },
     "sound": "default",
-    "mutable-content": 1
+    "thread-id": "DAPUR_A1B2C3",
+    "interruption-level": "time-sensitive",
+    "relevance-score": 0.8
   },
   "beforefire": {
-    "version": 2,
-    "type": "condition",
-    "event_id": "test-warning2-001",
-    "device_id": "DAPUR_A1B2C3",
-    "assessment": {
-      "condition": "warning2",
-      "valid": true,
-      "rule_id": 20,
-      "reasons": [
-        "no_presence",
-        "high_heat"
-      ],
-      "absence_duration_seconds": 480
-    }
+    "deviceId": "DAPUR_A1B2C3",
+    "alertId": "test-warning2-001",
+    "condition": "warning2",
+    "score": 65,
+    "issuedAt": 1793926800
   }
 }

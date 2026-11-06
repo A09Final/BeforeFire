@@ -3,17 +3,16 @@ import Foundation
 nonisolated enum KitchenPushPayloadError: Error, Equatable {
     case unrelatedNotification
     case invalidPayload
-    case unsupportedEvent
     case differentDevice
 }
 
+/// Reads the APNs payload sent by A09Final-Backend/internal/alert/notification.go.
 nonisolated struct KitchenPushEvent: Identifiable, Equatable, Sendable {
     let id: String
     let deviceID: String
     let assessment: KitchenAssessment
-
-    private static let supportedVersion = 2
-    private static let maximumIDBytes = 128
+    let score: Double?
+    let issuedAt: Int64
 
     init(userInfo: [AnyHashable: Any]) throws {
         guard let rawPayload = userInfo["beforefire"] else {
@@ -28,32 +27,28 @@ nonisolated struct KitchenPushEvent: Identifiable, Equatable, Sendable {
         } catch {
             throw KitchenPushPayloadError.invalidPayload
         }
-        guard payload.version == Self.supportedVersion, payload.type == "condition" else {
-            throw KitchenPushPayloadError.unsupportedEvent
-        }
-        guard Self.isValidID(payload.eventID), Self.isValidID(payload.deviceID) else {
+        guard Self.matches(payload.alertId, pattern: "[A-Za-z0-9_-]{1,64}"),
+              Self.matches(payload.deviceId, pattern: "DAPUR_(ALM_)?[0-9A-F]{6}") else {
             throw KitchenPushPayloadError.invalidPayload
         }
-        id = payload.eventID
-        deviceID = payload.deviceID
-        assessment = payload.assessment
+        id = payload.alertId
+        deviceID = payload.deviceId
+        score = payload.score
+        issuedAt = payload.issuedAt
+        // The backend validates condition. It does not send rule, reason, or duration metadata.
+        // Preserve that condition; never classify the score again in the app.
+        assessment = KitchenAssessment(condition: payload.condition, isValid: true)
     }
 
-    private static func isValidID(_ value: String) -> Bool {
-        !value.isEmpty && value.utf8.count <= maximumIDBytes && value == value.trimmingCharacters(in: .whitespacesAndNewlines)
+    private static func matches(_ value: String, pattern: String) -> Bool {
+        value.range(of: "\\A(?:" + pattern + ")\\z", options: .regularExpression) != nil
     }
 
     private struct Payload: Decodable {
-        let version: Int
-        let type: String
-        let eventID: String
-        let deviceID: String
-        let assessment: KitchenAssessment
-
-        enum CodingKeys: String, CodingKey {
-            case version, type, assessment
-            case eventID = "event_id"
-            case deviceID = "device_id"
-        }
+        let deviceId: String
+        let alertId: String
+        let condition: KitchenCondition
+        let score: Double?
+        let issuedAt: Int64
     }
 }
