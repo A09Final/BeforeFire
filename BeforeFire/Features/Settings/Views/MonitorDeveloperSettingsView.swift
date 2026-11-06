@@ -80,6 +80,15 @@ struct MonitorDeveloperSettingsView: View {
                 Toggle("Simulate sensor and alarm", isOn: $isDeviceSimulationEnabled)
                     .accessibilityIdentifier("settings.simulateSensorsToggle")
 
+                // Sensor Connection links the sensor automatically. This screen is a fallback, for example for a
+                // sensor that already has Wi-Fi or a network that blocks .local names.
+                NavigationLink {
+                    SensorBackendSettingsView()
+                } label: {
+                    Text(SensorBackendSettingsCopy.screenTitle)
+                }
+                .accessibilityIdentifier("settings.sensorData")
+
                 Button("Preview Alarm") {
                     alarmPreview.resumeIfExpired()
                     alarmPreview.isAlarmPresented = true
@@ -98,7 +107,7 @@ struct MonitorDeveloperSettingsView: View {
             } header: {
                 Text("Developer Settings")
             } footer: {
-                Text("Mock alarm only, with no sound or device connection. Slide to start the snooze countdown. Duration changes apply to the next snooze and reset to 60 seconds when the app restarts.")
+                Text("Preview only. Sound and vibration repeat while the alarm screen is open and the app is active. Silence stops both. Resume starts both again. No device command is sent. Duration changes apply to the next snooze and reset to 60 seconds when the app restarts.")
             }
 
             AlarmLiveActivitySettingsSection()
@@ -159,4 +168,6 @@ struct EmergencyContactView: View {
     @Previewable @State var mock = MonitorPreviewCondition.dangerous
     MonitorDeveloperSettingsView(isActionGuidanceVisible: $isTrue, previewCondition: $mock)
         .environment(AlarmPreviewModel())
+        .environment(SensorBackendSettingsModel.preview())
+        .environment(MonitorLiveReadingsModel.live())
 }

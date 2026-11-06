@@ -9,6 +9,8 @@ import SwiftUI
 
 struct ContentView: View {
     @State private var alarmPreview = AlarmPreviewModel()
+    @State private var sensorBackend = SensorBackendSettingsModel.live()
+    @State private var liveReadings = MonitorLiveReadingsModel.live()
     @Environment(\.scenePhase) private var scenePhase
 
     var body: some View {
@@ -16,6 +18,8 @@ struct ContentView: View {
             MonitorView(viewModel: .mock)
         }
         .environment(alarmPreview)
+        .environment(sensorBackend)
+        .environment(liveReadings)
         .onOpenURL { alarmPreview.open($0) }
         .onChange(of: alarmPreview.isAlarmPresented) { _, isPresented in
             if isPresented { alarmPreview.startLiveActivity() }
@@ -37,8 +41,9 @@ struct ContentView: View {
                 alarmPreview.resumeIfExpired()
             }
         }
-        .onChange(of: scenePhase) { _, phase in
+        .onChange(of: scenePhase, initial: true) { _, phase in
             if phase == .active { alarmPreview.synchronizeFromLiveActivity() }
+            alarmPreview.setApplicationActive(phase == .active)
         }
         .onReceive(NotificationCenter.default.publisher(for: AlarmActivityAttributes.previewStateDidChange)) { _ in
             alarmPreview.synchronizeFromLiveActivity()

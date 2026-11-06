@@ -1,5 +1,6 @@
 import Foundation
 import Observation
+import os
 
 /// Finds units of one type over Bluetooth and keeps the connection status for the connection screen.
 @MainActor
@@ -16,12 +17,17 @@ final class DeviceConnectionModel {
     let copy: DeviceConnectionCopy
     private(set) var scanStatus: ScanStatus = .idle
     private(set) var discoveredDevices: [DiscoveredDevice] = []
-    /// Kept in memory only. The app does not yet read the unit connection from HomeKit.
+    /// The last unit that joined Wi-Fi. The live model keeps it on the phone. It does not tell whether the unit is online now.
     private(set) var connectedDeviceName: String?
     var selectedDevice: DiscoveredDevice?
     let isSimulated: Bool
     @ObservationIgnored let connector: any DeviceProvisioningConnecting
     @ObservationIgnored let homeSetup: any DeviceHomeSetupPerforming
+    /// `nil` keeps the name only in memory, for simulated units and tests.
+    @ObservationIgnored private let connectedDeviceStore: (any ConnectedDeviceStoring)?
+    /// `nil` saves no setup codes, for simulated units and tests.
+    @ObservationIgnored private let setupCodeStore: (any DeviceSetupCodeStoring)?
+    @ObservationIgnored private let logger = Logger(subsystem: "BeforeFire", category: "DeviceConnection")
 
     @ObservationIgnored private let scanner: any DeviceScanning
     @ObservationIgnored private let scanDuration: Duration
@@ -34,7 +40,9 @@ final class DeviceConnectionModel {
         connector: any DeviceProvisioningConnecting,
         homeSetup: any DeviceHomeSetupPerforming,
         scanDuration: Duration = DeviceProvisioningConfiguration.scanDuration,
-        isSimulated: Bool = false
+        isSimulated: Bool = false,
+        connectedDeviceStore: (any ConnectedDeviceStoring)? = nil,
+        setupCodeStore: (any DeviceSetupCodeStoring)? = nil
     ) {
         self.kind = kind
         self.copy = DeviceConnectionCopy(kind: kind)
@@ -43,6 +51,9 @@ final class DeviceConnectionModel {
         self.homeSetup = homeSetup
         self.scanDuration = scanDuration
         self.isSimulated = isSimulated
+        self.connectedDeviceStore = connectedDeviceStore
+        self.setupCodeStore = setupCodeStore
+        connectedDeviceName = connectedDeviceStore?.connectedDeviceName(for: kind)
     }
 
     static func live(kind: ProvisioningDeviceKind) -> DeviceConnectionModel {
@@ -50,7 +61,9 @@ final class DeviceConnectionModel {
             kind: kind,
             scanner: BluetoothDeviceScanner(kind: kind),
             connector: ESPProvisionConnector(),
-            homeSetup: HomeKitDeviceHomeSetup()
+            homeSetup: HomeKitDeviceHomeSetup(),
+            connectedDeviceStore: UserDefaultsConnectedDeviceStore(),
+            setupCodeStore: KeychainDeviceSetupCodeStore()
         )
     }
 
@@ -109,8 +122,62 @@ final class DeviceConnectionModel {
         selectedDevice = device
     }
 
+    /// Records a unit that joined Wi-Fi. The setup sheet stays open, because the Home setup starts next.
+    /// The setup code is saved, so the next Wi-Fi setup of this unit needs no typed code.
+    func rememberJoined(_ device: DiscoveredDevice, setupCode: DeviceSetupCode? = nil) {
+        rememberUnit(named: device.name, setupCode: setupCode)
+    }
+
+    /// Records a unit by its name, for example a sensor that the app linked through the server without Bluetooth.
+    func rememberUnit(named deviceName: String, setupCode: DeviceSetupCode?) {
+        connectedDeviceName = deviceName
+        connectedDeviceStore?.saveConnectedDeviceName(deviceName, for: kind)
+        guard let setupCode else { return }
+        do {
+            try setupCodeStore?.saveSetupCode(setupCode, for: deviceName)
+        } catch {
+            // The setup still works. The user only types the code again next time.
+            logger.error("Saving the setup code failed: \(String(describing: error), privacy: .public)")
+        }
+    }
+
+    func savedSetupCode(for device: DiscoveredDevice) -> DeviceSetupCode? {
+        savedSetupCode(forDeviceNamed: device.name)
+    }
+
+    func savedSetupCode(forDeviceNamed deviceName: String) -> DeviceSetupCode? {
+        setupCodeStore?.setupCode(for: deviceName)
+    }
+
+    /// Removes a saved code that the unit did not accept, for example after the unit made a new setup code.
+    func forgetSetupCode(for device: DiscoveredDevice) {
+        forgetSetupCode(forDeviceNamed: device.name)
+    }
+
+    func forgetSetupCode(forDeviceNamed deviceName: String) {
+        removeSetupCode(for: deviceName)
+    }
+
+    /// Forgets the connected unit and its setup code. The unit keeps its Wi-Fi network.
+    func disconnect() {
+        if let connectedDeviceName {
+            removeSetupCode(for: connectedDeviceName)
+        }
+        connectedDeviceName = nil
+        connectedDeviceStore?.removeConnectedDeviceName(for: kind)
+    }
+
+    private func removeSetupCode(for deviceName: String) {
+        do {
+            try setupCodeStore?.removeSetupCode(for: deviceName)
+        } catch {
+            logger.error("Removing the setup code failed: \(String(describing: error), privacy: .public)")
+        }
+    }
+
+    /// Records the unit and closes the setup sheet.
     func markConnected(_ device: DiscoveredDevice) {
-        connectedDeviceName = device.name
+        rememberJoined(device)
         selectedDevice = nil
     }
 

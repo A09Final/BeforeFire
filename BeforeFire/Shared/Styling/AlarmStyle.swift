@@ -19,7 +19,7 @@ enum AlarmStyle {
     static let hubOfflineBottomSpacing: CGFloat = 20
     static let offlineMessageSpacing: CGFloat = 8
     // DESIGN: Leave room for the offline badge and both status lines above the snooze control.
-    static let offlineEmblemSize: CGFloat = 220
+    static let offlineEmblemSize: CGFloat = 120
     static let snoozedBackground = Color("Onyx")
     // DESIGN: The view uses dark appearance, so this resolves to Apple's dark system orange.
     static let snoozedAccent = Color(uiColor: .systemOrange)
@@ -31,16 +31,16 @@ enum AlarmStyle {
     static let countdownContentSpacing: CGFloat = 24
     static let countdownContentInset: CGFloat = 36
     static let snoozedTitleSize: CGFloat = 32
-    static let snoozedMessageSize: CGFloat = 20
     static let snoozedTitleSpacing: CGFloat = 24
-    static let snoozedMessageSpacing: CGFloat = 12
-    static let snoozedMessageOpacity: Double = 0.85
+    static let snoozedInstructionSpacing: CGFloat = 32
+    static let resumeButtonHeight: CGFloat = 64
+    static let resumeButtonTextSize: CGFloat = 20
 
     // DESIGN: The symbol and rings scale together. Text follows Dynamic Type.
-    static let emblemSize: CGFloat = 252
-    static let titleSize: CGFloat = 25
-    static let messageSize: CGFloat = 17
-    static let sliderTextSize: CGFloat = 24
+    static let emblemSize: CGFloat = 140
+    static let titleSize: CGFloat = 30
+    static let alarmHeadingSize: CGFloat = 48
+    static let messageSize: CGFloat = 21
     static let horizontalInset: CGFloat = 24
     static let topInset: CGFloat = 32
     static let bottomInset: CGFloat = 76
@@ -49,11 +49,11 @@ enum AlarmStyle {
     static let minimumSliderSpacing: CGFloat = 40
     static let maximumContentWidth: CGFloat = 440
 
-    // DESIGN: Keep the large Clock-style proportions with the sketch's red and white colors.
-    static let sliderHeight: CGFloat = 104
+    static let snoozeSliderHeight: CGFloat = 64
+    static let snoozeSliderTextSize: CGFloat = 20
     static let thumbInset: CGFloat = 3
-    static let thumbSize: CGFloat = 98
-    static let snoozeIconSize: CGFloat = 35
+    static let thumbSize: CGFloat = 58
+    static let snoozeIconSize: CGFloat = 24
     static let sliderLabelSpacing: CGFloat = 10
     static let sliderLabelTrailingInset: CGFloat = 20
     static let sliderLabelMinimumScale: CGFloat = 0.7
