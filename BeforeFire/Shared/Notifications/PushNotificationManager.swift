@@ -116,8 +116,6 @@ final class PushNotificationManager {
         registrationStatus = .registered
         errorMessage = nil
         logger.info("APNs registration succeeded. The device token is not logged.")
-        // TODO: Send this registration to an authenticated provider after its endpoint,
-        // household association, and APNs environment contract are agreed. Do not bundle the .p8 key.
     }
 
     func didFailToRegister(error: Error) {

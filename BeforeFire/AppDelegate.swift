@@ -12,7 +12,11 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
     }
 
     func application(_ application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
-        PushNotificationManager.shared.didRegister(deviceToken: deviceToken)
+        let notifications = PushNotificationManager.shared
+        notifications.didRegister(deviceToken: deviceToken)
+        if let registration = notifications.deviceRegistration {
+            PushTokenRegistrar.shared.updateToken(registration.token)
+        }
     }
 
     func application(_ application: UIApplication, didFailToRegisterForRemoteNotificationsWithError error: Error) {

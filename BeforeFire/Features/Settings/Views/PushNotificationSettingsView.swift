@@ -54,7 +54,7 @@ struct PushNotificationSettingsView: View {
                 .disabled(notifications.deviceRegistration == nil)
                 .accessibilityIdentifier("notifications.copyToken")
 
-                Text("Use the token with com.ibnu.BeforeFire and the APNs environment from the signing profile. The token is not written to logs. Server registration is not connected yet.")
+                Text("Use the displayed Bundle ID and the APNs environment from the signing profile. The app sends the token to the linked sensor through the server.")
                     .font(.footnote)
                     .foregroundStyle(.secondary)
 
