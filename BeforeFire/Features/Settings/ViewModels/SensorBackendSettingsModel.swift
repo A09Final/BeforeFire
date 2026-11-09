@@ -62,6 +62,8 @@ final class SensorBackendSettingsModel {
             throw SensorBackendLinkIssue.storageFailed
         }
         link = newLink
+        // Register a push token that the system delivered before the sensor was linked.
+        PushTokenRegistrar.shared.register()
     }
 
     func remove() throws {
