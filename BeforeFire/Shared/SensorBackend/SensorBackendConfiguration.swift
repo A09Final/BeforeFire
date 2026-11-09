@@ -5,6 +5,10 @@ nonisolated enum SensorBackendConfiguration {
     /// The first line of the read key message. Must match `readKeyVersion` in `internal/telemetry/readkey.go`.
     static let readKeyVersion = "beforefire-read-v1"
 
+    /// The first line of the signed command text. Must match `signingVersion` in
+    /// `internal/command/request.go` and `hitungTanda()` in the firmware (`Sensor/KirimBackend.cpp`).
+    static let commandSigningVersion = "beforefire-cmd-v1"
+
     /// The server that the app uses when the user did not type an address. The `.local` name of the Mac that runs
     /// BeforeFire-Backend stays the same when the Mac changes its IP address or Wi-Fi network.
     /// Must use the same host as `BACKEND_MQTT_URI` in the firmware (`Sensor/KirimBackend.cpp`).
@@ -40,4 +44,13 @@ nonisolated enum SensorBackendConfiguration {
     static func readingsPath(deviceID: String) -> String {
         "v1/devices/\(deviceID)/readings"
     }
+
+    /// Sends a signed command to the sensor through the backend.
+    static func commandsPath(deviceID: String) -> String {
+        "v1/devices/\(deviceID)/commands"
+    }
+
+    /// The backend waits for the sensor's ack (up to `COMMAND_ANSWER_TIMEOUT`, default 8s),
+    /// so the app must allow more than that before it gives up.
+    static let commandTimeout: TimeInterval = 12
 }

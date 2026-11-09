@@ -37,6 +37,10 @@ struct SensorBackendLink: Equatable, Sendable {
         backendURL.appending(path: SensorBackendConfiguration.readingsPath(deviceID: deviceID))
     }
 
+    var commandsURL: URL {
+        backendURL.appending(path: SensorBackendConfiguration.commandsPath(deviceID: deviceID))
+    }
+
     /// The address in the short form that the user typed, for example `http://192.168.1.10:8080`.
     var backendAddress: String {
         backendURL.absoluteString
