@@ -5,7 +5,7 @@ struct AlarmSnoozeSlider: View {
 
     @GestureState private var dragOffset: CGFloat = 0
     @State private var hasCompletedSlide = false
-    @ScaledMetric(relativeTo: .body) private var textSize = AlarmStyle.sliderTextSize
+    @ScaledMetric(relativeTo: .body) private var textSize = AlarmStyle.snoozeSliderTextSize
     private static let trackCoordinateSpace = "alarm.snoozeTrack"
 
     var body: some View {
@@ -55,7 +55,7 @@ struct AlarmSnoozeSlider: View {
             }
             .coordinateSpace(name: Self.trackCoordinateSpace)
         }
-        .frame(height: AlarmStyle.sliderHeight)
+        .frame(height: AlarmStyle.snoozeSliderHeight)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("Silence Phone Alarm")
         .accessibilityHint("Starts the snooze preview countdown. No alarm command is sent.")

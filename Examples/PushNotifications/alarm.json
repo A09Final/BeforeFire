@@ -1,0 +1,19 @@
+{
+  "aps": {
+    "alert": {
+      "title": "Check your kitchen now",
+      "body": "Danger near the stove. Go to the kitchen now."
+    },
+    "sound": "default",
+    "thread-id": "DAPUR_A1B2C3",
+    "interruption-level": "time-sensitive",
+    "relevance-score": 1.0
+  },
+  "beforefire": {
+    "deviceId": "DAPUR_A1B2C3",
+    "alertId": "test-alarm-001",
+    "condition": "alarm",
+    "score": 87.5,
+    "issuedAt": 1793926800
+  }
+}

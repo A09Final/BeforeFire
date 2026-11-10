@@ -2,12 +2,17 @@ import SwiftUI
 
 struct MonitorView: View {
     @State private var viewModel: MonitorViewModel
+    @Environment(MonitorLiveReadingsModel.self) private var liveReadings
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @ScaledMetric(relativeTo: .title2) private var statusHeadingSize = MonitorStyle.statusHeadingSize
     @ScaledMetric(relativeTo: .largeTitle) private var statusValueSize = MonitorStyle.statusValueSize
     @ScaledMetric(relativeTo: .subheadline) private var connectionSize = MonitorStyle.connectionSize
     @ScaledMetric(relativeTo: .body) private var actionGuidanceTextSize = MonitorStyle.actionGuidanceTextSize
     @ScaledMetric(relativeTo: .body) private var minimumCardHeight = MonitorStyle.cardHeight
+
+    private enum Destination: Hashable { case settings }
+
+    private let readingsFormatter = MonitorReadingsFormatter()
 
     init(viewModel: MonitorViewModel) {
         _viewModel = State(initialValue: viewModel)
@@ -25,6 +30,15 @@ struct MonitorView: View {
         .background(MonitorStyle.background.ignoresSafeArea())
         .preferredColorScheme(.dark)
         .toolbar(.hidden, for: .navigationBar)
+        .navigationDestination(for: Destination.self) { _ in
+            MonitorDeveloperSettingsView(
+                isActionGuidanceVisible: $viewModel.isActionGuidanceVisible,
+                previewCondition: $viewModel.previewCondition
+            )
+        }
+        .onChange(of: liveReadings.status, initial: true) { _, status in
+            viewModel.show(readingsFormatter.content(for: status) ?? MonitorViewModel.mockContent)
+        }
     }
 
     private func pageContent(expandsGrid: Bool) -> some View {
@@ -64,7 +78,7 @@ struct MonitorView: View {
         LazyVGrid(columns: columns, spacing: MonitorStyle.spacing) {
             ForEach(viewModel.readings) { reading in
                 MonitorReadingCard(reading: reading,
-                                   alertCondition: viewModel.readingAlertCondition,
+                                   alertCondition: viewModel.readingAlertCondition(for: reading.id),
                                    height: cardHeight)
             }
         }
@@ -86,7 +100,7 @@ struct MonitorView: View {
                 .font(.system(size: statusValueSize, weight: MonitorStyle.valueWeight))
                 .fontWidth(MonitorStyle.fontWidth)
                 .tracking(MonitorStyle.statusTracking)
-                .foregroundStyle(viewModel.isAlarmPreview ? MonitorStyle.alarmText : MonitorStyle.primaryText)
+                .foregroundStyle(viewModel.showsAlarmStatus ? MonitorStyle.alarmText : MonitorStyle.primaryText)
                 .lineLimit(1)
                 .minimumScaleFactor(MonitorStyle.statusMinimumScaleFactor)
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -101,12 +115,7 @@ struct MonitorView: View {
     }
 
     private var settingsLink: some View {
-        NavigationLink {
-            MonitorDeveloperSettingsView(
-                isActionGuidanceVisible: $viewModel.isActionGuidanceVisible,
-                previewCondition: $viewModel.previewCondition
-            )
-        } label: {
+        NavigationLink(value: Destination.settings) {
             Image(systemName: "gearshape")
                 .font(.system(size: MonitorStyle.settingsIconSize))
                 .frame(width: MonitorStyle.settingsButtonSize, height: MonitorStyle.settingsButtonSize)
@@ -153,6 +162,8 @@ struct MonitorView: View {
 #Preview("Monitoring") {
     NavigationStack { MonitorView(viewModel: .mock) }
         .environment(AlarmPreviewModel())
+        .environment(SensorBackendSettingsModel.preview())
+        .environment(MonitorLiveReadingsModel.live())
 }
 
 #Preview("Large Text") {
@@ -161,6 +172,8 @@ struct MonitorView: View {
             .environment(\.dynamicTypeSize, .accessibility3)
     }
     .environment(AlarmPreviewModel())
+    .environment(SensorBackendSettingsModel.preview())
+    .environment(MonitorLiveReadingsModel.live())
 }
 
 #Preview("Dangerous") {
@@ -173,4 +186,6 @@ struct MonitorView: View {
         }())
     }
     .environment(AlarmPreviewModel())
+    .environment(SensorBackendSettingsModel.preview())
+    .environment(MonitorLiveReadingsModel.live())
 }

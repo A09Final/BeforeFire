@@ -32,22 +32,40 @@ final class DeviceWiFiSetupModel {
     private(set) var networks: [DeviceWiFiNetwork] = []
     /// `nil` on the password step means that the user types the network name.
     private(set) var selectedNetwork: DeviceWiFiNetwork?
+    /// `true` while the app connects with the saved setup code. The screen then shows no setup code field.
+    private(set) var isUsingSavedSetupCode = false
 
     @ObservationIgnored private let connector: any DeviceProvisioningConnecting
     @ObservationIgnored private let homeSetup: any DeviceHomeSetupPerforming
+    @ObservationIgnored private let startsHomeSetupAfterWiFi: Bool
     @ObservationIgnored private var session: (any DeviceProvisioningSession)?
     @ObservationIgnored private var activityTask: Task<Void, Never>?
+    /// The setup code that opened the secure session. The unit accepts only its own code, so this code is correct.
+    @ObservationIgnored private var acceptedSetupCode: DeviceSetupCode?
+    /// Called one time when the unit joins Wi-Fi, with the setup code that the unit accepted.
+    @ObservationIgnored private let onWiFiJoined: ((DiscoveredDevice, DeviceSetupCode) -> Void)?
+    /// The code from an earlier setup of this unit. It is used one time; after a failure the user types the code.
+    @ObservationIgnored private var savedSetupCode: DeviceSetupCode?
+    @ObservationIgnored private let onSavedSetupCodeRejected: ((DiscoveredDevice) -> Void)?
 
     init(
         device: DiscoveredDevice,
         kind: ProvisioningDeviceKind,
         connector: any DeviceProvisioningConnecting,
-        homeSetup: any DeviceHomeSetupPerforming
+        homeSetup: any DeviceHomeSetupPerforming,
+        savedSetupCode: DeviceSetupCode? = nil,
+        onWiFiJoined: ((DiscoveredDevice, DeviceSetupCode) -> Void)? = nil,
+        onSavedSetupCodeRejected: ((DiscoveredDevice) -> Void)? = nil,
+        startsHomeSetupAfterWiFi: Bool = true
     ) {
         self.device = device
         self.copy = DeviceConnectionCopy(kind: kind)
         self.connector = connector
         self.homeSetup = homeSetup
+        self.startsHomeSetupAfterWiFi = startsHomeSetupAfterWiFi
+        self.savedSetupCode = savedSetupCode
+        self.onWiFiJoined = onWiFiJoined
+        self.onSavedSetupCodeRejected = onSavedSetupCodeRejected
     }
 
     var isBusy: Bool {
@@ -90,6 +108,15 @@ final class DeviceWiFiSetupModel {
         !isBusy && (step == .networks || step == .password)
     }
 
+    /// Connects at once with the saved setup code, so the user goes to the Wi-Fi list with no typed code.
+    /// It does nothing when no code is saved.
+    func connectWithSavedSetupCode() {
+        guard step == .setupCode, !isBusy, let savedSetupCode else { return }
+        isUsingSavedSetupCode = true
+        setupCode = savedSetupCode.value
+        connect()
+    }
+
     func connect() {
         guard canConnect else { return }
         let validSetupCode: DeviceSetupCode
@@ -101,12 +128,20 @@ final class DeviceWiFiSetupModel {
         }
 
         perform(.connecting) { [weak self, connector, device] in
-            let session = try await connector.connect(to: device, setupCode: validSetupCode)
+            let session: any DeviceProvisioningSession
+            do {
+                session = try await connector.connect(to: device, setupCode: validSetupCode)
+            } catch {
+                self?.endSavedSetupCodeAttempt(after: error)
+                throw error
+            }
             guard let self, !Task.isCancelled else {
                 session.disconnect()
                 return
             }
             self.session = session
+            self.acceptedSetupCode = validSetupCode
+            self.isUsingSavedSetupCode = false
             self.step = .networks
             try await self.loadNetworks(using: session)
         }
@@ -151,8 +186,13 @@ final class DeviceWiFiSetupModel {
             self.endSession()
             self.password = ""
             self.step = .connected(wiFiName: credentials.wiFiName)
-            // The Home setup starts at once. The firmware restarts while the user scans the HomeKit code.
-            try await self.addDeviceToHome()
+            if let acceptedSetupCode = self.acceptedSetupCode {
+                self.onWiFiJoined?(self.device, acceptedSetupCode)
+            }
+            // Onboarding ends at Wi-Fi. Settings retains its existing Home setup flow.
+            if self.startsHomeSetupAfterWiFi {
+                try await self.addDeviceToHome()
+            }
         }
     }
 
@@ -184,6 +224,18 @@ final class DeviceWiFiSetupModel {
         cancelActivity()
         endSession()
         password = ""
+    }
+
+    /// Shows the setup code field after a failed attempt with the saved code. A rejected code is removed,
+    /// because the unit has a different code now, for example after `@R` in the firmware.
+    private func endSavedSetupCodeAttempt(after error: Error) {
+        guard isUsingSavedSetupCode else { return }
+        isUsingSavedSetupCode = false
+        savedSetupCode = nil
+        if (error as? DeviceProvisioningError) == .setupCodeRejected {
+            setupCode = ""
+            onSavedSetupCodeRejected?(device)
+        }
     }
 
     private func showPasswordStep(for network: DeviceWiFiNetwork?) {

@@ -69,6 +69,33 @@ struct DeviceConnectionCopy {
     }
     let connectToDeviceButton = "Connect"
     var connectingToDevice: String { "Connecting to \(theUnit)…" }
+    let usingSavedSetupCode = "The app uses the setup code from the last setup of this unit."
+
+    // MARK: Sensors on Wi-Fi
+
+    let networkSensorsHeader = "Sensors on Wi-Fi"
+    let networkSensorsFooter = "These sensors already have Wi-Fi. Tap a sensor and enter its setup code. No Wi-Fi setup is necessary."
+    let searchingNetworkSensors = "Searching on the server…"
+    let noNetworkSensors = "No sensor on Wi-Fi was found. Make sure that the sensor is on, and that your phone is on the same Wi-Fi network as the server."
+    let linkSensorButton = "Link Sensor"
+    let linkingSensor = "Checking the setup code…"
+    let linkSensorFooter = "The app checks the setup code with the server. The sensor keeps its Wi-Fi network."
+    let usingSavedSetupCodeToLink = "The app uses the saved setup code of this sensor."
+
+    // MARK: Saved units
+
+    let savedDeviceLabel = "Saved"
+    var disconnectButton: String { "Disconnect \(unitName)" }
+    var disconnectConfirmationTitle: String { "Disconnect \(theUnit)?" }
+    var disconnectConfirmButton: String { "Disconnect" }
+    var disconnectConfirmationMessage: String {
+        switch kind {
+        case .sensor:
+            "The app forgets the sensor and its setup code, and the Monitor screen shows example values. The sensor keeps its Wi-Fi network and stays in the Home app."
+        case .alarm:
+            "The app forgets the alarm and its setup code. The alarm keeps its Wi-Fi network and stays in the Home app."
+        }
+    }
 
     let networksHeader = "Choose a Wi-Fi Network"
     var networksFooter: String {

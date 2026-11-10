@@ -22,7 +22,7 @@ struct AlarmLiveActivitySettingsSection: View {
         } header: {
             Text("Developer Settings · Live Activity")
         } footer: {
-            Text("The Live Activity starts when you open Preview Alarm. Snooze starts a local preview countdown. No sound or device command is sent. End the Live Activity here when finished.")
+            Text("The Live Activity starts when you open Preview Alarm. Snooze stops preview sound and vibration. Feedback plays only while the app is active and the alarm screen is open. No device command is sent. End the Live Activity here when finished.")
         }
         .onDisappear { endTask?.cancel() }
     }

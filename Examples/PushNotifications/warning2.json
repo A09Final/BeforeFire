@@ -1,0 +1,19 @@
+{
+  "aps": {
+    "alert": {
+      "title": "Kitchen warning",
+      "body": "The stove is hot and nobody is near it. Check the kitchen soon."
+    },
+    "sound": "default",
+    "thread-id": "DAPUR_A1B2C3",
+    "interruption-level": "time-sensitive",
+    "relevance-score": 0.8
+  },
+  "beforefire": {
+    "deviceId": "DAPUR_A1B2C3",
+    "alertId": "test-warning2-001",
+    "condition": "warning2",
+    "score": 65,
+    "issuedAt": 1793926800
+  }
+}

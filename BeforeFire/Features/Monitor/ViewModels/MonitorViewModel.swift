@@ -1,11 +1,14 @@
 import Foundation
 
 struct MonitorViewModel {
-    let connectionTitle: String
-    let statusValue: String
+    private(set) var connectionTitle: String
+    private(set) var statusValue: String
     let statusHeading = "Your Kitchen Is"
 
-    private let originalReadings: [MonitorReading]
+    private var originalReadings: [MonitorReading]
+    /// `true` when the live sensor values report the alarm condition.
+    private var isLiveDangerous = false
+    private var liveAssessment: KitchenAssessment?
     private let previewStoveTemperatureC = 180
     private let previewAbsenceDurationSeconds = 240
 
@@ -19,10 +22,26 @@ struct MonitorViewModel {
         self.originalReadings = readings
     }
 
+    init(content: MonitorContent) {
+        self.init(connectionTitle: content.connectionTitle, statusValue: content.statusValue, readings: content.readings)
+        isLiveDangerous = content.isDangerous
+        liveAssessment = content.assessment
+    }
+
+    /// Shows new status and sensor values. The developer preview still replaces them while it is on.
+    mutating func show(_ content: MonitorContent) {
+        connectionTitle = content.connectionTitle
+        statusValue = content.statusValue
+        originalReadings = content.readings
+        isLiveDangerous = content.isDangerous
+        liveAssessment = content.assessment
+    }
+
     private var previewAirQualityDescription: String {
         switch previewCondition {
+        case .normal: "Good"
         case .unsafe: "Lightly Polluted"
-        case .dangerous: "Heavily Polluted"
+        case .dangerous, .alarm: "Heavily Polluted"
         }
     }
 
@@ -30,6 +49,7 @@ struct MonitorViewModel {
         guard isActionGuidanceVisible else {
             return originalReadings
         }
+        if previewCondition == .normal { return Self.mockContent.readings }
 
         return originalReadings.map { reading in
             switch reading.id {
@@ -79,21 +99,51 @@ struct MonitorViewModel {
     }
 
     var actionGuidance: String? {
-        isActionGuidanceVisible ? previewCondition.actionGuidance : nil
+        isActionGuidanceVisible ? previewCondition.actionGuidance : liveAssessment.flatMap(KitchenGuidance.monitorMessage)
     }
 
     var isAlarmPreview: Bool {
-        isActionGuidanceVisible && previewCondition == .dangerous
+        isActionGuidanceVisible && previewCondition == .alarm
+    }
+
+    /// Shows the status in the alarm color for the preview or for a live alarm condition.
+    var showsAlarmStatus: Bool {
+        if isActionGuidanceVisible { return previewCondition == .dangerous || previewCondition == .alarm }
+        return liveAssessment?.validCondition == .warning2 || isLiveDangerous
     }
 
     var readingAlertCondition: MonitorPreviewCondition? {
-        // The indicator shows the preview condition, not a sensor threshold.
-        isActionGuidanceVisible ? previewCondition : nil
+        switch currentAssessment?.validCondition {
+        case .warning1: .unsafe
+        case .warning2: .dangerous
+        case .alarm: .alarm
+        case .normal, nil: nil
+        }
     }
 
-    static let mock = MonitorViewModel(
+    func readingAlertCondition(for kind: MonitorReading.Kind) -> MonitorPreviewCondition? {
+        let reason: KitchenConditionReason
+        switch kind {
+        case .stoveHeat: reason = .highHeat
+        case .airQuality: reason = .poorAirQuality
+        case .presence: reason = .noPresence
+        default: return nil
+        }
+        guard currentAssessment?.reasons.contains(reason) == true else { return nil }
+        return readingAlertCondition
+    }
+
+    private var currentAssessment: KitchenAssessment? {
+        isActionGuidanceVisible ? previewCondition.assessment : liveAssessment
+    }
+
+    static let mock = MonitorViewModel(content: mockContent)
+
+    /// Example values. The Monitor screen shows them when no sensor is linked.
+    static let mockContent = MonitorContent(
         connectionTitle: "Hub connected",
-        statusValue: "Safe",
+        statusValue: "Normal",
+        isDangerous: false,
         readings: [
             MonitorReading(
                 id: .stoveHeat,

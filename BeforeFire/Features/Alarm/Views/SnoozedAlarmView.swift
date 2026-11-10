@@ -2,13 +2,14 @@ import SwiftUI
 
 struct SnoozedAlarmView: View {
     let state: AlarmActivityAttributes.ContentState
+    var guidance: AlarmGuidance = .mock
     let onResume: () -> Void
 
     @Environment(\.dismiss) private var dismiss
     @ScaledMetric(relativeTo: .largeTitle) private var countdownSize = AlarmStyle.countdownTextSize
     @ScaledMetric(relativeTo: .title) private var headingSize = AlarmStyle.snoozedTitleSize
-    @ScaledMetric(relativeTo: .body) private var messageSize = AlarmStyle.snoozedMessageSize
-    @ScaledMetric(relativeTo: .body) private var buttonSize = AlarmStyle.sliderTextSize
+    @ScaledMetric(relativeTo: .title2) private var instructionSize = AlarmStyle.titleSize
+    @ScaledMetric(relativeTo: .body) private var buttonSize = AlarmStyle.resumeButtonTextSize
 
     var body: some View {
         GeometryReader { geometry in
@@ -18,52 +19,62 @@ struct SnoozedAlarmView: View {
                         .frame(width: min(AlarmStyle.countdownDiameter, geometry.size.width - AlarmStyle.horizontalInset * 2),
                                height: min(AlarmStyle.countdownDiameter, geometry.size.width - AlarmStyle.horizontalInset * 2))
 
-                    Text("Alarm silenced")
+                    Text(KitchenGuidance.snoozedAlarmStatus)
                         .font(.system(size: headingSize, weight: .bold))
                         .foregroundStyle(AlarmStyle.snoozedAccent)
                         .padding(.top, AlarmStyle.snoozedTitleSpacing)
                         .accessibilityAddTraits(.isHeader)
 
-                    Text("Check your kitchen now.")
-                        .font(.system(size: messageSize))
-                        .foregroundStyle(AlarmStyle.foreground.opacity(AlarmStyle.snoozedMessageOpacity))
-                        .padding(.top, AlarmStyle.snoozedMessageSpacing)
-
-                    Spacer(minLength: AlarmStyle.minimumSliderSpacing)
-
-                    Button(action: onResume) {
-                        Text("Resume Alarm")
-                            .font(.system(size: buttonSize, weight: .medium))
-                            .foregroundStyle(AlarmStyle.foreground)
-                            .frame(maxWidth: .infinity, minHeight: AlarmStyle.sliderHeight)
-                            .contentShape(Capsule())
-                    }
-                    .buttonStyle(.plain)
-                    .glassEffect(.regular.interactive(), in: .capsule)
-                    .overlay {
-                        Capsule().strokeBorder(
-                            AlarmStyle.foreground.opacity(AlarmStyle.sliderBorderOpacity),
-                            lineWidth: AlarmStyle.sliderBorderWidth
-                        )
-                        .allowsHitTesting(false)
-                    }
-                    .accessibilityIdentifier("alarm.resume")
+                    Text(guidance.snoozedInstruction)
+                        .font(.system(size: instructionSize, weight: .bold))
+                        .foregroundStyle(AlarmStyle.foreground)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .padding(.top, AlarmStyle.snoozedInstructionSpacing)
+                        .accessibilityIdentifier("alarm.snoozedInstruction")
                 }
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, AlarmStyle.horizontalInset)
                 .padding(.top, AlarmStyle.topInset)
-                .padding(.bottom, AlarmStyle.bottomInset)
                 .frame(maxWidth: AlarmStyle.maximumContentWidth)
-                .frame(minHeight: geometry.size.height)
+                .frame(minHeight: geometry.size.height, alignment: .top)
                 .frame(maxWidth: .infinity)
             }
             .scrollBounceBehavior(.basedOnSize)
             .scrollIndicators(.hidden)
+            .accessibilityIdentifier("alarm.snoozed")
+        }
+        .safeAreaInset(edge: .bottom, spacing: 0) {
+            resumeButton
+                .padding(.horizontal, AlarmStyle.horizontalInset)
+                .frame(maxWidth: AlarmStyle.maximumContentWidth)
+                .padding(.top, AlarmStyle.minimumSliderSpacing)
+                .padding(.bottom, AlarmStyle.bottomInset)
+                .frame(maxWidth: .infinity)
+                .accessibilitySortPriority(-1)
         }
         .background(AlarmStyle.snoozedBackground.ignoresSafeArea())
         .preferredColorScheme(.dark)
-        .accessibilityIdentifier("alarm.snoozed")
         .accessibilityAction(.escape) { dismiss() }
+    }
+
+    private var resumeButton: some View {
+        Button(action: onResume) {
+            Text("Resume Alarm")
+                .font(.system(size: buttonSize, weight: .medium))
+                .foregroundStyle(AlarmStyle.foreground)
+                .frame(maxWidth: .infinity, minHeight: AlarmStyle.resumeButtonHeight)
+                .contentShape(Capsule())
+        }
+        .buttonStyle(.plain)
+        .glassEffect(.regular.interactive(), in: .capsule)
+        .overlay {
+            Capsule().strokeBorder(
+                AlarmStyle.foreground.opacity(AlarmStyle.sliderBorderOpacity),
+                lineWidth: AlarmStyle.sliderBorderWidth
+            )
+            .allowsHitTesting(false)
+        }
+        .accessibilityIdentifier("alarm.resume")
     }
 
     private var countdown: some View {

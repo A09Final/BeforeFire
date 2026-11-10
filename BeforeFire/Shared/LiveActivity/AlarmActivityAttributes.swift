@@ -5,6 +5,7 @@ nonisolated struct AlarmActivityAttributes: ActivityAttributes {
     struct ContentState: Codable, Hashable {
         var isSnoozed = false
         var isHubDisconnected: Bool?
+        var pushEventID: String?
         var isHubOffline: Bool { isHubDisconnected ?? false }
         // Optional fields keep existing preview activities decodable after an app update.
         var snoozeEndsAt: Date?
@@ -34,6 +35,14 @@ nonisolated struct AlarmActivityAttributes: ActivityAttributes {
             return result
         }
 
+        func presentingPushEvent(_ eventID: String) -> Self {
+            // A repeated tap must not reset this event's snooze countdown.
+            guard pushEventID != eventID else { return self }
+            var result = resumed()
+            result.pushEventID = eventID
+            return result
+        }
+
         func remainingSeconds(at date: Date) -> Int {
             guard isSnoozed, let snoozeEndsAt else { return 0 }
             return min(durationSeconds, max(0, Int(ceil(snoozeEndsAt.timeIntervalSince(date)))))
@@ -50,21 +59,35 @@ nonisolated struct AlarmActivityAttributes: ActivityAttributes {
         }
 
         var title: String {
-            isSnoozed ? "Alarm silenced" : "Check your kitchen now"
+            isSnoozed ? KitchenGuidance.snoozedAlarmStatus : KitchenGuidance.alarmInstruction
         }
 
         var message: String {
             if isHubOffline {
                 return "\(AlarmActivityAttributes.lastKnownAlarmStatus)\n\(AlarmActivityAttributes.liveStatusUnavailableMessage)"
             }
-            return isSnoozed ? "Preview only. No alarm command was sent." : "Check the stove and surrounding area."
+            return isSnoozed ? KitchenGuidance.snoozedInstruction : KitchenGuidance.alarmSupportingInstruction
         }
 
-        var status: String { isHubOffline ? AlarmActivityAttributes.hubOfflineLabel : (isSnoozed ? "Silenced" : "Alarm active") }
+        var status: String { isHubOffline ? AlarmActivityAttributes.hubOfflineLabel : (isSnoozed ? KitchenGuidance.snoozedAlarmStatus : KitchenGuidance.activeAlarmStatus) }
         var symbol: String { isHubOffline ? "wifi.slash" : (isSnoozed ? "bell.slash.fill" : "light.beacon.max") }
     }
 
     let previewID: UUID
+    var sensorDeviceID: String?
+    var remoteEventID: String?
+    var alarmIssuedAt: Int64?
+    var alarmDate: Date? { alarmIssuedAt.map { Date(timeIntervalSince1970: TimeInterval($0)) } }
+
+    var openURL: URL {
+        guard let sensorDeviceID else { return Self.previewURL }
+        var url = URLComponents(url: Self.previewURL, resolvingAgainstBaseURL: false)
+        url?.queryItems = [
+            URLQueryItem(name: "deviceId", value: sensorDeviceID),
+            URLQueryItem(name: "activityId", value: previewID.uuidString)
+        ]
+        return url?.url ?? Self.previewURL
+    }
     static let hubOfflineLabel = "Hub offline"
     static let lastKnownAlarmStatus = "Last known status: Alarm active"
     static let liveStatusUnavailableMessage = "Live status unavailable"

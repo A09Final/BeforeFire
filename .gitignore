@@ -12,6 +12,9 @@ xcuserdata/
 *.xcscmblueprint
 *.xccheckout
 
+# Xcode project files that are not already tracked
+*.pbxproj
+
 # Xcode build output
 DerivedData/
 build/
