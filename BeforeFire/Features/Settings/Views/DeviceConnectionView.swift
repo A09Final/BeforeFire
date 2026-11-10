@@ -6,17 +6,24 @@ import os
 struct DeviceConnectionView: View {
     @State private var model: DeviceConnectionModel
     @Environment(SensorBackendSettingsModel.self) private var sensorBackend
+    @State private var onboardingSetup: DeviceWiFiSetupModel?
+    @State private var isWiFiPresented = false
+    private let onSetupComplete: (() -> Void)?
+    private var isOnboarding: Bool { onSetupComplete != nil }
+    private var hasJoinedWiFi: Bool { onboardingSetup?.isWiFiConnected == true }
     @State private var isDisconnectConfirmationPresented = false
     @State private var networkSensors = NetworkSensorDiscoveryModel.live()
     /// Each change starts a new search on the server. 0 means that the user did not search yet.
     @State private var networkSearchCount = 0
     private let logger = Logger(subsystem: "BeforeFire", category: "DeviceConnection")
 
-    init(kind: ProvisioningDeviceKind, isSimulated: Bool) {
+    init(kind: ProvisioningDeviceKind, isSimulated: Bool, onSetupComplete: (() -> Void)? = nil) {
+        self.onSetupComplete = onSetupComplete
         _model = State(initialValue: isSimulated ? .simulated(kind: kind) : .live(kind: kind))
     }
 
     init(model: DeviceConnectionModel) {
+        self.onSetupComplete = nil
         _model = State(initialValue: model)
     }
 
@@ -24,6 +31,58 @@ struct DeviceConnectionView: View {
     private var presentation: DeviceConnectionPresentation { DeviceConnectionPresentation(kind: model.kind) }
 
     var body: some View {
+        Group {
+            if isOnboarding { onboardingForm } else { settingsForm }
+        }
+        .task(id: networkSearchCount) {
+            guard networkSearchCount > 0 else { return }
+            await networkSensors.search(serverAddress: sensorBackend.serverAddress)
+        }
+        .navigationTitle(isOnboarding ? "\(copy.unitName) Setup" : copy.screenTitle)
+        .navigationBarTitleDisplayMode(.inline)
+        .sheet(item: Binding(
+            get: { isOnboarding ? nil : model.selectedDevice },
+            set: { model.selectedDevice = $0 }
+        )) { device in
+            DeviceWiFiSetupView(model: makeSetupModel(for: device), kind: model.kind) {
+                model.markConnected(device)
+            }
+        }
+        .navigationDestination(isPresented: $isWiFiPresented) {
+            if let onboardingSetup {
+                OnboardingWiFiView(model: onboardingSetup, kind: model.kind) {
+                    onSetupComplete?()
+                }
+            }
+        }
+        .onChange(of: model.selectedDevice) { _, device in
+            guard isOnboarding, let device else { return }
+            onboardingSetup?.close()
+            let setup = makeSetupModel(for: device)
+            onboardingSetup = setup
+            setup.connectWithSavedSetupCode()
+        }
+        .onChange(of: onboardingSetup?.step) { _, step in
+            if step == .networks { isWiFiPresented = true }
+        }
+        .task {
+            if isOnboarding, connectedDeviceName == nil, model.scanStatus == .idle {
+                startScan()
+            }
+        }
+        .confirmationDialog(copy.disconnectConfirmationTitle, isPresented: $isDisconnectConfirmationPresented,
+                            titleVisibility: .visible) {
+            Button(copy.disconnectConfirmButton, role: .destructive, action: disconnect)
+        } message: {
+            Text(copy.disconnectConfirmationMessage)
+        }
+        .onDisappear {
+            model.stopScan()
+            if !isWiFiPresented { onboardingSetup?.close() }
+        }
+    }
+
+    private var settingsForm: some View {
         Form {
             Section(copy.statusHeader) {
                 LabeledContent(copy.unitName, value: connectedDeviceName ?? copy.notConnected)
@@ -39,13 +98,7 @@ struct DeviceConnectionView: View {
 
             Section {
                 Button(model.isScanning ? copy.stopSearchButton : copy.connectButton) {
-                    if model.isScanning {
-                        model.stopScan()
-                    } else {
-                        model.startScan()
-                        // A sensor that already has Wi-Fi has no Bluetooth, so the app also asks the server.
-                        if usesSensorLink { networkSearchCount += 1 }
-                    }
+                    toggleScan()
                 }
                 .accessibilityIdentifier(presentation.screenIdentifier("connectButton"))
             } footer: {
@@ -67,27 +120,109 @@ struct DeviceConnectionView: View {
                 )
             }
         }
-        .task(id: networkSearchCount) {
-            guard networkSearchCount > 0 else { return }
-            await networkSensors.search(serverAddress: sensorBackend.serverAddress)
-        }
-        .navigationTitle(copy.screenTitle)
-        .navigationBarTitleDisplayMode(.inline)
-        .sheet(item: $model.selectedDevice) { device in
-            DeviceWiFiSetupView(device: device, kind: model.kind, connector: model.connector, homeSetup: model.homeSetup,
-                                savedSetupCode: savedSetupCode(for: device),
-                                onWiFiJoined: handleWiFiJoined,
-                                onSavedSetupCodeRejected: handleSavedSetupCodeRejected) {
-                model.markConnected(device)
+    }
+
+    private var onboardingForm: some View {
+        Form {
+            Section {
+                VStack(alignment: .leading, spacing: 16) {
+                    Text(OnboardingCopy.deviceTitle(model.kind))
+                        .font(.largeTitle.bold())
+                        .accessibilityAddTraits(.isHeader)
+                    Text(OnboardingCopy.deviceInstruction(model.kind))
+                        .foregroundStyle(.secondary)
+                }
+                .listRowBackground(Color.clear)
+                .listRowInsets(EdgeInsets(top: 16, leading: 0, bottom: 24, trailing: 0))
+            }
+
+            if let connectedDeviceName, onboardingSetup == nil || hasJoinedWiFi {
+                Section {
+                    LabeledContent(copy.unitName, value: connectedDeviceName)
+                    Text("This device was set up before.")
+                        .foregroundStyle(.secondary)
+                }
+            }
+
+            if model.scanStatus != .idle {
+                DevicesFoundSection(model: model, presentation: presentation,
+                                    isSaved: { savedSetupCode(for: $0) != nil }, showsSelection: true)
+                    .disabled(onboardingSetup?.isBusy == true)
+            }
+
+            if let onboardingSetup, onboardingSetup.step == .setupCode {
+                if onboardingSetup.isUsingSavedSetupCode {
+                    Section {
+                        DeviceSetupProgressRow(text: copy.connectingToDevice, presentation: presentation)
+                    }
+                } else {
+                    DeviceSetupCodeFields(model: onboardingSetup, presentation: presentation,
+                                          footer: OnboardingCopy.codeHint(model.kind))
+                        .disabled(onboardingSetup.isBusy)
+                    Section {
+                        DeviceSetupErrorRow(message: onboardingSetup.errorMessage, presentation: presentation)
+                    }
+                }
+            }
+
+            Section {
+                Button(model.isScanning ? copy.stopSearchButton : copy.refreshNetworksButton) {
+                    toggleScan()
+                }
+                .disabled(onboardingSetup?.isBusy == true)
+                .accessibilityIdentifier(presentation.screenIdentifier("connectButton"))
+            } footer: {
+                Text(model.isSimulated ? copy.simulationFooter : copy.connectFooter)
+            }
+
+            if usesSensorLink, networkSensors.status != .idle, onboardingSetup == nil {
+                NetworkSensorsSection(discovery: networkSensors, copy: copy, presentation: presentation,
+                                      isSaved: { savedSetupCode(forDeviceNamed: $0.id) != nil },
+                                      makeLinkModel: makeLinkModel)
             }
         }
-        .confirmationDialog(copy.disconnectConfirmationTitle, isPresented: $isDisconnectConfirmationPresented,
-                            titleVisibility: .visible) {
-            Button(copy.disconnectConfirmButton, role: .destructive, action: disconnect)
-        } message: {
-            Text(copy.disconnectConfirmationMessage)
+        .safeAreaInset(edge: .bottom) {
+            if let onboardingSetup, !hasJoinedWiFi {
+                OnboardingActionButton(title: copy.connectToDeviceButton,
+                                       isBusy: onboardingSetup.isBusy) { onboardingSetup.connect() }
+                    .disabled(!onboardingSetup.canConnect)
+                    .accessibilityIdentifier(presentation.setupIdentifier("connectButton"))
+                    .padding(24)
+                    .background(Color(.systemGroupedBackground))
+            } else if connectedDeviceName != nil {
+                OnboardingActionButton(title: OnboardingCopy.deviceContinueButton(model.kind)) {
+                    onSetupComplete?()
+                }
+                .accessibilityIdentifier(presentation.setupIdentifier("continueButton"))
+                .padding(24)
+                .background(Color(.systemGroupedBackground))
+            }
         }
-        .onDisappear { model.stopScan() }
+    }
+
+    private func toggleScan() {
+        if model.isScanning {
+            model.stopScan()
+        } else {
+            onboardingSetup?.close()
+            onboardingSetup = nil
+            model.selectedDevice = nil
+            startScan()
+        }
+    }
+
+    private func startScan() {
+        model.startScan()
+        // A sensor with Wi-Fi can also be found through the existing server path.
+        if usesSensorLink { networkSearchCount += 1 }
+    }
+
+    private func makeSetupModel(for device: DiscoveredDevice) -> DeviceWiFiSetupModel {
+        DeviceWiFiSetupModel(device: device, kind: model.kind, connector: model.connector,
+                            homeSetup: model.homeSetup, savedSetupCode: savedSetupCode(for: device),
+                            onWiFiJoined: handleWiFiJoined,
+                            onSavedSetupCodeRejected: handleSavedSetupCodeRejected,
+                            startsHomeSetupAfterWiFi: !isOnboarding)
     }
 
     /// A sensor that the user linked on the Sensor Data screen, for example a sensor that already had Wi-Fi,
@@ -170,6 +305,7 @@ private struct DevicesFoundSection: View {
     let presentation: DeviceConnectionPresentation
     /// `true` for a unit with a saved setup code. Tapping it goes to the Wi-Fi list with no typed code.
     let isSaved: (DiscoveredDevice) -> Bool
+    var showsSelection = false
 
     private var copy: DeviceConnectionCopy { model.copy }
 
@@ -186,7 +322,8 @@ private struct DevicesFoundSection: View {
                             Text(copy.savedDeviceLabel)
                                 .foregroundStyle(.secondary)
                         }
-                        Image(systemName: "chevron.right")
+                        Image(systemName: showsSelection && model.selectedDevice == device
+                              ? "checkmark" : "chevron.right")
                             .font(.footnote.weight(.semibold))
                             .foregroundStyle(Color(.tertiaryLabel))
                     }

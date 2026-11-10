@@ -131,7 +131,7 @@ private struct SensorBackendStatusSection: View {
             Text(SensorBackendSettingsCopy.statusHeader)
         } footer: {
             if status != .notConfigured {
-                Text(SensorBackendSettingsCopy.monitorPausedNote)
+                Text(SensorBackendSettingsCopy.liveReadingsNote)
             }
         }
     }

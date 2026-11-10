@@ -3,9 +3,6 @@ import Foundation
 /// Converts the backend response to the text on the Monitor screen.
 struct MonitorReadingsFormatter {
     enum StatusText {
-        static let safe = "Safe"
-        static let unsafe = "Unsafe"
-        static let dangerous = "Dangerous"
         /// The sensor sends readings, but no fuzzy result yet.
         static let unknown = "Unknown"
         /// The app cannot get current values from the sensor.
@@ -73,11 +70,16 @@ struct MonitorReadingsFormatter {
         guard !snapshot.isStale, snapshot.connection != .offline else {
             return unavailableContent(status: StatusText.offline, connection: ConnectionText.offline)
         }
+        guard snapshot.connection == .online else {
+            return unavailableContent(status: StatusText.unknown, connection: ConnectionText.unreachable)
+        }
+        let assessment = snapshot.assessment
         return MonitorContent(
             connectionTitle: ConnectionText.online,
-            statusValue: statusText(for: snapshot.condition),
-            isDangerous: snapshot.condition == .alarm,
-            readings: Self.cardOrder.map { reading(for: $0, in: snapshot) }
+            statusValue: assessment.validCondition?.displayName ?? StatusText.unknown,
+            isDangerous: assessment.validCondition == .alarm,
+            readings: Self.cardOrder.map { reading(for: $0, in: snapshot) },
+            assessment: assessment
         )
     }
 
@@ -88,15 +90,6 @@ struct MonitorReadingsFormatter {
             isDangerous: false,
             readings: Self.cardOrder.map(unavailableReading)
         )
-    }
-
-    private func statusText(for condition: SensorReadingsSnapshot.Condition?) -> String {
-        switch condition {
-        case .normal: StatusText.safe
-        case .warning1, .warning2: StatusText.unsafe
-        case .alarm: StatusText.dangerous
-        case nil: StatusText.unknown
-        }
     }
 
     private func reading(for kind: MonitorReading.Kind, in snapshot: SensorReadingsSnapshot) -> MonitorReading {

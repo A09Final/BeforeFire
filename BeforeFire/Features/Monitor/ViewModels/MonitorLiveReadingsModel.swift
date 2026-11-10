@@ -1,7 +1,7 @@
 import Foundation
 import Observation
 
-/// Reads the sensor values from the backend again and again while the Monitor screen is active.
+/// Reads sensor values from the backend while the app is active.
 @MainActor
 @Observable
 final class MonitorLiveReadingsModel {
