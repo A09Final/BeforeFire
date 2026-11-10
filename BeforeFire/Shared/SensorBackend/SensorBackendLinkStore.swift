@@ -44,9 +44,9 @@ final class KeychainSensorBackendLinkStore: SensorBackendLinkStoring {
     }
 
     func remove() throws {
+        try setupCodes.deleteAll()
         defaults.removeObject(forKey: Key.backendAddress)
         defaults.removeObject(forKey: Key.deviceID)
-        try setupCodes.deleteAll()
     }
 }
 
