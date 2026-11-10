@@ -75,17 +75,17 @@ struct KitchenGuidanceTests {
         }
     }
 
-    @Test func notificationDurationUsesOnlySuppliedDuration() throws {
+    @Test func monitorDurationUsesOnlySuppliedDuration() throws {
         let timed = KitchenAssessment(condition: .warning1, isValid: true, ruleID: 3, absenceDurationSeconds: 245)
         let untimed = KitchenAssessment(condition: .warning1, isValid: true, ruleID: 3)
-        #expect(KitchenGuidance.notificationBody(for: timed)?.contains("4 minutes 5 seconds") == true)
-        let body = try #require(KitchenGuidance.notificationBody(for: untimed))
-        #expect(body.contains("no one is detected"))
+        #expect(KitchenGuidance.monitorMessage(for: timed)?.contains("4 minutes 5 seconds") == true)
+        let body = try #require(KitchenGuidance.monitorMessage(for: untimed))
+        #expect(body.contains("No Presence Detected."))
         #expect(!body.contains("{duration}"))
         #expect(!body.contains("minutes"))
     }
 
-    @Test(arguments: [(3, "The air is lightly polluted"), (9, "The stove area is hot")])
+    @Test(arguments: [(3, "Lightly Polluted Air."), (9, "High Heat Detected.")])
     func monitorShowsDifferentRuleMessagesWithinTheSameLevel(_ ruleID: Int, _ expectedReason: String) throws {
         let json = """
         {
@@ -98,7 +98,7 @@ struct KitchenGuidanceTests {
         let model = MonitorViewModel(content: MonitorReadingsFormatter().content(for: snapshot))
         #expect(model.displayedStatusValue == "Unsafe")
         let guidance = try #require(model.actionGuidance)
-        #expect(guidance.contains(expectedReason))
+        #expect(guidance.hasPrefix(expectedReason))
         #expect(guidance.contains("8 minutes"))
     }
 

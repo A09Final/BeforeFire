@@ -61,6 +61,8 @@ nonisolated enum KitchenGuidance {
         guard let duration else {
             return template.replacingOccurrences(of: "no one has been detected for {duration}",
                                                  with: "no one is detected")
+                .replacingOccurrences(of: "No one has been detected for {duration}",
+                                      with: "No Presence Detected")
         }
         let minutes = duration / 60
         let seconds = duration % 60
