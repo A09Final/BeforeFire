@@ -4,7 +4,6 @@ struct MonitorDeveloperSettingsView: View {
     @Binding var isActionGuidanceVisible: Bool
     @Binding var previewCondition: MonitorPreviewCondition
     @Environment(AlarmPreviewModel.self) private var alarmPreview
-    @State private var showPlacementGuideline = false
     @State private var isDeviceSimulationEnabled = false
     
     var body: some View {
@@ -33,18 +32,11 @@ struct MonitorDeveloperSettingsView: View {
                 }
                 .accessibilityIdentifier("settings.alarmConnection")
                 
-                Button {
-                    showPlacementGuideline = true
+                NavigationLink {
+                    PlacementGuidelineView()
                 } label: {
-                    HStack {
-                        Label("Placement Guideline", systemImage: "")
-                        Spacer()
-                        Image(systemName: "chevron.right")
-                            .font(.footnote.weight(.semibold))
-                            .foregroundStyle(Color(.tertiaryLabel))
-                    }
+                    Label("Placement Guideline", systemImage: "")
                 }
-                .foregroundStyle(.primary)
                 .accessibilityIdentifier("settings.placementGuideline")
                 
                 NavigationLink {
@@ -122,9 +114,6 @@ struct MonitorDeveloperSettingsView: View {
         .navigationTitle("Settings")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar(.visible, for: .navigationBar)
-        .sheet(isPresented: $showPlacementGuideline) {
-            PlacementGuidelineView()
-        }
     }
     
 }

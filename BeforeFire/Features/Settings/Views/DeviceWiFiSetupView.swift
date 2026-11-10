@@ -26,6 +26,12 @@ struct DeviceWiFiSetupView: View {
         self.onConnected = onConnected
     }
 
+    init(model: DeviceWiFiSetupModel, kind: ProvisioningDeviceKind, onConnected: @escaping () -> Void) {
+        _model = State(initialValue: model)
+        presentation = DeviceConnectionPresentation(kind: kind)
+        self.onConnected = onConnected
+    }
+
     private var copy: DeviceConnectionCopy { model.copy }
 
     var body: some View {
@@ -126,18 +132,7 @@ private struct DeviceSetupCodeStep: View {
 
     private var setupCodeForm: some View {
         Form {
-            Section {
-                TextField(copy.setupCodePlaceholder, text: $model.setupCode)
-                    .textInputAutocapitalization(.never)
-                    .autocorrectionDisabled()
-                    .submitLabel(.next)
-                    .onSubmit { model.connect() }
-                    .accessibilityIdentifier(presentation.setupIdentifier("setupCodeField"))
-            } header: {
-                Text(copy.setupCodeHeader)
-            } footer: {
-                Text(copy.setupCodeFooter)
-            }
+            DeviceSetupCodeFields(model: model, presentation: presentation)
 
             Section {
                 if model.activity == .connecting {
@@ -154,9 +149,38 @@ private struct DeviceSetupCodeStep: View {
     }
 }
 
-private struct DeviceNetworkListStep: View {
+struct DeviceSetupCodeFields: View {
+    @Bindable var model: DeviceWiFiSetupModel
+    let presentation: DeviceConnectionPresentation
+    var footer: String? = nil
+    @FocusState private var isCodeFocused: Bool
+    private var copy: DeviceConnectionCopy { model.copy }
+
+    var body: some View {
+        Section {
+            TextField(copy.setupCodePlaceholder, text: $model.setupCode)
+                .focused($isCodeFocused)
+                .textInputAutocapitalization(.never)
+                .autocorrectionDisabled()
+                .submitLabel(.next)
+                .onSubmit { model.connect() }
+                .accessibilityIdentifier(presentation.setupIdentifier("setupCodeField"))
+        } header: {
+            Text(copy.setupCodeHeader)
+        } footer: {
+            Text(footer ?? copy.setupCodeFooter)
+        }
+        .onChange(of: model.isBusy) { _, isBusy in
+            if isBusy { isCodeFocused = false }
+        }
+        .onDisappear { isCodeFocused = false }
+    }
+}
+
+struct DeviceNetworkListStep: View {
     let model: DeviceWiFiSetupModel
     let presentation: DeviceConnectionPresentation
+    var footer: String? = nil
 
     private var copy: DeviceConnectionCopy { model.copy }
 
@@ -196,7 +220,7 @@ private struct DeviceNetworkListStep: View {
                     .accessibilityIdentifier(presentation.setupIdentifier("refreshButton"))
                 }
             } footer: {
-                Text(copy.networksFooter)
+                Text(footer ?? copy.networksFooter)
             }
         }
         // The model ignores a selection during a scan. A cancelled scan ends the Bluetooth session.
@@ -222,9 +246,10 @@ private struct DeviceNetworkRow: View {
     }
 }
 
-private struct DeviceWiFiPasswordStep: View {
+struct DeviceWiFiPasswordStep: View {
     @Bindable var model: DeviceWiFiSetupModel
     let presentation: DeviceConnectionPresentation
+    var automaticallyFocusPassword = true
     @FocusState private var isPasswordFocused: Bool
 
     private var copy: DeviceConnectionCopy { model.copy }
@@ -264,8 +289,8 @@ private struct DeviceWiFiPasswordStep: View {
         }
         .disabled(model.isBusy)
         .onAppear {
-            // A selected secured network needs only the password, so the keyboard opens at once.
-            isPasswordFocused = model.requiresPassword
+            // Onboarding opens at half height. A tap on the field opens the keyboard.
+            isPasswordFocused = automaticallyFocusPassword && model.requiresPassword
         }
     }
 }

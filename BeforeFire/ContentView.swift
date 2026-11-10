@@ -13,6 +13,7 @@ struct ContentView: View {
     @State private var sensorBackend = SensorBackendSettingsModel.live()
     @State private var liveReadings = MonitorLiveReadingsModel.live()
     @State private var pushNotifications = PushNotificationManager.shared
+    @State private var onboarding = OnboardingProgressStore()
     @State private var navigationPath = NavigationPath()
     @Environment(\.scenePhase) private var scenePhase
 
@@ -22,8 +23,17 @@ struct ContentView: View {
     }
 
     var body: some View {
-        NavigationStack(path: $navigationPath) {
-            MonitorView(viewModel: .mock)
+        Group {
+            if onboarding.hasCompleted {
+                NavigationStack(path: $navigationPath) {
+                    MonitorView(viewModel: .mock)
+                }
+            } else {
+                OnboardingFlowView(isSimulated: simulatesOnboarding) {
+                    onboarding.complete()
+                    navigationPath = NavigationPath()
+                }
+            }
         }
         .environment(alarmPreview)
         .environment(sensorBackend)
@@ -90,6 +100,14 @@ struct ContentView: View {
         .onReceive(NotificationCenter.default.publisher(for: AlarmActivityAttributes.previewStateDidChange)) { _ in
             alarmPreview.synchronizeFromLiveActivity()
         }
+    }
+
+    private var simulatesOnboarding: Bool {
+        #if DEBUG
+        ProcessInfo.processInfo.arguments.contains("-simulateOnboarding")
+        #else
+        false
+        #endif
     }
 
     private func presentPendingPushEvent() {
