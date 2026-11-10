@@ -16,7 +16,7 @@ struct AlarmLiveActivity: Widget {
             AlarmLockScreenView(context: context)
                 .activityBackgroundTint(context.state.isSnoozed ? AlarmLiveActivityStyle.snoozedBackground : Color("AlarmBackgroundTop"))
                 .activitySystemActionForegroundColor(AlarmLiveActivityStyle.foreground)
-                .widgetURL(AlarmActivityAttributes.previewURL)
+                .widgetURL(context.attributes.openURL)
                 .environment(\.colorScheme, .dark)
         } dynamicIsland: { context in
             DynamicIsland {
@@ -68,7 +68,7 @@ struct AlarmLiveActivity: Widget {
                     .foregroundStyle(AlarmLiveActivityStyle.accent(for: context.state))
                     .accessibilityLabel(context.state.status)
             }
-            .widgetURL(AlarmActivityAttributes.previewURL)
+            .widgetURL(context.attributes.openURL)
             .keylineTint(AlarmLiveActivityStyle.accent(for: context.state))
         }
     }

@@ -46,8 +46,76 @@ struct AlarmFeedbackTests {
 
         model.handleLiveReading(.init(deviceID: deviceID, condition: .warning2), linkedDeviceID: deviceID)
         model.handleLiveReading(alarm, linkedDeviceID: deviceID)
+        #expect(!model.isAlarmPresented)
+
+        model.handleLiveReading(.init(deviceID: deviceID, condition: .normal,
+                                      readings: .init(stoveTemperatureC: 60, iaq: 30, presence: false)),
+                                linkedDeviceID: deviceID)
+        model.handleLiveReading(alarm, linkedDeviceID: deviceID)
         #expect(model.isAlarmPresented)
         #expect(output.requests == [true, false, true])
+    }
+
+    @Test func alarmStaysActiveUntilAllSensorsConfirmNormal() {
+        let output = RecordingAlarmFeedback()
+        let model = AlarmPreviewModel(feedback: output)
+        let deviceID = "DAPUR_A1B2C3"
+        let readings = SensorReadingsSnapshot.Readings(stoveTemperatureC: 60, iaq: 30, presence: false)
+        model.setApplicationActive(true)
+        model.handleLiveReading(.init(deviceID: deviceID, condition: .alarm), linkedDeviceID: deviceID)
+
+        let unconfirmed: [SensorReadingsSnapshot] = [
+            .init(deviceID: deviceID, condition: .warning1, readings: readings),
+            .init(deviceID: deviceID, condition: .warning2, readings: readings),
+            .init(deviceID: deviceID, condition: .normal, readings: readings, unavailableSensors: ["radar"]),
+            .init(deviceID: deviceID, condition: .normal),
+            .init(deviceID: deviceID, condition: .normal, readings: readings, isStale: true),
+            .init(deviceID: deviceID, condition: .normal, readings: readings, connection: .offline),
+            .init(deviceID: deviceID, condition: .normal, conditionIsValid: false, readings: readings),
+            .init(deviceID: "DAPUR_123456", condition: .normal, readings: readings)
+        ]
+        for snapshot in unconfirmed {
+            model.handleLiveReading(snapshot, linkedDeviceID: deviceID)
+            #expect(model.isAlarmPresented)
+        }
+        #expect(output.requests == [true])
+
+        model.handleLiveReading(.init(deviceID: deviceID, condition: .normal, readings: readings), linkedDeviceID: deviceID)
+        #expect(!model.isAlarmPresented)
+        #expect(output.requests == [true, false])
+    }
+
+    @Test func recoveryMustBeNewerThanTheAlarm() {
+        let model = AlarmPreviewModel(feedback: RecordingAlarmFeedback())
+        let deviceID = "DAPUR_A1B2C3"
+        model.setApplicationActive(true)
+        model.handleLiveReading(.init(deviceID: deviceID, condition: .alarm, measuredAt: start),
+                                linkedDeviceID: deviceID)
+        let readings = SensorReadingsSnapshot.Readings(stoveTemperatureC: 60, iaq: 30, presence: false)
+        for time in [nil, start.addingTimeInterval(-1), start] {
+            model.handleLiveReading(.init(deviceID: deviceID, condition: .normal, readings: readings, measuredAt: time),
+                                    linkedDeviceID: deviceID)
+            #expect(model.isAlarmPresented)
+        }
+
+        let afterAlarm = start.addingTimeInterval(1)
+        model.handleLiveReading(.init(deviceID: deviceID, condition: .normal, readings: readings,
+                                      measuredAt: afterAlarm, recoveryConfirmed: false), linkedDeviceID: deviceID)
+        #expect(model.isAlarmPresented)
+        model.handleLiveReading(.init(deviceID: deviceID, condition: .normal, readings: readings,
+                                      measuredAt: afterAlarm, recoveryConfirmed: true), linkedDeviceID: deviceID)
+        #expect(!model.isAlarmPresented)
+    }
+
+    @Test func normalReadingLeavesTheDeveloperPreviewOpen() {
+        let output = RecordingAlarmFeedback()
+        let model = activePreview(output)
+        let deviceID = "DAPUR_A1B2C3"
+        model.handleLiveReading(.init(deviceID: deviceID, condition: .normal,
+                                      readings: .init(stoveTemperatureC: 60, iaq: 30, presence: false)),
+                                linkedDeviceID: deviceID)
+        #expect(model.isAlarmPresented)
+        #expect(output.requests == [true])
     }
 
     @Test func liveAlarmRequiresAnActiveAppAndACurrentReadingFromTheLinkedSensor() {
