@@ -580,6 +580,57 @@ struct DeviceWiFiSetupModelTests {
 
     // MARK: Join and Home setup
 
+    @Test(arguments: [ProvisioningDeviceKind.sensor, .alarm])
+    func onboardingJoinsWiFiWithoutStartingHome(kind: ProvisioningDeviceKind) async throws {
+        let session = FakeProvisioningSession()
+        let homeSetup = RecordingHomeSetup()
+        var joinedCount = 0
+        let model = DeviceWiFiSetupModel(
+            device: Fixture.kitchenSensor, kind: kind,
+            connector: RecordingConnector(session: session), homeSetup: homeSetup,
+            onWiFiJoined: { _, _ in joinedCount += 1 }, startsHomeSetupAfterWiFi: false
+        )
+        model.setupCode = Fixture.validSetupCode
+        model.connect()
+        try await waitUntil { model.step == .networks && !model.isBusy }
+        model.select(Fixture.securedNetwork)
+        model.password = Fixture.validPassword
+        model.join()
+        try await waitUntil { model.isWiFiConnected && !model.isBusy }
+
+        #expect(model.step == .connected(wiFiName: Fixture.securedNetwork.ssid))
+        #expect(homeSetup.callCount == 0)
+        #expect(joinedCount == 1)
+        #expect(session.disconnectCount == 1)
+        #expect(model.password.isEmpty)
+        model.close()
+        #expect(model.isWiFiConnected)
+    }
+
+    @Test func onboardingJoinFailureDoesNotCompleteSetup() async throws {
+        let homeSetup = RecordingHomeSetup()
+        var joinedCount = 0
+        let session = FakeProvisioningSession(sendError: DeviceProvisioningError.wiFiPasswordRejected)
+        let model = DeviceWiFiSetupModel(
+            device: Fixture.kitchenSensor, kind: .sensor,
+            connector: RecordingConnector(session: session), homeSetup: homeSetup,
+            onWiFiJoined: { _, _ in joinedCount += 1 }, startsHomeSetupAfterWiFi: false
+        )
+        model.setupCode = Fixture.validSetupCode
+        model.connect()
+        try await waitUntil { model.step == .networks && !model.isBusy }
+        model.select(Fixture.securedNetwork)
+        model.password = Fixture.validPassword
+        model.join()
+        try await waitUntil { !model.isBusy }
+
+        #expect(model.step == .password)
+        #expect(model.errorMessage != nil)
+        #expect(joinedCount == 0)
+        #expect(homeSetup.callCount == 0)
+        model.close()
+    }
+
     @Test func joinSuccessStartsHomeSetupAtOnce() async throws {
         let session = FakeProvisioningSession()
         let homeSetup = RecordingHomeSetup()

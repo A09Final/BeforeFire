@@ -37,6 +37,7 @@ final class DeviceWiFiSetupModel {
 
     @ObservationIgnored private let connector: any DeviceProvisioningConnecting
     @ObservationIgnored private let homeSetup: any DeviceHomeSetupPerforming
+    @ObservationIgnored private let startsHomeSetupAfterWiFi: Bool
     @ObservationIgnored private var session: (any DeviceProvisioningSession)?
     @ObservationIgnored private var activityTask: Task<Void, Never>?
     /// The setup code that opened the secure session. The unit accepts only its own code, so this code is correct.
@@ -54,12 +55,14 @@ final class DeviceWiFiSetupModel {
         homeSetup: any DeviceHomeSetupPerforming,
         savedSetupCode: DeviceSetupCode? = nil,
         onWiFiJoined: ((DiscoveredDevice, DeviceSetupCode) -> Void)? = nil,
-        onSavedSetupCodeRejected: ((DiscoveredDevice) -> Void)? = nil
+        onSavedSetupCodeRejected: ((DiscoveredDevice) -> Void)? = nil,
+        startsHomeSetupAfterWiFi: Bool = true
     ) {
         self.device = device
         self.copy = DeviceConnectionCopy(kind: kind)
         self.connector = connector
         self.homeSetup = homeSetup
+        self.startsHomeSetupAfterWiFi = startsHomeSetupAfterWiFi
         self.savedSetupCode = savedSetupCode
         self.onWiFiJoined = onWiFiJoined
         self.onSavedSetupCodeRejected = onSavedSetupCodeRejected
@@ -186,8 +189,10 @@ final class DeviceWiFiSetupModel {
             if let acceptedSetupCode = self.acceptedSetupCode {
                 self.onWiFiJoined?(self.device, acceptedSetupCode)
             }
-            // The Home setup starts at once. The firmware restarts while the user scans the HomeKit code.
-            try await self.addDeviceToHome()
+            // Onboarding ends at Wi-Fi. Settings retains its existing Home setup flow.
+            if self.startsHomeSetupAfterWiFi {
+                try await self.addDeviceToHome()
+            }
         }
     }
 

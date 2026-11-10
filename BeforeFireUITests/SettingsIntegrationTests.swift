@@ -5,6 +5,7 @@ final class SettingsIntegrationTests: XCTestCase {
     func testPlacementGuideReturnsToExistingDeveloperControls() {
         continueAfterFailure = false
         let app = XCUIApplication()
+        app.launchArguments += ["-onboarding.completed", "YES"]
         app.launch()
         defer { app.terminate() }
 
@@ -184,6 +185,7 @@ final class SettingsIntegrationTests: XCTestCase {
     /// Turns on the device simulation and opens the connection screen of the unit. Returns the status row.
     @MainActor
     private func openSimulatedConnection(_ unit: UnitPrefix, in app: XCUIApplication) -> XCUIElement {
+        app.launchArguments += ["-onboarding.completed", "YES"]
         app.launch()
         app.buttons["monitor.settings"].tap()
 
