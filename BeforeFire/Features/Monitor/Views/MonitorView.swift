@@ -2,9 +2,7 @@ import SwiftUI
 
 struct MonitorView: View {
     @State private var viewModel: MonitorViewModel
-    @Environment(SensorBackendSettingsModel.self) private var sensorBackend
     @Environment(MonitorLiveReadingsModel.self) private var liveReadings
-    @Environment(\.scenePhase) private var scenePhase
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @ScaledMetric(relativeTo: .title2) private var statusHeadingSize = MonitorStyle.statusHeadingSize
     @ScaledMetric(relativeTo: .largeTitle) private var statusValueSize = MonitorStyle.statusValueSize
@@ -12,13 +10,9 @@ struct MonitorView: View {
     @ScaledMetric(relativeTo: .body) private var actionGuidanceTextSize = MonitorStyle.actionGuidanceTextSize
     @ScaledMetric(relativeTo: .body) private var minimumCardHeight = MonitorStyle.cardHeight
 
-    private let readingsFormatter = MonitorReadingsFormatter()
+    private enum Destination: Hashable { case settings }
 
-    /// Restarts the refresh loop when the sensor link changes or the app becomes active again.
-    private struct LiveReadingsTaskID: Equatable {
-        let link: SensorBackendLink?
-        let isActive: Bool
-    }
+    private let readingsFormatter = MonitorReadingsFormatter()
 
     init(viewModel: MonitorViewModel) {
         _viewModel = State(initialValue: viewModel)
@@ -36,10 +30,11 @@ struct MonitorView: View {
         .background(MonitorStyle.background.ignoresSafeArea())
         .preferredColorScheme(.dark)
         .toolbar(.hidden, for: .navigationBar)
-        .task(id: LiveReadingsTaskID(link: sensorBackend.link, isActive: scenePhase == .active)) {
-            // iOS suspends the app in the background, so requests there only fail.
-            guard scenePhase == .active else { return }
-            await liveReadings.refreshRepeatedly(for: sensorBackend.link)
+        .navigationDestination(for: Destination.self) { _ in
+            MonitorDeveloperSettingsView(
+                isActionGuidanceVisible: $viewModel.isActionGuidanceVisible,
+                previewCondition: $viewModel.previewCondition
+            )
         }
         .onChange(of: liveReadings.status, initial: true) { _, status in
             viewModel.show(readingsFormatter.content(for: status) ?? MonitorViewModel.mockContent)
@@ -83,7 +78,7 @@ struct MonitorView: View {
         LazyVGrid(columns: columns, spacing: MonitorStyle.spacing) {
             ForEach(viewModel.readings) { reading in
                 MonitorReadingCard(reading: reading,
-                                   alertCondition: viewModel.readingAlertCondition,
+                                   alertCondition: viewModel.readingAlertCondition(for: reading.id),
                                    height: cardHeight)
             }
         }
@@ -120,12 +115,7 @@ struct MonitorView: View {
     }
 
     private var settingsLink: some View {
-        NavigationLink {
-            MonitorDeveloperSettingsView(
-                isActionGuidanceVisible: $viewModel.isActionGuidanceVisible,
-                previewCondition: $viewModel.previewCondition
-            )
-        } label: {
+        NavigationLink(value: Destination.settings) {
             Image(systemName: "gearshape")
                 .font(.system(size: MonitorStyle.settingsIconSize))
                 .frame(width: MonitorStyle.settingsButtonSize, height: MonitorStyle.settingsButtonSize)

@@ -1,16 +1,24 @@
 enum MonitorPreviewCondition: String, CaseIterable, Identifiable {
+    case normal = "Normal"
     case unsafe = "Unsafe"
     case dangerous = "Dangerous"
+    case alarm = "Alarm"
 
     var id: Self { self }
 
-    // DESIGN: Edit the action text for each developer preview here.
-    var actionGuidance: String {
+    var condition: KitchenCondition {
         switch self {
-        case .unsafe:
-            "Check your stove. The stove area is hot, the air is lightly polluted, and no one is detected. Check your food, then stay nearby while the stove is on."
-        case .dangerous:
-            "Check your kitchen now. The stove area is hot, air quality is poor, and no one is detected. Turn off the stove if you can do so safely."
+        case .normal: .normal
+        case .unsafe: .warning1
+        case .dangerous: .warning2
+        case .alarm: .alarm
         }
     }
+
+    var assessment: KitchenAssessment {
+        KitchenAssessment(condition: condition, isValid: true,
+                          reasons: self == .normal ? [] : [.poorAirQuality, .noPresence, .highHeat])
+    }
+
+    var actionGuidance: String? { KitchenGuidance.monitorMessage(for: assessment) }
 }

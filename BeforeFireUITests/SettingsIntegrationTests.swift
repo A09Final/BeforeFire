@@ -36,23 +36,17 @@ final class SettingsIntegrationTests: XCTestCase {
             assertCanReach(control, in: app)
         }
 
-        // The Stepper container is not tappable. Use its native buttons.
-        let durationControl = app.steppers["settings.snoozeDuration"]
+        // Scroll the Stepper clear of the bottom edge before tapping its buttons.
+        app.swipeUp()
         let increaseDuration = app.buttons["settings.snoozeDuration-Increment"]
         let decreaseDuration = app.buttons["settings.snoozeDuration-Decrement"]
         assertCanReach(increaseDuration, in: app)
         increaseDuration.tap()
-        let increasedDuration = XCTNSPredicateExpectation(
-            predicate: NSPredicate(format: "value == %@", "65"), object: durationControl
-        )
-        XCTAssertEqual(XCTWaiter.wait(for: [increasedDuration], timeout: 5), .completed)
+        XCTAssertTrue(app.staticTexts["Snooze duration, 65 seconds"].waitForExistence(timeout: 5))
 
         assertCanReach(decreaseDuration, in: app)
         decreaseDuration.tap()
-        let restoredDuration = XCTNSPredicateExpectation(
-            predicate: NSPredicate(format: "value == %@", "60"), object: durationControl
-        )
-        XCTAssertEqual(XCTWaiter.wait(for: [restoredDuration], timeout: 5), .completed)
+        XCTAssertTrue(app.staticTexts["Snooze duration, 60 seconds"].waitForExistence(timeout: 5))
         assertCanReach(app.buttons["settings.endAlarmActivity"], in: app)
     }
 

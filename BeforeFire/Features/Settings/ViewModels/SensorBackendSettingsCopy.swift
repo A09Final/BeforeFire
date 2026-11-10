@@ -28,7 +28,7 @@ enum SensorBackendSettingsCopy {
     static let loading = "Connecting…"
     static let receiving = "Receiving"
     static let sensorOffline = "The sensor sends no new values. Make sure that it is on and connected to Wi-Fi."
-    static let monitorPausedNote = "The app gets new values only while the Monitor screen is open."
+    static let liveReadingsNote = "Readings update while BeforeFire is open."
 
     static func message(for issue: SensorBackendLinkIssue) -> String {
         switch issue {

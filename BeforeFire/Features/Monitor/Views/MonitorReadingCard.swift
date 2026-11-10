@@ -112,8 +112,8 @@ struct MonitorReadingCard: View {
     private var statusDotColor: Color? {
         switch alertCondition {
         case .unsafe: MonitorStyle.warningIndicator
-        case .dangerous: MonitorStyle.alarmText
-        case nil: nil
+        case .dangerous, .alarm: MonitorStyle.alarmText
+        case .normal, nil: nil
         }
     }
 

@@ -1,0 +1,19 @@
+{
+  "aps": {
+    "alert": {
+      "title": "Check your kitchen",
+      "body": "The stove is on. Make sure that somebody watches it."
+    },
+    "sound": "default",
+    "thread-id": "DAPUR_A1B2C3",
+    "interruption-level": "active",
+    "relevance-score": 0.5
+  },
+  "beforefire": {
+    "deviceId": "DAPUR_A1B2C3",
+    "alertId": "test-warning1-001",
+    "condition": "warning1",
+    "score": 35,
+    "issuedAt": 1793926800
+  }
+}

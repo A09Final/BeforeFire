@@ -16,6 +16,16 @@
 		BFAC20261028000000000050 /* BeforeFire/Shared/LiveActivity/ResumeAlarmPreviewIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFAC2026102800000000003C /* BeforeFire/Shared/LiveActivity/ResumeAlarmPreviewIntent.swift */; };
 		BFAC20261028000000000051 /* BeforeFireWidgets/AlarmSnoozedActivityContent.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFAC2026102800000000003D /* BeforeFireWidgets/AlarmSnoozedActivityContent.swift */; };
 		BFAC20261102000000000003 /* ESPProvision in Frameworks */ = {isa = PBXBuildFile; productRef = BFAC20261102000000000002 /* ESPProvision */; };
+		BFAE20261105000000000040 /* BeforeFireNotificationService/NotificationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFAE20261105000000000020 /* BeforeFireNotificationService/NotificationService.swift */; };
+		BFAE20261105000000000041 /* BeforeFire/Models/KitchenAssessment.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFAE20261105000000000021 /* BeforeFire/Models/KitchenAssessment.swift */; };
+		BFAE20261105000000000042 /* BeforeFire/Models/KitchenPushEvent.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFAE20261105000000000022 /* BeforeFire/Models/KitchenPushEvent.swift */; };
+		BFAE20261105000000000043 /* BeforeFire/Shared/Notifications/KitchenGuidance.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFAE20261105000000000023 /* BeforeFire/Shared/Notifications/KitchenGuidance.swift */; };
+		BFAE20261105000000000044 /* BeforeFire/Shared/Notifications/KitchenRuleMessages.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFAE20261105000000000024 /* BeforeFire/Shared/Notifications/KitchenRuleMessages.swift */; };
+		BFAE20261105000000000045 /* BeforeFire/Shared/Notifications/KitchenNotificationContent.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFAE20261105000000000025 /* BeforeFire/Shared/Notifications/KitchenNotificationContent.swift */; };
+		BFAE20261105000000000061 /* BeforeFire/Models/KitchenAssessment.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFAE20261105000000000021 /* BeforeFire/Models/KitchenAssessment.swift */; };
+		BFAE20261105000000000063 /* BeforeFire/Shared/Notifications/KitchenGuidance.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFAE20261105000000000023 /* BeforeFire/Shared/Notifications/KitchenGuidance.swift */; };
+		BFAE20261105000000000064 /* BeforeFire/Shared/Notifications/KitchenRuleMessages.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFAE20261105000000000024 /* BeforeFire/Shared/Notifications/KitchenRuleMessages.swift */; };
+		BFAE20261105000000000070 /* BeforeFireNotificationService.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = BFAE20261105000000000002 /* BeforeFireNotificationService.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		F0A0C6093089F00D00BF99E1 /* AGENTS.md in Resources */ = {isa = PBXBuildFile; fileRef = F0A0C6083089F00D00BF99E1 /* AGENTS.md */; };
 /* End PBXBuildFile section */
 
@@ -26,6 +36,13 @@
 			proxyType = 1;
 			remoteGlobalIDString = BFAC20261027000000000001;
 			remoteInfo = BeforeFireWidgets;
+		};
+		BFAE20261105000000000009 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = F0A0C5D53089EFBE00BF99E1 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = BFAE20261105000000000001;
+			remoteInfo = BeforeFireNotificationService;
 		};
 		F0A0C5EB3089EFBE00BF99E1 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -50,6 +67,7 @@
 			dstSubfolder = PlugIns;
 			files = (
 				BFAC2026102700000000002D /* BeforeFireWidgets.appex in Embed Foundation Extensions */,
+				BFAE20261105000000000070 /* BeforeFireNotificationService.appex in Embed Foundation Extensions */,
 			);
 			name = "Embed Foundation Extensions";
 		};
@@ -66,6 +84,14 @@
 		BFAC2026102700000000001A /* Configuration/BeforeFire-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "Configuration/BeforeFire-Info.plist"; sourceTree = SOURCE_ROOT; };
 		BFAC2026102800000000003C /* BeforeFire/Shared/LiveActivity/ResumeAlarmPreviewIntent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BeforeFire/Shared/LiveActivity/ResumeAlarmPreviewIntent.swift; sourceTree = SOURCE_ROOT; };
 		BFAC2026102800000000003D /* BeforeFireWidgets/AlarmSnoozedActivityContent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BeforeFireWidgets/AlarmSnoozedActivityContent.swift; sourceTree = SOURCE_ROOT; };
+		BFAE20261105000000000002 /* BeforeFireNotificationService.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = BeforeFireNotificationService.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		BFAE20261105000000000020 /* BeforeFireNotificationService/NotificationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BeforeFireNotificationService/NotificationService.swift; sourceTree = SOURCE_ROOT; };
+		BFAE20261105000000000021 /* BeforeFire/Models/KitchenAssessment.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BeforeFire/Models/KitchenAssessment.swift; sourceTree = SOURCE_ROOT; };
+		BFAE20261105000000000022 /* BeforeFire/Models/KitchenPushEvent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BeforeFire/Models/KitchenPushEvent.swift; sourceTree = SOURCE_ROOT; };
+		BFAE20261105000000000023 /* BeforeFire/Shared/Notifications/KitchenGuidance.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BeforeFire/Shared/Notifications/KitchenGuidance.swift; sourceTree = SOURCE_ROOT; };
+		BFAE20261105000000000024 /* BeforeFire/Shared/Notifications/KitchenRuleMessages.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BeforeFire/Shared/Notifications/KitchenRuleMessages.swift; sourceTree = SOURCE_ROOT; };
+		BFAE20261105000000000025 /* BeforeFire/Shared/Notifications/KitchenNotificationContent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BeforeFire/Shared/Notifications/KitchenNotificationContent.swift; sourceTree = SOURCE_ROOT; };
+		BFAE20261105000000000030 /* BeforeFireNotificationService/Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = BeforeFireNotificationService/Info.plist; sourceTree = SOURCE_ROOT; };
 		F0A0C5DD3089EFBE00BF99E1 /* BeforeFire.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = BeforeFire.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		F0A0C5EA3089EFBE00BF99E1 /* BeforeFireTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = BeforeFireTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		F0A0C5F43089EFBE00BF99E1 /* BeforeFireUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = BeforeFireUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -92,6 +118,11 @@
 
 /* Begin PBXFrameworksBuildPhase section */
 		BFAC20261027000000000006 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			files = (
+			);
+		};
+		BFAE20261105000000000004 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			files = (
 			);
@@ -131,11 +162,26 @@
 			name = BeforeFireWidgets;
 			sourceTree = "<group>";
 		};
+		BFAE2026110500000000000B /* BeforeFireNotificationService */ = {
+			isa = PBXGroup;
+			children = (
+				BFAE20261105000000000020 /* BeforeFireNotificationService/NotificationService.swift */,
+				BFAE20261105000000000021 /* BeforeFire/Models/KitchenAssessment.swift */,
+				BFAE20261105000000000022 /* BeforeFire/Models/KitchenPushEvent.swift */,
+				BFAE20261105000000000023 /* BeforeFire/Shared/Notifications/KitchenGuidance.swift */,
+				BFAE20261105000000000024 /* BeforeFire/Shared/Notifications/KitchenRuleMessages.swift */,
+				BFAE20261105000000000025 /* BeforeFire/Shared/Notifications/KitchenNotificationContent.swift */,
+				BFAE20261105000000000030 /* BeforeFireNotificationService/Info.plist */,
+			);
+			name = BeforeFireNotificationService;
+			sourceTree = "<group>";
+		};
 		F0A0C5D43089EFBE00BF99E1 = {
 			isa = PBXGroup;
 			children = (
 				F0A0C5DF3089EFBE00BF99E1 /* BeforeFire */,
 				BFAC20261027000000000003 /* BeforeFireWidgets */,
+				BFAE2026110500000000000B /* BeforeFireNotificationService */,
 				F0A0C5ED3089EFBE00BF99E1 /* BeforeFireTests */,
 				F0A0C5F73089EFBE00BF99E1 /* BeforeFireUITests */,
 				F0A0C6083089F00D00BF99E1 /* AGENTS.md */,
@@ -148,6 +194,7 @@
 			children = (
 				F0A0C5DD3089EFBE00BF99E1 /* BeforeFire.app */,
 				BFAC20261027000000000002 /* BeforeFireWidgets.appex */,
+				BFAE20261105000000000002 /* BeforeFireNotificationService.appex */,
 				F0A0C5EA3089EFBE00BF99E1 /* BeforeFireTests.xctest */,
 				F0A0C5F43089EFBE00BF99E1 /* BeforeFireUITests.xctest */,
 			);
@@ -172,6 +219,21 @@
 			productReference = BFAC20261027000000000002 /* BeforeFireWidgets.appex */;
 			productType = "com.apple.product-type.app-extension";
 		};
+		BFAE20261105000000000001 /* BeforeFireNotificationService */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = BFAE20261105000000000006 /* Build configuration list for PBXNativeTarget "BeforeFireNotificationService" */;
+			buildPhases = (
+				BFAE20261105000000000003 /* Sources */,
+				BFAE20261105000000000004 /* Frameworks */,
+				BFAE20261105000000000005 /* Resources */,
+			);
+			buildRules = (
+			);
+			name = BeforeFireNotificationService;
+			productName = BeforeFireNotificationService;
+			productReference = BFAE20261105000000000002 /* BeforeFireNotificationService.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 		F0A0C5DC3089EFBE00BF99E1 /* BeforeFire */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = F0A0C5FC3089EFBE00BF99E1 /* Build configuration list for PBXNativeTarget "BeforeFire" */;
@@ -185,6 +247,7 @@
 			);
 			dependencies = (
 				BFAC2026102700000000000A /* PBXTargetDependency */,
+				BFAE2026110500000000000A /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				F0A0C5DF3089EFBE00BF99E1 /* BeforeFire */,
@@ -280,6 +343,7 @@
 			projectRoot = "";
 			targets = (
 				BFAC20261027000000000001 /* BeforeFireWidgets */,
+				BFAE20261105000000000001 /* BeforeFireNotificationService */,
 				F0A0C5DC3089EFBE00BF99E1 /* BeforeFire */,
 				F0A0C5E93089EFBE00BF99E1 /* BeforeFireTests */,
 				F0A0C5F33089EFBE00BF99E1 /* BeforeFireUITests */,
@@ -292,6 +356,11 @@
 			isa = PBXResourcesBuildPhase;
 			files = (
 				BFAC2026102700000000002C /* BeforeFire/Assets.xcassets in Resources */,
+			);
+		};
+		BFAE20261105000000000005 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			files = (
 			);
 		};
 		F0A0C5DB3089EFBE00BF99E1 /* Resources */ = {
@@ -316,12 +385,26 @@
 		BFAC20261027000000000004 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			files = (
+				BFAE20261105000000000061 /* BeforeFire/Models/KitchenAssessment.swift in Sources */,
+				BFAE20261105000000000063 /* BeforeFire/Shared/Notifications/KitchenGuidance.swift in Sources */,
+				BFAE20261105000000000064 /* BeforeFire/Shared/Notifications/KitchenRuleMessages.swift in Sources */,
 				BFAC20261027000000000028 /* BeforeFireWidgets/AlarmLiveActivity.swift in Sources */,
 				BFAC20261027000000000029 /* BeforeFireWidgets/AlarmLiveActivityStyle.swift in Sources */,
 				BFAC2026102700000000002A /* BeforeFire/Shared/LiveActivity/AlarmActivityAttributes.swift in Sources */,
 				BFAC2026102700000000002B /* BeforeFire/Shared/LiveActivity/SnoozeAlarmPreviewIntent.swift in Sources */,
 				BFAC20261028000000000051 /* BeforeFireWidgets/AlarmSnoozedActivityContent.swift in Sources */,
 				BFAC20261028000000000050 /* BeforeFire/Shared/LiveActivity/ResumeAlarmPreviewIntent.swift in Sources */,
+			);
+		};
+		BFAE20261105000000000003 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			files = (
+				BFAE20261105000000000040 /* BeforeFireNotificationService/NotificationService.swift in Sources */,
+				BFAE20261105000000000041 /* BeforeFire/Models/KitchenAssessment.swift in Sources */,
+				BFAE20261105000000000042 /* BeforeFire/Models/KitchenPushEvent.swift in Sources */,
+				BFAE20261105000000000043 /* BeforeFire/Shared/Notifications/KitchenGuidance.swift in Sources */,
+				BFAE20261105000000000044 /* BeforeFire/Shared/Notifications/KitchenRuleMessages.swift in Sources */,
+				BFAE20261105000000000045 /* BeforeFire/Shared/Notifications/KitchenNotificationContent.swift in Sources */,
 			);
 		};
 		F0A0C5D93089EFBE00BF99E1 /* Sources */ = {
@@ -347,6 +430,11 @@
 			target = BFAC20261027000000000001 /* BeforeFireWidgets */;
 			targetProxy = BFAC20261027000000000009 /* PBXContainerItemProxy */;
 		};
+		BFAE2026110500000000000A /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = BFAE20261105000000000001 /* BeforeFireNotificationService */;
+			targetProxy = BFAE20261105000000000009 /* PBXContainerItemProxy */;
+		};
 		F0A0C5EC3089EFBE00BF99E1 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = F0A0C5DC3089EFBE00BF99E1 /* BeforeFire */;
@@ -366,7 +454,7 @@
 				APPLICATION_EXTENSION_API_ONLY = YES;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 15;
-				DEVELOPMENT_TEAM = 3UL4548SB8;
+				DEVELOPMENT_TEAM = LF442H2D9J;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = BeforeFireWidgets/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "BeforeFire Alarm";
@@ -377,7 +465,7 @@
 					"@executable_path/../../Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.michael.BeforeFire.AlarmWidgets;
+				PRODUCT_BUNDLE_IDENTIFIER = com.ibnu.BeforeFire.AlarmWidgets;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
 				SWIFT_VERSION = 5.0;
@@ -391,7 +479,7 @@
 				APPLICATION_EXTENSION_API_ONLY = YES;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 15;
-				DEVELOPMENT_TEAM = 3UL4548SB8;
+				DEVELOPMENT_TEAM = LF442H2D9J;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = BeforeFireWidgets/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "BeforeFire Alarm";
@@ -402,8 +490,60 @@
 					"@executable_path/../../Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.michael.BeforeFire.AlarmWidgets;
+				PRODUCT_BUNDLE_IDENTIFIER = com.ibnu.BeforeFire.AlarmWidgets;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		BFAE20261105000000000007 /* Debug configuration for PBXNativeTarget "BeforeFireNotificationService" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 15;
+				DEVELOPMENT_TEAM = LF442H2D9J;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = BeforeFireNotificationService/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "BeforeFire Notifications";
+				IPHONEOS_DEPLOYMENT_TARGET = 27.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.ibnu.BeforeFire.NotificationService;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		BFAE20261105000000000008 /* Release configuration for PBXNativeTarget "BeforeFireNotificationService" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 15;
+				DEVELOPMENT_TEAM = LF442H2D9J;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = BeforeFireNotificationService/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "BeforeFire Notifications";
+				IPHONEOS_DEPLOYMENT_TARGET = 27.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.ibnu.BeforeFire.NotificationService;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -445,7 +585,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = dwarf;
-				DEVELOPMENT_TEAM = 3UL4548SB8;
+				DEVELOPMENT_TEAM = LF442H2D9J;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
@@ -510,7 +650,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				DEVELOPMENT_TEAM = 3UL4548SB8;
+				DEVELOPMENT_TEAM = LF442H2D9J;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
@@ -541,7 +681,7 @@
 				CODE_SIGN_ENTITLEMENTS = Configuration/BeforeFire.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 15;
-				DEVELOPMENT_TEAM = 3UL4548SB8;
+				DEVELOPMENT_TEAM = LF442H2D9J;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "Configuration/BeforeFire-Info.plist";
@@ -555,7 +695,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.michael.BeforeFire;
+				PRODUCT_BUNDLE_IDENTIFIER = com.ibnu.BeforeFire;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -572,10 +712,10 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_ENTITLEMENTS = Configuration/BeforeFire.entitlements;
+				CODE_SIGN_ENTITLEMENTS = BeforeFire/BeforeFireRelease.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 15;
-				DEVELOPMENT_TEAM = 3UL4548SB8;
+				DEVELOPMENT_TEAM = LF442H2D9J;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "Configuration/BeforeFire-Info.plist";
@@ -589,7 +729,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.michael.BeforeFire;
+				PRODUCT_BUNDLE_IDENTIFIER = com.ibnu.BeforeFire;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -607,11 +747,11 @@
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 3UL4548SB8;
+				DEVELOPMENT_TEAM = LF442H2D9J;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 27.0;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.michael.BeforeFireTests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.ibnu.BeforeFireTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = NO;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -629,11 +769,11 @@
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 3UL4548SB8;
+				DEVELOPMENT_TEAM = LF442H2D9J;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 27.0;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.michael.BeforeFireTests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.ibnu.BeforeFireTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = NO;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -650,10 +790,10 @@
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 3UL4548SB8;
+				DEVELOPMENT_TEAM = LF442H2D9J;
 				GENERATE_INFOPLIST_FILE = YES;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.michael.BeforeFireUITests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.ibnu.BeforeFireUITests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = NO;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -670,10 +810,10 @@
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 3UL4548SB8;
+				DEVELOPMENT_TEAM = LF442H2D9J;
 				GENERATE_INFOPLIST_FILE = YES;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.michael.BeforeFireUITests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.ibnu.BeforeFireUITests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = NO;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -693,6 +833,14 @@
 			buildConfigurations = (
 				BFAC2026102700000000000B /* Debug configuration for PBXNativeTarget "BeforeFireWidgets" */,
 				BFAC2026102700000000000C /* Release configuration for PBXNativeTarget "BeforeFireWidgets" */,
+			);
+			defaultConfigurationName = Release;
+		};
+		BFAE20261105000000000006 /* Build configuration list for PBXNativeTarget "BeforeFireNotificationService" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				BFAE20261105000000000007 /* Debug configuration for PBXNativeTarget "BeforeFireNotificationService" */,
+				BFAE20261105000000000008 /* Release configuration for PBXNativeTarget "BeforeFireNotificationService" */,
 			);
 			defaultConfigurationName = Release;
 		};

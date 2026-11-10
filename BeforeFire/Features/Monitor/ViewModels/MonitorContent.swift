@@ -7,4 +7,5 @@ struct MonitorContent: Equatable {
     /// `true` when the sensor reports the alarm condition. The screen then shows the status in the alarm color.
     let isDangerous: Bool
     let readings: [MonitorReading]
+    var assessment: KitchenAssessment? = nil
 }

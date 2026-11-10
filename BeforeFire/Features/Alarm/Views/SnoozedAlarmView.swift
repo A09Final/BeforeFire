@@ -19,7 +19,7 @@ struct SnoozedAlarmView: View {
                         .frame(width: min(AlarmStyle.countdownDiameter, geometry.size.width - AlarmStyle.horizontalInset * 2),
                                height: min(AlarmStyle.countdownDiameter, geometry.size.width - AlarmStyle.horizontalInset * 2))
 
-                    Text("Alarm silenced")
+                    Text(KitchenGuidance.snoozedAlarmStatus)
                         .font(.system(size: headingSize, weight: .bold))
                         .foregroundStyle(AlarmStyle.snoozedAccent)
                         .padding(.top, AlarmStyle.snoozedTitleSpacing)

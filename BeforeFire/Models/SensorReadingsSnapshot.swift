@@ -4,12 +4,7 @@ import Foundation
 /// The field names must match `readingsResponse` in BeforeFire-Backend `internal/httpapi/server.go`.
 nonisolated struct SensorReadingsSnapshot: Decodable, Equatable, Sendable {
     /// The result of the fuzzy evaluation in the firmware. It is `nil` until the firmware sends it.
-    enum Condition: String, Sendable {
-        case normal
-        case warning1
-        case warning2
-        case alarm
-    }
+    typealias Condition = KitchenCondition
 
     enum Connection: String, Sendable {
         case online
@@ -32,6 +27,8 @@ nonisolated struct SensorReadingsSnapshot: Decodable, Equatable, Sendable {
 
     var deviceID: String
     var condition: Condition?
+    var conditionIsValid: Bool?
+    var reportedAssessment: KitchenAssessment?
     var readings: Readings
     var unavailableSensors: [String]
     var ageSeconds: Int
@@ -42,6 +39,8 @@ nonisolated struct SensorReadingsSnapshot: Decodable, Equatable, Sendable {
     private enum CodingKeys: String, CodingKey {
         case deviceID = "deviceId"
         case condition
+        case conditionIsValid = "valid"
+        case reportedAssessment = "assessment"
         case readings
         case unavailableSensors
         case ageSeconds
@@ -52,6 +51,8 @@ nonisolated struct SensorReadingsSnapshot: Decodable, Equatable, Sendable {
     init(
         deviceID: String,
         condition: Condition? = nil,
+        conditionIsValid: Bool? = nil,
+        reportedAssessment: KitchenAssessment? = nil,
         readings: Readings = Readings(),
         unavailableSensors: [String] = [],
         ageSeconds: Int = 0,
@@ -60,6 +61,8 @@ nonisolated struct SensorReadingsSnapshot: Decodable, Equatable, Sendable {
     ) {
         self.deviceID = deviceID
         self.condition = condition
+        self.conditionIsValid = conditionIsValid
+        self.reportedAssessment = reportedAssessment
         self.readings = readings
         self.unavailableSensors = unavailableSensors
         self.ageSeconds = ageSeconds
@@ -76,7 +79,32 @@ nonisolated struct SensorReadingsSnapshot: Decodable, Equatable, Sendable {
         isStale = try container.decodeIfPresent(Bool.self, forKey: .isStale) ?? true
         // A new value from a newer backend must not make the whole response unreadable.
         condition = try container.decodeIfPresent(String.self, forKey: .condition).flatMap(Condition.init(rawValue:))
+        conditionIsValid = try container.decodeIfPresent(Bool.self, forKey: .conditionIsValid)
+        reportedAssessment = try container.decodeIfPresent(KitchenAssessment.self, forKey: .reportedAssessment)
         connection = try container.decodeIfPresent(String.self, forKey: .connection)
             .flatMap(Connection.init(rawValue:)) ?? .unknown
+    }
+
+    var assessment: KitchenAssessment {
+        if let reportedAssessment, let condition, reportedAssessment.condition != condition {
+            return KitchenAssessment(condition: nil, isValid: false)
+        }
+        // The existing endpoint exposes a nullable, sensor-supplied condition. Keep that legacy contract.
+        // TODO: The backend must forward fuzzy `valid`, and the optional assessment metadata, without
+        // replacing invalid results with Normal. Confirm the new field names with the backend owner.
+        let result = reportedAssessment ?? KitchenAssessment(condition: condition,
+                                                             isValid: condition != nil && conditionIsValid != false)
+        let blockedReasons: [KitchenConditionReason] = unavailableSensors.compactMap { sensor in
+            switch sensor {
+            case SensorBackendConfiguration.thermalSensorName: .highHeat
+            case SensorBackendConfiguration.environmentSensorName: .poorAirQuality
+            case SensorBackendConfiguration.presenceSensorName: .noPresence
+            default: nil
+            }
+        }
+        return KitchenAssessment(condition: result.condition, isValid: result.isValid && conditionIsValid != false,
+                                 reasons: result.reasons.filter { !blockedReasons.contains($0) },
+                                 ruleID: blockedReasons.isEmpty ? result.ruleID : nil,
+                                 absenceDurationSeconds: blockedReasons.contains(.noPresence) ? nil : result.absenceDurationSeconds)
     }
 }
