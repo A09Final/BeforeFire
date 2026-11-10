@@ -5,6 +5,7 @@
 //  Created by Ibnu Taufick Ahraza on 10/22/26.
 //
 
+import ActivityKit
 import SwiftUI
 
 struct ContentView: View {
@@ -36,9 +37,22 @@ struct ContentView: View {
                   case .updated(let snapshot) = liveReadings.status else { return }
             alarmPreview.handleLiveReading(snapshot, linkedDeviceID: deviceID)
         }
-        .onOpenURL { alarmPreview.open($0) }
+        .onOpenURL { alarmPreview.open($0, linkedDeviceID: sensorBackend.link?.deviceID) }
+        .task {
+            for activity in Activity<AlarmActivityAttributes>.activities {
+                await alarmPreview.adoptRemoteActivity(activity, linkedDeviceID: sensorBackend.link?.deviceID)
+            }
+            for await activity in Activity<AlarmActivityAttributes>.activityUpdates {
+                await alarmPreview.adoptRemoteActivity(activity, linkedDeviceID: sensorBackend.link?.deviceID)
+            }
+        }
+        .onChange(of: sensorBackend.link) { oldLink, newLink in
+            AlarmLiveActivityRegistration.shared.linkChanged(from: oldLink, to: newLink)
+        }
         .onChange(of: alarmPreview.isAlarmPresented) { _, isPresented in
-            if isPresented { alarmPreview.startLiveActivity() }
+            if isPresented {
+                alarmPreview.startLiveActivity(remoteDeviceID: AlarmLiveActivityRegistration.shared.registeredDeviceID)
+            }
         }
         .fullScreenCover(isPresented: $alarmPreview.isAlarmPresented, onDismiss: presentPendingPushEvent) {
             AlarmPreviewFlowView()
@@ -64,6 +78,7 @@ struct ContentView: View {
         }
         .task(id: scenePhase) {
             guard scenePhase == .active else { return }
+            AlarmLiveActivityRegistration.shared.refreshRegistration()
             await pushNotifications.refreshAuthorization()
         }
         .onChange(of: pushNotifications.pendingEvent, initial: true) { _, _ in

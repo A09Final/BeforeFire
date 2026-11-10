@@ -74,6 +74,20 @@ nonisolated struct AlarmActivityAttributes: ActivityAttributes {
     }
 
     let previewID: UUID
+    var sensorDeviceID: String?
+    var remoteEventID: String?
+    var alarmIssuedAt: Int64?
+    var alarmDate: Date? { alarmIssuedAt.map { Date(timeIntervalSince1970: TimeInterval($0)) } }
+
+    var openURL: URL {
+        guard let sensorDeviceID else { return Self.previewURL }
+        var url = URLComponents(url: Self.previewURL, resolvingAgainstBaseURL: false)
+        url?.queryItems = [
+            URLQueryItem(name: "deviceId", value: sensorDeviceID),
+            URLQueryItem(name: "activityId", value: previewID.uuidString)
+        ]
+        return url?.url ?? Self.previewURL
+    }
     static let hubOfflineLabel = "Hub offline"
     static let lastKnownAlarmStatus = "Last known status: Alarm active"
     static let liveStatusUnavailableMessage = "Live status unavailable"

@@ -4,6 +4,20 @@ import Testing
 
 @MainActor
 struct AlarmActivityTests {
+    @Test func backendStartPayloadDecodesAndUsesAnAlarmLink() throws {
+        let attributes = try JSONDecoder().decode(AlarmActivityAttributes.self, from: Data(
+            #"{"previewID":"01234567-89ab-cdef-0123-456789abcdef","sensorDeviceID":"DAPUR_A1B2C3","remoteEventID":"alarm-1","alarmIssuedAt":1794272400}"#.utf8
+        ))
+        let state = try JSONDecoder().decode(AlarmActivityAttributes.ContentState.self, from: Data(
+            #"{"isSnoozed":false,"pushEventID":"alarm-1"}"#.utf8
+        ))
+        #expect(attributes.sensorDeviceID == "DAPUR_A1B2C3")
+        #expect(attributes.remoteEventID == state.pushEventID)
+        #expect(attributes.alarmDate == Date(timeIntervalSince1970: 1794272400))
+        #expect(!state.isSnoozed)
+        #expect(attributes.openURL.query?.contains("deviceId=DAPUR_A1B2C3") == true)
+    }
+
     @Test func alarmStatesRoundTripWithoutLosingPreviewStatus() throws {
         for isSnoozed in [false, true] {
             let original = AlarmActivityAttributes.ContentState(isSnoozed: isSnoozed)
