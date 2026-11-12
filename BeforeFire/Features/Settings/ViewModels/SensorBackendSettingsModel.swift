@@ -9,15 +9,17 @@ final class SensorBackendSettingsModel {
     private(set) var link: SensorBackendLink?
 
     @ObservationIgnored private let store: any SensorBackendLinkStoring
+    @ObservationIgnored private let pushTokens: PushTokenRegistrar?
     @ObservationIgnored private let logger = Logger(subsystem: "BeforeFire", category: "SensorBackend")
 
-    init(store: any SensorBackendLinkStoring) {
+    init(store: any SensorBackendLinkStoring, pushTokens: PushTokenRegistrar? = nil) {
         self.store = store
+        self.pushTokens = pushTokens
         link = store.load()
     }
 
     static func live() -> SensorBackendSettingsModel {
-        SensorBackendSettingsModel(store: KeychainSensorBackendLinkStore())
+        SensorBackendSettingsModel(store: KeychainSensorBackendLinkStore(), pushTokens: .shared)
     }
 
     static func preview(link: SensorBackendLink? = nil) -> SensorBackendSettingsModel {
@@ -57,21 +59,28 @@ final class SensorBackendSettingsModel {
 
         let newLink = try SensorBackendLink(backendAddress: addressToSave, deviceID: deviceID, setupCode: codeToSave)
         do {
+            if let link, link.deviceID != newLink.deviceID {
+                try pushTokens?.prepareToUnlink(link)
+            }
             try store.save(newLink)
         } catch {
             throw SensorBackendLinkIssue.storageFailed
         }
         link = newLink
         // Register a push token that the system delivered before the sensor was linked.
-        PushTokenRegistrar.shared.register()
+        pushTokens?.register()
     }
 
     func remove() throws {
         do {
+            if let link {
+                try pushTokens?.prepareToUnlink(link)
+            }
             try store.remove()
         } catch {
             throw SensorBackendLinkIssue.storageFailed
         }
         link = nil
+        pushTokens?.retryRevocations()
     }
 }
