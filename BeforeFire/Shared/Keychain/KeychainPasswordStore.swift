@@ -10,27 +10,36 @@ struct KeychainPasswordStore {
     let service: String
 
     func read(account: String) -> String? {
+        try? readValue(account: account)
+    }
+
+    func readValue(account: String) throws -> String? {
         var query = baseQuery()
         query[kSecAttrAccount as String] = account
         query[kSecReturnData as String] = true
         query[kSecMatchLimit as String] = kSecMatchLimitOne
 
         var result: CFTypeRef?
-        guard SecItemCopyMatching(query as CFDictionary, &result) == errSecSuccess,
-              let data = result as? Data
-        else {
-            return nil
+        let status = SecItemCopyMatching(query as CFDictionary, &result)
+        if status == errSecItemNotFound { return nil }
+        guard status == errSecSuccess, let data = result as? Data else {
+            throw KeychainPasswordStoreError.keychain(status)
         }
         return String(data: data, encoding: .utf8)
     }
 
     /// Replaces the value of the account.
     func write(_ value: String, account: String) throws {
-        try delete(account: account)
-
         var item = baseQuery()
         item[kSecAttrAccount as String] = account
-        item[kSecValueData as String] = Data(value.utf8)
+        let data = Data(value.utf8)
+        let attributes = [kSecValueData as String: data]
+        let updateStatus = SecItemUpdate(item as CFDictionary, attributes as CFDictionary)
+        if updateStatus == errSecSuccess { return }
+        guard updateStatus == errSecItemNotFound else {
+            throw KeychainPasswordStoreError.keychain(updateStatus)
+        }
+        item[kSecValueData as String] = data
         // The values are not necessary while the phone is locked before the first unlock.
         item[kSecAttrAccessible as String] = kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
 

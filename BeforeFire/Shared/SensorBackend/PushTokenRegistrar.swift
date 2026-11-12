@@ -1,48 +1,130 @@
 import Foundation
 import os
 
-/// Registers the APNs device token with the linked sensor, so the sensor keeps it
-/// in NVS and includes it in every alert — which is how the backend knows which
-/// phone to push a notification to.
-///
-/// The token and the sensor link can arrive in either order: the system delivers
-/// the token at launch (`AppDelegate`), and the user links a sensor on the settings
-/// screen. This object holds the latest token and registers once both exist.
+/// Updates the APNs device tokens that sensors use to send notifications to this iPhone.
 @MainActor
 final class PushTokenRegistrar {
     static let shared = PushTokenRegistrar()
 
     private let store: any SensorBackendLinkStoring
+    private let registrations: SensorPushRegistrationStore
     private let client: any SensorCommandSending
     private let logger = Logger(subsystem: "BeforeFire", category: "PushToken")
     private var token: String?
+    private var work: Task<Void, Never>?
+    private static let retryInterval: Duration = .seconds(30)
 
     init(store: any SensorBackendLinkStoring = KeychainSensorBackendLinkStore(),
+         registrations: SensorPushRegistrationStore = SensorPushRegistrationStore(),
          client: any SensorCommandSending = URLSessionSensorCommandClient()) {
         self.store = store
+        self.registrations = registrations
         self.client = client
     }
 
-    /// Call from `didRegisterForRemoteNotificationsWithDeviceToken`.
-    func updateToken(_ token: String) {
+    @discardableResult
+    func updateToken(_ token: String) -> Task<Void, Never> {
         self.token = token
-        register()
+        return register()
     }
 
-    /// Call after the user links a sensor, to register a token that arrived first.
-    func register() {
+    @discardableResult
+    func register() -> Task<Void, Never> {
+        schedule(registerCurrentToken: true)
+    }
+
+    @discardableResult
+    func retryRevocations() -> Task<Void, Never> {
+        schedule(registerCurrentToken: false)
+    }
+
+    func retryRevocationsWhileActive() async {
+        while !Task.isCancelled {
+            await retryRevocations().value
+            do {
+                try await Task.sleep(for: Self.retryInterval)
+            } catch {
+                return
+            }
+        }
+    }
+
+    /// Save the current connection details before Settings removes them.
+    func prepareToUnlink(_ link: SensorBackendLink) throws {
+        let saved = try registrations.load()
+        let tokens = saved.filter { $0.deviceID == link.deviceID }.map(\.token)
+        let remaining = saved.filter { $0.deviceID != link.deviceID }
+        // Older installs can have a registered token before there is a Keychain record.
+        let entries = (tokens.isEmpty ? [token] : tokens).map {
+            SensorPushRegistration(link: link, token: $0)
+        }
+        try registrations.save(remaining + entries)
+    }
+
+    private func schedule(registerCurrentToken: Bool) -> Task<Void, Never> {
+        // Keep a relink registration after any removal already sent to that sensor.
+        let previousWork = work
+        let nextWork = Task {
+            await previousWork?.value
+            if registerCurrentToken { await registerCurrent() }
+            await revokeUnlinked()
+        }
+        work = nextWork
+        return nextWork
+    }
+
+    private func registerCurrent() async {
         guard let token, let link = store.load() else { return }
-        Task { await send(token: token, to: link) }
+        do {
+            var saved = try registrations.load()
+            saved.removeAll { $0.deviceID == link.deviceID && ($0.token == token || $0.token == nil) }
+            saved.append(SensorPushRegistration(link: link, token: token))
+            // The sensor can keep the token even if its reply does not reach the app.
+            try registrations.save(saved)
+            try await send(.registerPushToken, token: token, to: link)
+        } catch {
+            logger.error("Could not register the push token.")
+        }
     }
 
-    private func send(token: String, to link: SensorBackendLink) async {
+    private func revokeUnlinked() async {
+        let saved: [SensorPushRegistration]
         do {
-            let ack = try await client.send(SensorCommand(action: .registerPushToken, pushToken: token, link: link), for: link)
-            logger.info("register_push_token: \(ack.result, privacy: .public) \(ack.reason ?? "", privacy: .public)")
+            saved = try registrations.load()
         } catch {
-            // The sensor may be offline right now; it still sends tokens it already has.
-            // Registration retries on the next launch (the token is redelivered) or next link.
-            logger.error("register_push_token failed: \(String(describing: error), privacy: .public)")
+            logger.error("Could not read push token registrations.")
+            return
+        }
+
+        for registration in saved {
+            guard store.load()?.deviceID != registration.deviceID,
+                  let token = registration.token ?? token else { continue }
+            do {
+                let link = try registration.sensorLink()
+                let resolved = SensorPushRegistration(link: link, token: token)
+                if registration != resolved {
+                    try replace(registration, with: resolved)
+                }
+                try await send(.unregisterPushToken, token: token, to: link)
+                try replace(resolved, with: nil)
+            } catch {
+                logger.error("Push token removal is pending.")
+            }
+        }
+    }
+
+    private func replace(_ registration: SensorPushRegistration, with replacement: SensorPushRegistration?) throws {
+        var saved = try registrations.load()
+        saved.removeAll { $0 == registration }
+        if let replacement { saved.append(replacement) }
+        try registrations.save(saved)
+    }
+
+    private func send(_ action: SensorCommand.Action, token: String, to link: SensorBackendLink) async throws {
+        let command = SensorCommand(action: action, pushToken: token, link: link)
+        let ack = try await client.send(command, for: link)
+        guard ack.requestId == command.requestId, ack.result == "done" else {
+            throw SensorCommandError.unexpectedResponse
         }
     }
 }
