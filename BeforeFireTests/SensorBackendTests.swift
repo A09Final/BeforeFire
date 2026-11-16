@@ -487,6 +487,135 @@ struct SensorBackendSettingsModelTests {
     }
 }
 
+// MARK: - Push token removal
+
+@MainActor
+struct SensorPushTokenRemovalTests {
+    private let token = String(repeating: "a", count: 64)
+    private let replacementToken = String(repeating: "b", count: 64)
+
+    @Test func unlinkRevokesTheTokenForTheOldSensor() async throws {
+        let oldLink = try exampleLink()
+        let store = InMemorySensorBackendLinkStore(link: oldLink)
+        let registrations = SensorPushRegistrationStore(keychainService: UUID().uuidString)
+        defer { try? registrations.save([]) }
+        let client = RecordingSensorCommandClient()
+        let registrar = PushTokenRegistrar(store: store, registrations: registrations, client: client)
+        let settings = SensorBackendSettingsModel(store: store, pushTokens: registrar)
+
+        await registrar.updateToken(token).value
+        try settings.remove()
+        await registrar.retryRevocations().value
+
+        #expect(settings.link == nil)
+        #expect(client.requests.map(\.command.action) == [.registerPushToken, .unregisterPushToken])
+        #expect(client.requests.last?.link == oldLink)
+        #expect(client.requests.last?.command.pushToken == token)
+        #expect(try registrations.load().isEmpty)
+    }
+
+    @Test func offlineRevocationSurvivesRelaunchAndUsesTheOldToken() async throws {
+        let oldLink = try exampleLink()
+        let store = InMemorySensorBackendLinkStore(link: oldLink)
+        let service = UUID().uuidString
+        let registrations = SensorPushRegistrationStore(keychainService: service)
+        defer { try? registrations.save([]) }
+        let client = RecordingSensorCommandClient()
+        let registrar = PushTokenRegistrar(store: store, registrations: registrations, client: client)
+        let settings = SensorBackendSettingsModel(store: store, pushTokens: registrar)
+
+        await registrar.updateToken(token).value
+        client.isOffline = true
+        try settings.remove()
+        await registrar.retryRevocations().value
+        #expect(try registrations.load().map(\.token) == [token])
+
+        let relaunchedClient = RecordingSensorCommandClient()
+        let relaunched = PushTokenRegistrar(
+            store: store, registrations: SensorPushRegistrationStore(keychainService: service),
+            client: relaunchedClient
+        )
+        await relaunched.updateToken(replacementToken).value
+
+        #expect(relaunchedClient.requests.count == 1)
+        #expect(relaunchedClient.requests.first?.command.action == .unregisterPushToken)
+        #expect(relaunchedClient.requests.first?.command.pushToken == token)
+        #expect(relaunchedClient.requests.first?.link == oldLink)
+        #expect(try registrations.load().isEmpty)
+    }
+
+    @Test func unlinkOfAnOlderInstallWaitsForAPNsToken() async throws {
+        let oldLink = try exampleLink()
+        let store = InMemorySensorBackendLinkStore(link: oldLink)
+        let registrations = SensorPushRegistrationStore(keychainService: UUID().uuidString)
+        defer { try? registrations.save([]) }
+        let client = RecordingSensorCommandClient()
+        let registrar = PushTokenRegistrar(store: store, registrations: registrations, client: client)
+        let settings = SensorBackendSettingsModel(store: store, pushTokens: registrar)
+
+        try settings.remove()
+        await registrar.retryRevocations().value
+        #expect(client.requests.isEmpty)
+        #expect(try registrations.load() == [SensorPushRegistration(link: oldLink, token: nil)])
+
+        await registrar.updateToken(token).value
+        #expect(client.requests.map(\.command.action) == [.unregisterPushToken])
+        #expect(try registrations.load().isEmpty)
+    }
+
+    @Test func switchingSensorsRegistersTheNewSensorAndRevokesTheOldOne() async throws {
+        let oldLink = try exampleLink()
+        let store = InMemorySensorBackendLinkStore(link: oldLink)
+        let registrations = SensorPushRegistrationStore(keychainService: UUID().uuidString)
+        defer { try? registrations.save([]) }
+        let client = RecordingSensorCommandClient()
+        let registrar = PushTokenRegistrar(store: store, registrations: registrations, client: client)
+        let settings = SensorBackendSettingsModel(store: store, pushTokens: registrar)
+
+        await registrar.updateToken(token).value
+        settings.linkSensor(deviceID: "DAPUR_D4E5F6", setupCode: "wxyz6789")
+        await registrar.retryRevocations().value
+
+        #expect(client.requests.map(\.command.action) == [.registerPushToken, .registerPushToken, .unregisterPushToken])
+        #expect(client.requests.map(\.link.deviceID) == [oldLink.deviceID, "DAPUR_D4E5F6", oldLink.deviceID])
+        #expect(try registrations.load().map(\.deviceID) == ["DAPUR_D4E5F6"])
+    }
+
+    @Test func relinkingTheSameSensorKeepsItsToken() async throws {
+        let link = try exampleLink()
+        let store = InMemorySensorBackendLinkStore(link: link)
+        let registrations = SensorPushRegistrationStore(keychainService: UUID().uuidString)
+        defer { try? registrations.save([]) }
+        let client = RecordingSensorCommandClient()
+        let registrar = PushTokenRegistrar(store: store, registrations: registrations, client: client)
+        let settings = SensorBackendSettingsModel(store: store, pushTokens: registrar)
+
+        await registrar.updateToken(token).value
+        client.isOffline = true
+        try settings.remove()
+        await registrar.retryRevocations().value
+
+        client.isOffline = false
+        client.requests.removeAll()
+        settings.linkSensor(deviceID: link.deviceID, setupCode: link.setupCode)
+        await registrar.retryRevocations().value
+
+        #expect(client.requests.map(\.command.action) == [.registerPushToken])
+        #expect(try registrations.load().map(\.token) == [token])
+    }
+}
+
+private final class RecordingSensorCommandClient: SensorCommandSending {
+    var isOffline = false
+    var requests: [(command: SensorCommand, link: SensorBackendLink)] = []
+
+    func send(_ command: SensorCommand, for link: SensorBackendLink) async throws -> SensorCommandAck {
+        requests.append((command, link))
+        if isOffline { throw SensorCommandError.deviceOffline }
+        return SensorCommandAck(requestId: command.requestId, result: "done", reason: nil)
+    }
+}
+
 // MARK: - Sensors that already have Wi-Fi
 
 private final class FixedDiscoveryClient: SensorDiscovering {

@@ -90,6 +90,7 @@ struct ContentView: View {
             guard scenePhase == .active else { return }
             AlarmLiveActivityRegistration.shared.refreshRegistration()
             await pushNotifications.refreshAuthorization()
+            await PushTokenRegistrar.shared.retryRevocationsWhileActive()
         }
         .onChange(of: pushNotifications.pendingEvent, initial: true) { _, _ in
             presentPendingPushEvent()
