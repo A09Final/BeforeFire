@@ -280,9 +280,18 @@ struct DeviceWiFiPasswordStep: View {
                 if model.activity == .joining {
                     DeviceSetupProgressRow(text: copy.joining, presentation: presentation)
                 } else {
-                    Button(copy.joinButton) { model.join() }
-                        .disabled(!model.canJoin)
-                        .accessibilityIdentifier(presentation.setupIdentifier("joinButton"))
+                    Button { model.join() } label: {
+                        Text(copy.joinButton)
+                            .frame(maxWidth: .infinity, minHeight: 30)
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .buttonBorderShape(.capsule)
+                    .controlSize(.large)
+                    .tint(.blue)
+                    .listRowBackground(Color.clear)
+                    .listRowInsets(EdgeInsets())
+                    .disabled(!model.canJoin)
+                    .accessibilityIdentifier(presentation.setupIdentifier("joinButton"))
                 }
                 DeviceSetupErrorRow(message: model.errorMessage, presentation: presentation)
             }

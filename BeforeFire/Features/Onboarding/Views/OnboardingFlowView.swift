@@ -42,30 +42,10 @@ struct OnboardingFlowView: View {
                        description: OnboardingCopy.welcomeDescription,
                        footer: OnboardingCopy.nearbyReminder,
                        buttonTitle: "Get Started", buttonIdentifier: "onboarding.getStarted",
+                       showsNavigationBar: false, onSkip: onFinished,
                        action: { path.append(.permissions) }) {
-            VStack(alignment: .leading, spacing: 24) {
-                Text(OnboardingCopy.requirementsTitle)
-                    .font(.title2.bold())
-                    .accessibilityAddTraits(.isHeader)
-                Text("BeforeFire sensor")
-                Text("BeforeFire alarm")
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("2.4 GHz Wi-Fi")
-                    Text("Network name and password")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                }
-            }
+            OnboardingRequirementsView()
         }
-        .navigationTitle("BeforeFire")
-        #if DEBUG
-        .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                Button("Skip", action: onFinished)
-                    .accessibilityIdentifier("onboarding.skip")
-            }
-        }
-        #endif
     }
 
     private var completion: some View {
