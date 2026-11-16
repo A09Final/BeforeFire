@@ -18,10 +18,12 @@ final class PushNotificationManager {
 
     let bundleIdentifier: String
     private(set) var authorizationStatus: UNAuthorizationStatus = .notDetermined
+    private(set) var criticalAlertsEnabled = false
     private(set) var registrationStatus: RegistrationStatus = .notRegistered
     private(set) var deviceRegistration: PushDeviceRegistration?
     private(set) var isUpdating = false
     private(set) var errorMessage: String?
+    private(set) var criticalAlertErrorMessage: String?
     private(set) var pendingEvent: KitchenPushEvent?
     private(set) var payloadMessage: String?
     @ObservationIgnored private let client: any PushNotificationClient
@@ -68,22 +70,44 @@ final class PushNotificationManager {
         await updateAuthorization(shouldRequestPermission: true)
     }
 
+    func requestCriticalAlertPermission() async {
+        guard canReceiveAlerts, !criticalAlertsEnabled, !isUpdating else { return }
+        isUpdating = true
+        defer { isUpdating = false }
+        criticalAlertErrorMessage = nil
+
+        do {
+            try Task.checkCancellation()
+            try await client.requestCriticalAlertAuthorization()
+            try Task.checkCancellation()
+            let settings = await client.authorizationSettings()
+            try Task.checkCancellation()
+            criticalAlertsEnabled = settings.criticalAlertsEnabled
+        } catch is CancellationError {
+            return
+        } catch {
+            guard !Task.isCancelled else { return }
+            criticalAlertErrorMessage = "Could not request Critical Alerts. Try again."
+            logger.error("Critical alert authorization failed.")
+        }
+    }
+
     private func updateAuthorization(shouldRequestPermission: Bool) async {
         guard !isUpdating else { return }
         isUpdating = true
         defer { isUpdating = false }
         do {
-            let currentStatus = await client.authorizationStatus()
+            var settings = await client.authorizationSettings()
             try Task.checkCancellation()
-            if shouldRequestPermission && currentStatus == .notDetermined {
+            if shouldRequestPermission && settings.status == .notDetermined {
                 try await client.requestAuthorization()
                 try Task.checkCancellation()
-                let updatedStatus = await client.authorizationStatus()
+                settings = await client.authorizationSettings()
                 try Task.checkCancellation()
-                authorizationStatus = updatedStatus
-            } else {
-                authorizationStatus = currentStatus
             }
+            authorizationStatus = settings.status
+            criticalAlertsEnabled = settings.criticalAlertsEnabled
+            if criticalAlertsEnabled { criticalAlertErrorMessage = nil }
             guard canReceiveAlerts else {
                 deviceRegistration = nil
                 registrationStatus = .notRegistered
