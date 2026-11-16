@@ -58,6 +58,14 @@ struct OnboardingFlowView: View {
             }
         }
         .navigationTitle("BeforeFire")
+        #if DEBUG
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                Button("Skip", action: onFinished)
+                    .accessibilityIdentifier("onboarding.skip")
+            }
+        }
+        #endif
     }
 
     private var completion: some View {

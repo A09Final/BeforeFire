@@ -53,6 +53,18 @@ struct SensorBackendLinkTests {
         }
     }
 
+    @Test(arguments: [
+        ("http://Dericks-MacBook-Pro.local:8080", "http://beforefire-server.local:8080"),
+        ("http://dericks-macbook-pro.local:8081", "http://beforefire-server.local:8081"),
+        ("https://DERICKS-MACBOOK-PRO.LOCAL:8080", "https://beforefire-server.local:8080"),
+        ("http://192.168.1.10:8080", "http://192.168.1.10:8080"),
+        ("http://other-mac.local:8080", "http://other-mac.local:8080"),
+        ("http://beforefire-server.local:8080", "http://beforefire-server.local:8080")
+    ])
+    func movesOnlyTheEarlierDefaultServerToTheNewName(saved: String, expected: String) {
+        #expect(SensorBackendLink.replacingLegacyDefaultHost(in: saved) == expected)
+    }
+
     @Test func rejectsShortSetupCode() {
         #expect(throws: SensorBackendLinkIssue.invalidSetupCode) {
             try SensorBackendLink(backendAddress: "192.168.1.10", deviceID: exampleSerial, setupCode: "abc")
@@ -472,6 +484,43 @@ struct SensorBackendSettingsModelTests {
         #expect(link.backendAddress == SensorBackendConfiguration.defaultBackendAddress)
     }
 
+    @Test func defaultServerUsesTheNameOfTheServerScript() throws {
+        let url = try SensorBackendLink.serverURL(from: SensorBackendConfiguration.defaultBackendAddress)
+        #expect(url.host == SensorBackendConfiguration.defaultHost)
+        #expect(url.port == SensorBackendConfiguration.defaultPort)
+        #expect(!SensorBackendConfiguration.legacyDefaultHosts.contains(SensorBackendConfiguration.defaultHost))
+    }
+
+    @Test func keychainStoreMovesALinkToTheEarlierDefaultServer() throws {
+        let suiteName = "SensorBackendTests.\(UUID().uuidString)"
+        let defaults = try #require(UserDefaults(suiteName: suiteName))
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+        let store = KeychainSensorBackendLinkStore(defaults: defaults, keychainService: suiteName)
+        defer { try? store.remove() }
+        // A link that an earlier version saved with its default server.
+        try store.save(try exampleLink(address: "http://Dericks-MacBook-Pro.local:8080"))
+
+        let relaunchedStore = KeychainSensorBackendLinkStore(defaults: defaults, keychainService: suiteName)
+        let link = try #require(relaunchedStore.load())
+
+        #expect(link.backendAddress == SensorBackendConfiguration.defaultBackendAddress)
+        #expect(link.deviceID == exampleSerial)
+        #expect(link.setupCode == exampleSetupCode)
+        #expect(defaults.string(forKey: "sensorBackend.backendAddress") == SensorBackendConfiguration.defaultBackendAddress)
+    }
+
+    @Test func keychainStoreKeepsATypedServer() throws {
+        let suiteName = "SensorBackendTests.\(UUID().uuidString)"
+        let defaults = try #require(UserDefaults(suiteName: suiteName))
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+        let store = KeychainSensorBackendLinkStore(defaults: defaults, keychainService: suiteName)
+        defer { try? store.remove() }
+
+        try store.save(try exampleLink(address: "http://other-mac.local:8081"))
+
+        #expect(store.load()?.backendAddress == "http://other-mac.local:8081")
+    }
+
     @Test func keychainStoreKeepsTheLink() throws {
         let suiteName = "SensorBackendTests.\(UUID().uuidString)"
         let defaults = try #require(UserDefaults(suiteName: suiteName))
@@ -542,6 +591,17 @@ struct SensorPushTokenRemovalTests {
         #expect(relaunchedClient.requests.first?.command.pushToken == token)
         #expect(relaunchedClient.requests.first?.link == oldLink)
         #expect(try registrations.load().isEmpty)
+    }
+
+    @Test func savedRemovalForTheEarlierDefaultServerGoesToTheNewName() throws {
+        let oldLink = try exampleLink(address: "http://Dericks-MacBook-Pro.local:8080")
+        let registration = SensorPushRegistration(link: oldLink, token: token)
+
+        let link = try registration.sensorLink()
+
+        #expect(link.backendAddress == SensorBackendConfiguration.defaultBackendAddress)
+        #expect(link.deviceID == oldLink.deviceID)
+        #expect(link.setupCode == oldLink.setupCode)
     }
 
     @Test func unlinkOfAnOlderInstallWaitsForAPNsToken() async throws {
