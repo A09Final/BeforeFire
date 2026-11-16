@@ -4,13 +4,15 @@ struct PlacementStep: Identifiable {
     let id: Int
     let title: String
     let description: String
+    let illustration: (name: String, accessibilityLabel: String)?
 
     // Keep the current guide content in one place for Settings and onboarding.
     static let current = [
         PlacementStep(id: 0, title: "Sensor Placement Guide",
-                      description: "Follow the placement of the sensor as shown in the instruction above"),
-        PlacementStep(id: 1, title: "Step 2", description: "Add the second instruction here"),
-        PlacementStep(id: 2, title: "Step 3", description: "Add the third instruction here")
+                      description: "Follow the placement of the sensor as shown in the instruction above",
+                      illustration: ("Illustration-sensor-1", "Hands hold the sensor with its sensing side facing down.")),
+        PlacementStep(id: 1, title: "Step 2", description: "Add the second instruction here", illustration: nil),
+        PlacementStep(id: 2, title: "Step 3", description: "Add the third instruction here", illustration: nil)
     ]
 }
 
@@ -65,11 +67,20 @@ struct PlacementPage: View {
                 Text(step.title)
                     .font(.title2.bold())
                     .accessibilityAddTraits(.isHeader)
-                Rectangle()
-                    .fill(Color.black)
-                    .frame(maxWidth: 300)
-                    .aspectRatio(1, contentMode: .fit)
-                    .accessibilityHidden(true)
+                Group {
+                    if let illustration = step.illustration {
+                        Image(illustration.name, label: Text(illustration.accessibilityLabel))
+                            .resizable()
+                            .scaledToFit()
+                            .clipShape(.rect(cornerRadius: 18))
+                    } else {
+                        Rectangle()
+                            .fill(Color.black)
+                            .accessibilityHidden(true)
+                    }
+                }
+                .frame(maxWidth: 300)
+                .aspectRatio(1, contentMode: .fit)
                 Text(step.description)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
