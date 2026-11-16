@@ -13,8 +13,11 @@ struct SensorPushRegistration: Codable, Equatable {
         self.token = token
     }
 
+    /// A registration saved by an earlier version can name the earlier default server. The removal then goes to
+    /// the current default server, which is the same BeforeFire server.
     func sensorLink() throws -> SensorBackendLink {
-        try SensorBackendLink(backendAddress: backendAddress, deviceID: deviceID, setupCode: setupCode)
+        try SensorBackendLink(backendAddress: SensorBackendLink.replacingLegacyDefaultHost(in: backendAddress),
+                              deviceID: deviceID, setupCode: setupCode)
     }
 }
 
