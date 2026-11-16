@@ -67,6 +67,8 @@ Architecture update: The project owner changed the architecture on 2026-10-23. T
 
    **Onboarding validation (2026-11-10):** The simulator build and 39 focused tests passed on iPhone 17 with iOS 27.0. After a keyboard focus fix, the expanded onboarding test and the Settings Wi-Fi/Home regression test passed again. Checks covered returning from Wi-Fi to reconnect, cancelling password entry, returning from alarm setup to a completed sensor setup, both device setup flows, completion storage, and relaunch. Physical-device setup and system permission prompts still need device testing.
 
+   **Development-only Skip (owner-confirmed, 2026-11-16):** The onboarding welcome screen has a Skip button in Debug builds. It uses the existing completion action to open Monitor and save onboarding completion. It does not configure or mark a sensor or alarm as connected. Device setup remains available in Settings. The button is excluded at compile time from Release builds used for external testing.
+
    After setup, the resident can check kitchen conditions. Monitoring continues without requiring the resident to keep the app open.
 
    When the system detects a condition that requires attention, it produces an appropriate alert. The resident opens the alert, checks the kitchen, and addresses the cause.
