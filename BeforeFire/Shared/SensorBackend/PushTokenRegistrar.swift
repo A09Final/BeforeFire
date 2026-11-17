@@ -14,9 +14,17 @@ final class PushTokenRegistrar {
     private var work: Task<Void, Never>?
     private static let retryInterval: Duration = .seconds(30)
 
-    init(store: any SensorBackendLinkStoring = KeychainSensorBackendLinkStore(),
-         registrations: SensorPushRegistrationStore = SensorPushRegistrationStore(),
-         client: any SensorCommandSending = URLSessionSensorCommandClient()) {
+    convenience init() {
+        // Build the real dependencies here, on the main actor, instead of as
+        // default arguments (those are evaluated in a nonisolated context).
+        self.init(store: KeychainSensorBackendLinkStore(),
+                  registrations: SensorPushRegistrationStore(),
+                  client: URLSessionSensorCommandClient())
+    }
+
+    init(store: any SensorBackendLinkStoring,
+         registrations: SensorPushRegistrationStore,
+         client: any SensorCommandSending) {
         self.store = store
         self.registrations = registrations
         self.client = client
