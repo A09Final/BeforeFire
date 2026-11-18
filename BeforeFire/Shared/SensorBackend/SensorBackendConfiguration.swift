@@ -9,11 +9,18 @@ nonisolated enum SensorBackendConfiguration {
     /// `internal/command/request.go` and `hitungTanda()` in the firmware (`Sensor/KirimBackend.cpp`).
     static let commandSigningVersion = "beforefire-cmd-v1"
 
-    /// The server that the app uses when the user did not type an address. The `.local` name of the Mac that runs
-    /// BeforeFire-Backend stays the same when the Mac changes its IP address or Wi-Fi network.
-    /// Must use the same host as `BACKEND_MQTT_URI` in the firmware (`Sensor/KirimBackend.cpp`).
-    /// TODO: Change this value when the server runs on a different Mac or moves to a server with a fixed domain.
-    static let defaultBackendAddress = "http://Dericks-MacBook-Pro.local:8080"
+    /// The `.local` name that `scripts/start-server.sh` in BeforeFire-Backend publishes for the Mac that runs the
+    /// server. Any Mac can run the server, and the name moves with the Mac to a new Wi-Fi network or IP address,
+    /// so the app needs no new address. Must match `LOCAL_NAME` in `scripts/start-server.sh` and the host of
+    /// `BACKEND_MQTT_URI` in the firmware (`Sensor/KirimBackend.cpp`).
+    static let defaultHost = "beforefire-server.local"
+
+    /// The server that the app uses when the user did not type an address.
+    static let defaultBackendAddress = "http://beforefire-server.local:8080"
+
+    /// Hosts of earlier default addresses, in lowercase. Earlier versions used the `.local` name of one Mac.
+    /// The app moves a saved link with such a host to `defaultHost`, so the user does not link the sensor again.
+    static let legacyDefaultHosts: Set<String> = ["dericks-macbook-pro.local"]
 
     /// The backend HTTP port in `docker-compose.yml`. The app adds it when the user types an address without a port.
     static let defaultPort = 8080

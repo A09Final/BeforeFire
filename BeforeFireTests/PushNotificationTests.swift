@@ -12,6 +12,7 @@ struct PushNotificationTests {
         let manager = makeManager(client)
         await manager.refreshAuthorization()
         #expect(client.permissionRequests == 0)
+        #expect(client.criticalPermissionRequests == 0)
         #expect(client.registrationRequests == 0)
         #expect(manager.authorizationStatus == .notDetermined)
     }
@@ -46,6 +47,26 @@ struct PushNotificationTests {
         let client = StubPushNotificationClient(status: status)
         let manager = makeManager(client)
         await manager.refreshAuthorization()
+        #expect(client.permissionRequests == 0)
+        #expect(client.registrationRequests == 1)
+    }
+
+    @Test(arguments: [true, false])
+    func criticalAlertPermissionKeepsExistingPushRegistration(_ allowsCriticalAlerts: Bool) async {
+        let client = StubPushNotificationClient(status: .authorized)
+        client.allowsCriticalAlerts = allowsCriticalAlerts
+        let manager = makeManager(client)
+        await manager.refreshAuthorization()
+        manager.didRegister(deviceToken: Data([1, 2]))
+        let registration = manager.deviceRegistration
+
+        await manager.requestCriticalAlertPermission()
+
+        #expect(manager.criticalAlertsEnabled == allowsCriticalAlerts)
+        #expect(manager.authorizationStatus == .authorized)
+        #expect(manager.deviceRegistration == registration)
+        #expect(manager.registrationStatus == .registered)
+        #expect(client.criticalPermissionRequests == 1)
         #expect(client.permissionRequests == 0)
         #expect(client.registrationRequests == 1)
     }
@@ -289,19 +310,29 @@ private final class StubPushNotificationClient: PushNotificationClient {
     var status: UNAuthorizationStatus
     var statusAfterRequest: UNAuthorizationStatus = .authorized
     var shouldFailPermission = false
+    var allowsCriticalAlerts = true
+    private var criticalAlertsEnabled = false
     private(set) var permissionRequests = 0
+    private(set) var criticalPermissionRequests = 0
     private(set) var registrationRequests = 0
 
     init(status: UNAuthorizationStatus = .notDetermined) {
         self.status = status
     }
 
-    func authorizationStatus() async -> UNAuthorizationStatus { status }
+    func authorizationSettings() async -> (status: UNAuthorizationStatus, criticalAlertsEnabled: Bool) {
+        (status, criticalAlertsEnabled)
+    }
 
     func requestAuthorization() async throws {
         permissionRequests += 1
         if shouldFailPermission { throw Failure.unavailable }
         status = statusAfterRequest
+    }
+
+    func requestCriticalAlertAuthorization() async throws {
+        criticalPermissionRequests += 1
+        criticalAlertsEnabled = allowsCriticalAlerts
     }
 
     func registerForRemoteNotifications() {
