@@ -458,6 +458,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = BeforeFireWidgets/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "BeforeFire Alarm";
+                SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) BEFOREFIRE_WIDGET_EXTENSION";
 				IPHONEOS_DEPLOYMENT_TARGET = 27.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -483,6 +484,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = BeforeFireWidgets/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "BeforeFire Alarm";
+                SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) BEFOREFIRE_WIDGET_EXTENSION";
 				IPHONEOS_DEPLOYMENT_TARGET = 27.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",

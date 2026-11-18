@@ -17,6 +17,7 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
         notifications.didRegister(deviceToken: deviceToken)
         if let registration = notifications.deviceRegistration {
             PushTokenRegistrar.shared.updateToken(registration.token)
+            AlarmLiveActivityRegistration.shared.refreshRegistration()
         }
     }
 

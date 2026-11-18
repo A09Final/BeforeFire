@@ -14,20 +14,20 @@ struct AlarmLiveActivity: Widget {
     var body: some WidgetConfiguration {
         ActivityConfiguration(for: AlarmActivityAttributes.self) { context in
             AlarmLockScreenView(context: context)
-                .activityBackgroundTint(context.state.isSnoozed ? AlarmLiveActivityStyle.snoozedBackground : Color("AlarmBackgroundTop"))
+                .activityBackgroundTint(context.alarmDisplayState.isSnoozed ? AlarmLiveActivityStyle.snoozedBackground : Color("AlarmBackgroundTop"))
                 .activitySystemActionForegroundColor(AlarmLiveActivityStyle.foreground)
                 .widgetURL(context.attributes.openURL)
                 .environment(\.colorScheme, .dark)
         } dynamicIsland: { context in
             DynamicIsland {
                 DynamicIslandExpandedRegion(.leading) {
-                    if !context.state.isSnoozed {
+                    if !context.alarmDisplayState.isSnoozed {
                         HStack(spacing: AlarmLiveActivityStyle.spacing) {
-                            Image(systemName: context.state.symbol)
+                            Image(systemName: context.alarmDisplayState.symbol)
                                 .font(.system(size: AlarmLiveActivityStyle.iconSize))
                                 .foregroundStyle(AlarmLiveActivityStyle.alarm)
                                 .accessibilityHidden(true)
-                            Text(context.state.status)
+                            Text(context.alarmDisplayState.status)
                                 .font(.system(size: AlarmLiveActivityStyle.statusSize, weight: .medium))
                                 .lineLimit(1)
                                 .minimumScaleFactor(AlarmLiveActivityStyle.minimumTextScale)
@@ -37,10 +37,10 @@ struct AlarmLiveActivity: Widget {
                 }
                 DynamicIslandExpandedRegion(.bottom) {
                     VStack(alignment: .leading, spacing: AlarmLiveActivityStyle.spacing) {
-                        if context.state.isSnoozed {
-                            AlarmSnoozedActivityContent(state: context.state, isExpandedIsland: true)
+                        if context.alarmDisplayState.isSnoozed {
+                            AlarmSnoozedActivityContent(state: context.alarmDisplayState, isExpandedIsland: true)
                         } else {
-                            AlarmActivityMessage(state: context.state)
+                            AlarmActivityMessage(state: context.alarmDisplayState)
                         }
                         AlarmActivityActions(context: context)
                             .fixedSize(horizontal: false, vertical: true)
@@ -49,28 +49,34 @@ struct AlarmLiveActivity: Widget {
                     .padding(.vertical, AlarmLiveActivityStyle.expandedContentInset)
                 }
             } compactLeading: {
-                Image(systemName: context.state.symbol)
-                    .foregroundStyle(AlarmLiveActivityStyle.accent(for: context.state))
-                    .accessibilityLabel(context.state.status)
+                Image(systemName: context.alarmDisplayState.symbol)
+                    .foregroundStyle(AlarmLiveActivityStyle.accent(for: context.alarmDisplayState))
+                    .accessibilityLabel(context.alarmDisplayState.status)
             } compactTrailing: {
-                if context.state.isSnoozed {
-                    AlarmActivityCountdown(state: context.state)
+                if context.alarmDisplayState.isSnoozed {
+                    AlarmActivityCountdown(state: context.alarmDisplayState)
                         .font(.system(size: AlarmLiveActivityStyle.compactCountdownTextSize, weight: .semibold))
                         .foregroundStyle(AlarmLiveActivityStyle.snoozedAccent)
                         .frame(width: AlarmLiveActivityStyle.compactCountdownWidth)
                 } else {
                     Image(systemName: "exclamationmark.circle")
                         .foregroundStyle(AlarmLiveActivityStyle.alarm)
-                        .accessibilityLabel(context.state.status)
+                        .accessibilityLabel(context.alarmDisplayState.status)
                 }
             } minimal: {
-                Image(systemName: context.state.symbol)
-                    .foregroundStyle(AlarmLiveActivityStyle.accent(for: context.state))
-                    .accessibilityLabel(context.state.status)
+                Image(systemName: context.alarmDisplayState.symbol)
+                    .foregroundStyle(AlarmLiveActivityStyle.accent(for: context.alarmDisplayState))
+                    .accessibilityLabel(context.alarmDisplayState.status)
             }
             .widgetURL(context.attributes.openURL)
-            .keylineTint(AlarmLiveActivityStyle.accent(for: context.state))
+            .keylineTint(AlarmLiveActivityStyle.accent(for: context.alarmDisplayState))
         }
+    }
+}
+
+private extension ActivityViewContext where Attributes == AlarmActivityAttributes {
+    var alarmDisplayState: AlarmActivityAttributes.ContentState {
+        state.displayState(isStale: isStale, at: .now)
     }
 }
 
@@ -79,19 +85,19 @@ private struct AlarmLockScreenView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: AlarmLiveActivityStyle.spacing) {
-            if context.state.isSnoozed {
-                AlarmSnoozedActivityContent(state: context.state)
+            if context.alarmDisplayState.isSnoozed {
+                AlarmSnoozedActivityContent(state: context.alarmDisplayState)
             } else {
-                Label(context.state.status, systemImage: context.state.symbol)
+                Label(context.alarmDisplayState.status, systemImage: context.alarmDisplayState.symbol)
                     .font(.system(size: AlarmLiveActivityStyle.statusSize, weight: .medium))
-                AlarmActivityMessage(state: context.state)
+                AlarmActivityMessage(state: context.alarmDisplayState)
             }
             AlarmActivityActions(context: context)
         }
         .foregroundStyle(AlarmLiveActivityStyle.foreground)
         .padding(AlarmLiveActivityStyle.inset)
         .background {
-            if context.state.isSnoozed {
+            if context.alarmDisplayState.isSnoozed {
                 AlarmLiveActivityStyle.snoozedBackground
             } else {
                 AlarmLiveActivityStyle.gradient
@@ -123,7 +129,7 @@ private struct AlarmActivityActions: View {
 
     var body: some View {
         Group {
-            if context.state.isSnoozed {
+            if context.alarmDisplayState.isSnoozed {
                 Button(intent: ResumeAlarmPreviewIntent(activityID: context.activityID)) {
                     Text("Resume Alarm")
                         .modifier(AlarmActivityActionStyle())
@@ -136,7 +142,7 @@ private struct AlarmActivityActions: View {
             }
         }
         .buttonStyle(.plain)
-        .accessibilityHint("Changes the preview only. No alarm command is sent.")
+        .accessibilityHint("Silences or resumes alarm alerts on this iPhone only.")
     }
 }
 

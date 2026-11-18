@@ -250,6 +250,43 @@ struct AlarmFeedbackTests {
         #expect(player.numberOfChannels == 1)
     }
 
+    @Test func snoozeAndResumeSendOnlyTheLinkedPhoneState() {
+        var changes: [(String, AlarmActivityAttributes.ContentState)] = []
+        let model = AlarmPreviewModel(feedback: RecordingAlarmFeedback()) { deviceID, state in
+            changes.append((deviceID, state))
+        }
+        model.setApplicationActive(true)
+        model.handleLiveReading(.init(deviceID: "DAPUR_A1B2C3", condition: .alarm),
+                                linkedDeviceID: "DAPUR_A1B2C3")
+        model.snooze(at: start)
+        #expect(changes.count == 1)
+        #expect(changes[0].0 == "DAPUR_A1B2C3")
+        #expect(changes[0].1.isSnoozed)
+        #expect(changes[0].1.snoozeEndsAt == start.addingTimeInterval(60))
+        model.resumeAlarm()
+        #expect(changes.count == 2)
+        #expect(!changes[1].1.isSnoozed)
+        #expect(changes[1].1.snoozeEndsAt == nil)
+    }
+
+    @Test func criticalSirenUsesTheAvailableHeadroomWithoutClipping() throws {
+        let url = try #require(Bundle.main.url(forResource: "BeforeFireCriticalSiren", withExtension: "caf"))
+        let file = try AVAudioFile(forReading: url)
+        let duration = Double(file.length) / file.processingFormat.sampleRate
+        #expect(abs(duration - 28.8) < 0.001)
+        #expect(duration < 30)
+        let buffer = try #require(AVAudioPCMBuffer(pcmFormat: file.processingFormat,
+                                                 frameCapacity: AVAudioFrameCount(file.length)))
+        try file.read(into: buffer)
+        let channel = try #require(buffer.floatChannelData?[0])
+        let samples = UnsafeBufferPointer(start: channel, count: Int(buffer.frameLength))
+        let peak = samples.reduce(Float.zero) { max($0, abs($1)) }
+        let meanSquare = samples.reduce(Double.zero) { $0 + Double($1) * Double($1) } / Double(samples.count)
+        #expect(peak > 0.94 && peak < 0.96)
+        #expect(sqrt(meanSquare) > 0.25)
+        #expect(AlarmFeedbackConfiguration.audioVolume == 1)
+    }
+
     private func activePreview(_ output: RecordingAlarmFeedback) -> AlarmPreviewModel {
         let model = AlarmPreviewModel(feedback: output)
         model.setApplicationActive(true)

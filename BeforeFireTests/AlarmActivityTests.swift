@@ -125,4 +125,26 @@ struct AlarmActivityTests {
         #expect(!state.isHubOffline)
         #expect(state.status == "Active Alarm")
     }
+    @Test func staleSnoozedCardReturnsToActiveAlarmAtItsDeadline() {
+        let start = Date(timeIntervalSince1970: 1000)
+        var state = AlarmActivityAttributes.ContentState(isHubDisconnected: true, pushEventID: "alarm-1")
+            .snoozed(at: start)
+        #expect(state.displayState(isStale: false, at: start.addingTimeInterval(61)).isSnoozed)
+        #expect(state.displayState(isStale: true, at: start.addingTimeInterval(59)).isSnoozed)
+        let displayed = state.displayState(isStale: true, at: start.addingTimeInterval(60))
+        #expect(!displayed.isSnoozed)
+        #expect(displayed.snoozeEndsAt == nil)
+        #expect(displayed.pushEventID == "alarm-1")
+        #expect(displayed.isHubOffline)
+        #expect(state.isSnoozed) // Rendering does not change the stored state.
+        state.snoozeEndsAt = nil
+        #expect(state.displayState(isStale: true, at: start).isSnoozed)
+    }
+
+    @Test func snoozeDeadlineNeverResumesBeforeTheDisplayedCountdownEnds() {
+        let state = AlarmActivityAttributes.ContentState().snoozed(at: Date(timeIntervalSince1970: 1000.7))
+        #expect(state.snoozeDeadlineUnixSeconds == 1061)
+        #expect(state.resumed().snoozeDeadlineUnixSeconds == 0)
+    }
+
 }

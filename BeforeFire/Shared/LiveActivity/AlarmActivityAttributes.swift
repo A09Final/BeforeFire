@@ -35,6 +35,19 @@ nonisolated struct AlarmActivityAttributes: ActivityAttributes {
             return result
         }
 
+        // The system marks the card stale at its snooze deadline.
+        // The Lock Screen can then show Active Alarm without opening the app.
+        func displayState(isStale: Bool, at date: Date) -> Self {
+            guard isStale, isSnoozed, let snoozeEndsAt, date >= snoozeEndsAt else { return self }
+            return resumed()
+        }
+
+        var snoozeDeadlineUnixSeconds: Int64 {
+            guard isSnoozed, let snoozeEndsAt else { return 0 }
+            // Do not ask the server to resume before the countdown reaches zero.
+            return Int64(ceil(snoozeEndsAt.timeIntervalSince1970))
+        }
+
         func presentingPushEvent(_ eventID: String) -> Self {
             // A repeated tap must not reset this event's snooze countdown.
             guard pushEventID != eventID else { return self }
