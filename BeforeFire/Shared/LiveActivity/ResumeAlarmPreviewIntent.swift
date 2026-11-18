@@ -23,6 +23,9 @@ struct ResumeAlarmPreviewIntent: LiveActivityIntent {
         }
         let state = activity.content.state.resumed()
         await activity.update(ActivityContent(state: state, staleDate: nil))
+        #if !BEFOREFIRE_WIDGET_EXTENSION
+        await AlarmLiveActivityRegistration.shared.syncReminderState(for: activity, state: state)
+        #endif
         NotificationCenter.default.post(name: AlarmActivityAttributes.previewStateDidChange, object: nil)
         return .result()
     }

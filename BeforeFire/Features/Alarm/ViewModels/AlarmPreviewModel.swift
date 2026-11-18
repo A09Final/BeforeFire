@@ -25,6 +25,7 @@ final class AlarmPreviewModel {
     private(set) var alarmState = AlarmActivityAttributes.ContentState() {
         didSet { updateFeedback() }
     }
+    @ObservationIgnored private let reminderStateChanged: ((String, AlarmActivityAttributes.ContentState) -> Void)?
     @ObservationIgnored private let feedback: any AlarmFeedbackPlaying
     @ObservationIgnored private var isApplicationActive = false
     @ObservationIgnored private var isFeedbackRequested = false
@@ -36,10 +37,14 @@ final class AlarmPreviewModel {
     private let logger = Logger(subsystem: "com.ibnu.BeforeFire", category: "AlarmPreview")
 
     convenience init() {
-        self.init(feedback: AlarmFeedbackPlayer())
+        self.init(feedback: AlarmFeedbackPlayer()) { deviceID, state in
+            AlarmLiveActivityRegistration.shared.reminderStateChanged(deviceID: deviceID, state: state)
+        }
     }
 
-    init(feedback: any AlarmFeedbackPlaying) {
+    init(feedback: any AlarmFeedbackPlaying,
+         reminderStateChanged: ((String, AlarmActivityAttributes.ContentState) -> Void)? = nil) {
+        self.reminderStateChanged = reminderStateChanged
         self.feedback = feedback
         feedback.onFailure = { [weak self] failure in
             self?.feedbackMessage = failure?.message
@@ -101,7 +106,10 @@ final class AlarmPreviewModel {
             var snoozedState = localState
             snoozedState.pushEventID = eventID
             await activity.update(ActivityContent(state: snoozedState, staleDate: snoozedState.snoozeEndsAt))
-            if liveAlarmDeviceID == deviceID { alarmState = snoozedState }
+            if liveAlarmDeviceID == deviceID {
+                alarmState = snoozedState
+                syncReminders()
+            }
         } else {
             await activity.update(ActivityContent(state: state, staleDate: state.snoozeEndsAt))
             if liveAlarmDeviceID == deviceID { alarmState = state }
@@ -167,13 +175,20 @@ final class AlarmPreviewModel {
     func snooze(at date: Date = .now) {
         alarmState.snoozeDurationSeconds = snoozeDurationSeconds
         alarmState = alarmState.snoozed(at: date)
+        syncReminders()
         publishState()
     }
 
     func resumeAlarm() {
         alarmState = alarmState.resumed()
         alarmState.snoozeDurationSeconds = snoozeDurationSeconds
+        syncReminders()
         publishState()
+    }
+
+    private func syncReminders() {
+        guard let deviceID = liveAlarmDeviceID else { return }
+        reminderStateChanged?(deviceID, alarmState)
     }
 
     func resumeIfExpired(at date: Date = .now) {
