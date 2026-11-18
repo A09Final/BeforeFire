@@ -3,21 +3,16 @@ import SwiftUI
 struct MonitorDeveloperSettingsView: View {
     @Binding var isActionGuidanceVisible: Bool
     @Binding var previewCondition: MonitorPreviewCondition
+    #if DEBUG
     @Environment(AlarmPreviewModel.self) private var alarmPreview
     @State private var isDeviceSimulationEnabled = false
+    #else
+    private let isDeviceSimulationEnabled = false
+    #endif
     
     var body: some View {
         Form {
             Section {
-                NavigationLink {
-                    HubConnectionView()
-                } label: {
-                    Label("Hub Connection", systemImage: "")
-                    //If systemImage is deleted, it breaks
-                    //PLS DONT DELETE
-                }
-                .accessibilityIdentifier("settings.hubConnection")
-
                 NavigationLink {
                     DeviceConnectionView(kind: .sensor, isSimulated: isDeviceSimulationEnabled)
                 } label: {
@@ -40,13 +35,6 @@ struct MonitorDeveloperSettingsView: View {
                 .accessibilityIdentifier("settings.placementGuideline")
                 
                 NavigationLink {
-                    EmergencyContactView()
-                } label: {
-                    Label("Emergency Contact", systemImage: "")
-                }
-                .accessibilityIdentifier("settings.emergencyContact")
-
-                NavigationLink {
                     PushNotificationSettingsView(notifications: .shared)
                 } label: {
                     Label("Notifications", systemImage: "bell.badge")
@@ -55,7 +43,8 @@ struct MonitorDeveloperSettingsView: View {
             } header: {
                 Text("General")
             }
-            
+
+            #if DEBUG
             Section {
                 Toggle("Show action guidance", isOn: $isActionGuidanceVisible)
                     .accessibilityIdentifier("settings.actionGuidanceToggle")
@@ -110,6 +99,7 @@ struct MonitorDeveloperSettingsView: View {
             }
 
             AlarmLiveActivitySettingsSection()
+            #endif
         }
         .navigationTitle("Settings")
         .navigationBarTitleDisplayMode(.inline)

@@ -2,7 +2,7 @@ import XCTest
 
 final class SettingsIntegrationTests: XCTestCase {
     @MainActor
-    func testPlacementGuideReturnsToExistingDeveloperControls() {
+    func testPlacementGuideReturnsToSettingsWithExpectedControls() {
         continueAfterFailure = false
         let app = XCUIApplication()
         app.launchArguments += ["-onboarding.completed", "YES"]
@@ -20,10 +20,13 @@ final class SettingsIntegrationTests: XCTestCase {
         app.buttons["Done"].tap()
 
         XCTAssertTrue(guide.waitForExistence(timeout: 5))
-        XCTAssertTrue(app.buttons["settings.hubConnection"].exists)
+        XCTAssertFalse(app.buttons["Hub Connection"].exists)
         XCTAssertTrue(app.buttons["settings.sensorConnection"].exists)
         XCTAssertTrue(app.buttons["settings.alarmConnection"].exists)
-        XCTAssertTrue(app.buttons["settings.emergencyContact"].exists)
+        XCTAssertFalse(app.buttons["Emergency Contact"].exists)
+        XCTAssertTrue(app.buttons["settings.notifications"].exists)
+
+        #if DEBUG
         XCTAssertTrue(app.switches["settings.actionGuidanceToggle"].exists)
         // SwiftUI exposes the row and its native switch as separate accessibility elements.
         app.switches["settings.actionGuidanceToggle"].switches.firstMatch.tap()
@@ -31,6 +34,8 @@ final class SettingsIntegrationTests: XCTestCase {
 
         let controls = [
             app.switches["settings.hubDisconnectedToggle"],
+            app.switches["settings.simulateSensorsToggle"],
+            app.buttons["settings.sensorData"],
             app.buttons["settings.previewAlarm"]
         ]
         for control in controls {
@@ -49,8 +54,20 @@ final class SettingsIntegrationTests: XCTestCase {
         decreaseDuration.tap()
         XCTAssertTrue(app.staticTexts["Snooze duration, 60 seconds"].waitForExistence(timeout: 5))
         assertCanReach(app.buttons["settings.endAlarmActivity"], in: app)
+        #else
+        XCTAssertFalse(app.staticTexts["Developer Settings"].exists)
+        XCTAssertFalse(app.staticTexts["Developer Settings · Live Activity"].exists)
+        XCTAssertFalse(app.switches["settings.actionGuidanceToggle"].exists)
+        XCTAssertFalse(app.switches["settings.hubDisconnectedToggle"].exists)
+        XCTAssertFalse(app.switches["settings.simulateSensorsToggle"].exists)
+        XCTAssertFalse(app.buttons["settings.sensorData"].exists)
+        XCTAssertFalse(app.buttons["settings.previewAlarm"].exists)
+        XCTAssertFalse(app.buttons["settings.snoozeDuration-Increment"].exists)
+        XCTAssertFalse(app.buttons["settings.endAlarmActivity"].exists)
+        #endif
     }
 
+    #if DEBUG
     @MainActor
     func testSimulatedSensorJoinsWiFiAndHome() {
         continueAfterFailure = false
@@ -229,4 +246,5 @@ final class SettingsIntegrationTests: XCTestCase {
         let expectation = XCTNSPredicateExpectation(predicate: expectedStatus, object: status)
         XCTAssertEqual(XCTWaiter.wait(for: [expectation], timeout: 5), .completed)
     }
+    #endif
 }
