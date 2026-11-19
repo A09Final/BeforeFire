@@ -97,7 +97,12 @@ struct ContentView: View {
             }
         }
         .onChange(of: scenePhase, initial: true) { _, phase in
-            if phase == .active { alarmPreview.synchronizeFromLiveActivity() }
+            if phase == .active {
+                alarmPreview.synchronizeFromLiveActivity()
+                KitchenWidgetPushRegistration.shared.refresh(force: true)
+            } else if phase == .background {
+                WidgetCenter.shared.reloadTimelines(ofKind: KitchenStatusWidgetConnection.kind)
+            }
             alarmPreview.setApplicationActive(phase == .active)
             presentPendingPushEvent()
         }
@@ -132,6 +137,7 @@ struct ContentView: View {
             if try connection.update(link?.readingsAccess) {
                 WidgetCenter.shared.reloadTimelines(ofKind: KitchenStatusWidgetConnection.kind)
             }
+            KitchenWidgetPushRegistration.shared.refresh(force: true)
         } catch {
             Self.widgetLogger.error("Cannot update the widget sensor connection: \(String(describing: error), privacy: .private)")
         }

@@ -1,15 +1,6 @@
 import OSLog
 import WidgetKit
 
-struct KitchenStatusEntry: TimelineEntry {
-    let date: Date
-    let status: KitchenStatus
-    var needsSensor = false
-    #if DEBUG
-    var isDeveloperPreview = false
-    #endif
-}
-
 struct KitchenStatusTimelineProvider: TimelineProvider {
     private static let refreshInterval: TimeInterval = 15 * 60
     private let logger = Logger(subsystem: "BeforeFire", category: "KitchenStatusWidget")
@@ -37,7 +28,7 @@ struct KitchenStatusTimelineProvider: TimelineProvider {
             }
             #endif
             let entries = if entry.status.condition != nil {
-                [entry, KitchenStatusEntry(date: nextRefresh, status: .offline)]
+                [entry, entry.outdated(at: nextRefresh)]
             } else {
                 [entry]
             }
@@ -48,6 +39,7 @@ struct KitchenStatusTimelineProvider: TimelineProvider {
     private func currentEntry() async -> KitchenStatusEntry {
         do {
             let connection = try KitchenStatusWidgetConnection()
+            await KitchenWidgetPushRegistration.shared.refresh()
             #if DEBUG
             if let entry = try developerPreview(using: connection) { return entry }
             #endif
@@ -62,7 +54,9 @@ struct KitchenStatusTimelineProvider: TimelineProvider {
             guard try connection.load() == access else {
                 return KitchenStatusEntry(date: .now, status: .unknown)
             }
-            return KitchenStatusEntry(date: .now, status: KitchenStatus(snapshot: try result.get()))
+            let snapshot = try result.get()
+            return KitchenStatusEntry(date: .now, status: KitchenStatus(snapshot: snapshot),
+                                      measuredAt: snapshot.measuredAt ?? Date.now.addingTimeInterval(-Double(snapshot.ageSeconds)))
         } catch {
             logger.debug("Cannot read the widget sensor status: \(String(describing: error), privacy: .private)")
             return KitchenStatusEntry(date: .now, status: .offline)

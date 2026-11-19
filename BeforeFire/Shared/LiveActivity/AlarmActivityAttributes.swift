@@ -71,6 +71,16 @@ nonisolated struct AlarmActivityAttributes: ActivityAttributes {
             return String(format: "%02d:%02d", seconds / 60, seconds % 60)
         }
 
+        var activityTitle: String {
+            if isHubOffline { return AlarmActivityAttributes.hubOfflineLabel }
+            return isSnoozed ? KitchenGuidance.snoozedAlarmStatus : KitchenGuidance.alarmActivityInstruction
+        }
+
+        var activityMessage: String {
+            if isHubOffline { return "Last known status: Alarm." }
+            return isSnoozed ? "Check your kitchen now." : KitchenGuidance.alarmActivitySupportingInstruction
+        }
+
         var title: String {
             isSnoozed ? KitchenGuidance.snoozedAlarmStatus : KitchenGuidance.alarmInstruction
         }

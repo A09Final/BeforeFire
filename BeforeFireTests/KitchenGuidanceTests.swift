@@ -64,7 +64,7 @@ struct KitchenGuidanceTests {
         let first = KitchenAssessment(condition: .warning1, isValid: true)
         let second = KitchenAssessment(condition: .warning2, isValid: true)
         #expect(KitchenGuidance.notificationBody(for: first)?.hasPrefix("Check your kitchen.") == true)
-        #expect(KitchenGuidance.notificationBody(for: second)?.hasPrefix("Check your kitchen now.") == true)
+        #expect(KitchenGuidance.notificationBody(for: second)?.hasPrefix("Check the stove NOW.") == true)
         #expect(KitchenGuidance.monitorMessage(for: second)?.contains("Turn off the stove") == true)
     }
 
@@ -168,6 +168,26 @@ struct KitchenGuidanceTests {
         #expect(mapped.body == KitchenGuidance.notificationBody(for: event.assessment))
         #expect(mapped.sound != nil)
         #expect(KitchenNotificationContent.foregroundOptions(for: original.userInfo).contains(.sound))
+    }
+
+    @Test(arguments: ["warning1", "warning2"])
+    func warningMappingUsesCriticalAlertsWithoutStartingAnAlarm(_ condition: String) throws {
+        let original = notification(condition: condition)
+        let mapped = KitchenNotificationContent.mapped(original)
+        #expect(mapped.interruptionLevel == .critical)
+        #expect(mapped.sound != nil)
+        let model = AlarmPreviewModel()
+        model.openPushAlarm(try KitchenPushEvent(userInfo: original.userInfo))
+        #expect(!model.isAlarmPresented)
+    }
+
+    @Test func alarmMappingKeepsTheCriticalSiren() {
+        let original = notification(condition: "alarm")
+        original.interruptionLevel = .critical
+        original.sound = .criticalSoundNamed(UNNotificationSoundName("BeforeFireCriticalSiren.caf"), withAudioVolume: 1.0)
+        let mapped = KitchenNotificationContent.mapped(original)
+        #expect(mapped.interruptionLevel == .critical)
+        #expect(mapped.sound == original.sound)
     }
 
     @Test func normalIsSilentAndDoesNotHaveActionText() {

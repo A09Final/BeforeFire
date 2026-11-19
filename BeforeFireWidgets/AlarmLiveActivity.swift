@@ -112,13 +112,14 @@ private struct AlarmActivityMessage: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text(state.title)
+            Text(state.activityTitle)
                 .font(.system(size: AlarmLiveActivityStyle.titleSize, weight: .bold))
                 .lineLimit(1)
                 .minimumScaleFactor(AlarmLiveActivityStyle.minimumTextScale)
-            Text(state.message)
+            Text(state.activityMessage)
                 .font(.system(size: AlarmLiveActivityStyle.messageSize))
-                .lineLimit(2)
+                .lineLimit(1)
+                .minimumScaleFactor(AlarmLiveActivityStyle.minimumTextScale)
         }
         .foregroundStyle(AlarmLiveActivityStyle.foreground)
         .accessibilityElement(children: .combine)

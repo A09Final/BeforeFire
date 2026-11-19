@@ -1,12 +1,16 @@
 {
   "aps": {
     "alert": {
-      "title": "Kitchen warning",
-      "body": "The stove is hot and nobody is near it. Check the kitchen soon."
+      "title": "Check the stove now",
+      "body": "Check the stove NOW.\\nTurn it off if safe."
     },
-    "sound": "default",
+    "sound": {
+      "critical": 1,
+      "name": "default",
+      "volume": 1
+    },
     "thread-id": "DAPUR_A1B2C3",
-    "interruption-level": "time-sensitive",
+    "interruption-level": "critical",
     "relevance-score": 0.8
   },
   "beforefire": {
