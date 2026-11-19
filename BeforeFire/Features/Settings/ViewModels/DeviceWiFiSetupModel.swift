@@ -1,7 +1,8 @@
 import Foundation
 import Observation
 
-/// Runs the Wi-Fi and Home setup steps for one unit. The sensor and the alarm use the same steps.
+/// Runs the Wi-Fi setup steps for one unit. The sensor and the alarm use the same steps.
+/// The Home setup is on the Home Connection screen.
 @MainActor
 @Observable
 final class DeviceWiFiSetupModel {
@@ -9,16 +10,14 @@ final class DeviceWiFiSetupModel {
         case setupCode
         case networks
         case password
-        /// The unit joined Wi-Fi. The Home setup is not complete yet.
+        /// The unit joined Wi-Fi. This is the last step.
         case connected(wiFiName: String)
-        case addedToHome
     }
 
     enum Activity: Equatable {
         case connecting
         case scanning
         case joining
-        case addingToHome
     }
 
     let device: DiscoveredDevice
@@ -36,8 +35,6 @@ final class DeviceWiFiSetupModel {
     private(set) var isUsingSavedSetupCode = false
 
     @ObservationIgnored private let connector: any DeviceProvisioningConnecting
-    @ObservationIgnored private let homeSetup: any DeviceHomeSetupPerforming
-    @ObservationIgnored private let startsHomeSetupAfterWiFi: Bool
     @ObservationIgnored private var session: (any DeviceProvisioningSession)?
     @ObservationIgnored private var activityTask: Task<Void, Never>?
     /// The setup code that opened the secure session. The unit accepts only its own code, so this code is correct.
@@ -52,17 +49,13 @@ final class DeviceWiFiSetupModel {
         device: DiscoveredDevice,
         kind: ProvisioningDeviceKind,
         connector: any DeviceProvisioningConnecting,
-        homeSetup: any DeviceHomeSetupPerforming,
         savedSetupCode: DeviceSetupCode? = nil,
         onWiFiJoined: ((DiscoveredDevice, DeviceSetupCode) -> Void)? = nil,
-        onSavedSetupCodeRejected: ((DiscoveredDevice) -> Void)? = nil,
-        startsHomeSetupAfterWiFi: Bool = true
+        onSavedSetupCodeRejected: ((DiscoveredDevice) -> Void)? = nil
     ) {
         self.device = device
         self.copy = DeviceConnectionCopy(kind: kind)
         self.connector = connector
-        self.homeSetup = homeSetup
-        self.startsHomeSetupAfterWiFi = startsHomeSetupAfterWiFi
         self.savedSetupCode = savedSetupCode
         self.onWiFiJoined = onWiFiJoined
         self.onSavedSetupCodeRejected = onSavedSetupCodeRejected
@@ -98,10 +91,6 @@ final class DeviceWiFiSetupModel {
     var isWiFiConnected: Bool {
         if case .connected = step { return true }
         return false
-    }
-
-    var canAddToHome: Bool {
-        !isBusy && isWiFiConnected
     }
 
     var canGoBack: Bool {
@@ -189,17 +178,6 @@ final class DeviceWiFiSetupModel {
             if let acceptedSetupCode = self.acceptedSetupCode {
                 self.onWiFiJoined?(self.device, acceptedSetupCode)
             }
-            // Onboarding ends at Wi-Fi. Settings retains its existing Home setup flow.
-            if self.startsHomeSetupAfterWiFi {
-                try await self.addDeviceToHome()
-            }
-        }
-    }
-
-    func addToHome() {
-        guard canAddToHome else { return }
-        perform(.addingToHome) { [weak self] in
-            try await self?.addDeviceToHome()
         }
     }
 
@@ -214,7 +192,7 @@ final class DeviceWiFiSetupModel {
             endSession()
             networks = []
             step = .setupCode
-        case .setupCode, .connected, .addedToHome:
+        case .setupCode, .connected:
             break
         }
     }
@@ -256,15 +234,6 @@ final class DeviceWiFiSetupModel {
             networks = []
             errorMessage = copy.message(for: error)
         }
-    }
-
-    private func addDeviceToHome() async throws {
-        activity = .addingToHome
-        // A cancelled setup throws to `perform`, which shows a message. The unit keeps its Wi-Fi values,
-        // so the user can start the Home setup again.
-        try await homeSetup.addDeviceToHome()
-        guard !Task.isCancelled else { return }
-        step = .addedToHome
     }
 
     private func perform(_ newActivity: Activity, operation: @escaping @MainActor () async throws -> Void) {

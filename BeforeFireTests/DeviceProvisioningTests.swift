@@ -129,7 +129,6 @@ struct DeviceConnectionModelTests {
             kind: .sensor,
             scanner: scanner,
             connector: RecordingConnector(),
-            homeSetup: RecordingHomeSetup(),
             scanDuration: scanDuration
         )
     }
@@ -264,7 +263,6 @@ struct DeviceConnectionModelTests {
             kind: kind,
             scanner: ControlledDeviceScanner(),
             connector: RecordingConnector(),
-            homeSetup: RecordingHomeSetup(),
             connectedDeviceStore: store,
             setupCodeStore: setupCodeStore
         )
@@ -379,29 +377,22 @@ struct DeviceConnectionModelTests {
     }
 }
 
-// MARK: - Wi-Fi and Home setup
+// MARK: - Wi-Fi setup
 
 @MainActor
 struct DeviceWiFiSetupModelTests {
     // Default arguments run outside the main actor, so the doubles are created in the body.
-    private func makeModel(
-        connector: RecordingConnector? = nil,
-        homeSetup: RecordingHomeSetup? = nil
-    ) -> DeviceWiFiSetupModel {
+    private func makeModel(connector: RecordingConnector? = nil) -> DeviceWiFiSetupModel {
         DeviceWiFiSetupModel(
             device: Fixture.kitchenSensor,
             kind: .sensor,
-            connector: connector ?? RecordingConnector(),
-            homeSetup: homeSetup ?? RecordingHomeSetup()
+            connector: connector ?? RecordingConnector()
         )
     }
 
     /// Connects with a valid setup code and waits until the network list shows.
-    private func makeModelOnNetworksStep(
-        session: FakeProvisioningSession? = nil,
-        homeSetup: RecordingHomeSetup? = nil
-    ) async throws -> DeviceWiFiSetupModel {
-        let model = makeModel(connector: RecordingConnector(session: session), homeSetup: homeSetup)
+    private func makeModelOnNetworksStep(session: FakeProvisioningSession? = nil) async throws -> DeviceWiFiSetupModel {
+        let model = makeModel(connector: RecordingConnector(session: session))
         model.setupCode = Fixture.validSetupCode
         model.connect()
         try await waitUntil { model.step == .networks && !model.isBusy }
@@ -578,76 +569,37 @@ struct DeviceWiFiSetupModelTests {
         #expect(session.disconnectCount == 1)
     }
 
-    // MARK: Join and Home setup
+    // MARK: Join
 
     @Test(arguments: [ProvisioningDeviceKind.sensor, .alarm])
-    func onboardingJoinsWiFiWithoutStartingHome(kind: ProvisioningDeviceKind) async throws {
+    func joinSuccessEndsAtWiFiConnected(kind: ProvisioningDeviceKind) async throws {
         let session = FakeProvisioningSession()
-        let homeSetup = RecordingHomeSetup()
         var joinedCount = 0
         let model = DeviceWiFiSetupModel(
             device: Fixture.kitchenSensor, kind: kind,
-            connector: RecordingConnector(session: session), homeSetup: homeSetup,
-            onWiFiJoined: { _, _ in joinedCount += 1 }, startsHomeSetupAfterWiFi: false
+            connector: RecordingConnector(session: session),
+            onWiFiJoined: { _, _ in joinedCount += 1 }
         )
         model.setupCode = Fixture.validSetupCode
         model.connect()
         try await waitUntil { model.step == .networks && !model.isBusy }
-        model.select(Fixture.securedNetwork)
-        model.password = Fixture.validPassword
-        model.join()
-        try await waitUntil { model.isWiFiConnected && !model.isBusy }
-
-        #expect(model.step == .connected(wiFiName: Fixture.securedNetwork.ssid))
-        #expect(homeSetup.callCount == 0)
-        #expect(joinedCount == 1)
-        #expect(session.disconnectCount == 1)
-        #expect(model.password.isEmpty)
-        model.close()
-        #expect(model.isWiFiConnected)
-    }
-
-    @Test func onboardingJoinFailureDoesNotCompleteSetup() async throws {
-        let homeSetup = RecordingHomeSetup()
-        var joinedCount = 0
-        let session = FakeProvisioningSession(sendError: DeviceProvisioningError.wiFiPasswordRejected)
-        let model = DeviceWiFiSetupModel(
-            device: Fixture.kitchenSensor, kind: .sensor,
-            connector: RecordingConnector(session: session), homeSetup: homeSetup,
-            onWiFiJoined: { _, _ in joinedCount += 1 }, startsHomeSetupAfterWiFi: false
-        )
-        model.setupCode = Fixture.validSetupCode
-        model.connect()
-        try await waitUntil { model.step == .networks && !model.isBusy }
-        model.select(Fixture.securedNetwork)
-        model.password = Fixture.validPassword
-        model.join()
-        try await waitUntil { !model.isBusy }
-
-        #expect(model.step == .password)
-        #expect(model.errorMessage != nil)
-        #expect(joinedCount == 0)
-        #expect(homeSetup.callCount == 0)
-        model.close()
-    }
-
-    @Test func joinSuccessStartsHomeSetupAtOnce() async throws {
-        let session = FakeProvisioningSession()
-        let homeSetup = RecordingHomeSetup()
-        let model = try await makeModelOnNetworksStep(session: session, homeSetup: homeSetup)
         model.select(Fixture.securedNetwork)
         model.password = Fixture.validPassword
 
         model.join()
         #expect(model.activity == .joining)
-        try await waitUntil { model.step == .addedToHome }
+        try await waitUntil { model.isWiFiConnected && !model.isBusy }
 
+        // The Home setup is on the Home Connection screen, so the Wi-Fi setup ends here.
+        #expect(model.step == .connected(wiFiName: Fixture.securedNetwork.ssid))
         #expect(session.sentCredentials == [try DeviceWiFiCredentials(wiFiName: "Home", password: "password1", requiresPassword: true)])
+        #expect(joinedCount == 1)
         #expect(session.disconnectCount == 1)
         #expect(model.password.isEmpty)
-        #expect(homeSetup.callCount == 1)
         #expect(model.activity == nil)
         #expect(model.errorMessage == nil)
+        model.close()
+        #expect(model.isWiFiConnected)
     }
 
     @Test func joinSuccessReportsTheAcceptedSetupCodeOneTime() async throws {
@@ -657,7 +609,6 @@ struct DeviceWiFiSetupModelTests {
             device: Fixture.kitchenSensor,
             kind: .sensor,
             connector: RecordingConnector(),
-            homeSetup: RecordingHomeSetup(),
             onWiFiJoined: { device, setupCode in
                 joinedDevices.append(device.name)
                 joinedSetupCodes.append(setupCode.value)
@@ -670,7 +621,7 @@ struct DeviceWiFiSetupModelTests {
         model.select(Fixture.openNetwork)
 
         model.join()
-        try await waitUntil { model.step == .addedToHome }
+        try await waitUntil { model.isWiFiConnected && !model.isBusy }
 
         #expect(joinedDevices == [Fixture.kitchenSensor.name])
         #expect(joinedSetupCodes == [try DeviceSetupCode(Fixture.validSetupCode).value])
@@ -687,7 +638,6 @@ struct DeviceWiFiSetupModelTests {
             device: Fixture.kitchenSensor,
             kind: .sensor,
             connector: connector,
-            homeSetup: RecordingHomeSetup(),
             savedSetupCode: try DeviceSetupCode(savedSetupCode),
             onSavedSetupCodeRejected: onRejected
         )
@@ -759,7 +709,6 @@ struct DeviceWiFiSetupModelTests {
             device: Fixture.kitchenSensor,
             kind: .sensor,
             connector: RecordingConnector(session: session),
-            homeSetup: RecordingHomeSetup(),
             onWiFiJoined: { _, _ in joinCount += 1 }
         )
         model.setupCode = Fixture.validSetupCode
@@ -774,24 +723,9 @@ struct DeviceWiFiSetupModelTests {
         #expect(joinCount == 0)
     }
 
-    @Test func showsWiFiConnectedStepDuringHomeSetup() async throws {
-        let homeSetup = RecordingHomeSetup(delay: .seconds(60))
-        let model = try await makeModelOnNetworksStep(homeSetup: homeSetup)
-        model.select(Fixture.openNetwork)
-
-        model.join()
-        try await waitUntil { model.activity == .addingToHome }
-
-        #expect(model.step == .connected(wiFiName: "Guest"))
-        #expect(model.isWiFiConnected)
-        #expect(!model.canAddToHome)
-        model.close()
-    }
-
-    @Test func joinFailureKeepsPasswordAndSkipsHomeSetup() async throws {
+    @Test func joinFailureKeepsPassword() async throws {
         let session = FakeProvisioningSession(sendError: DeviceProvisioningError.wiFiPasswordRejected)
-        let homeSetup = RecordingHomeSetup()
-        let model = try await makeModelOnNetworksStep(session: session, homeSetup: homeSetup)
+        let model = try await makeModelOnNetworksStep(session: session)
         model.select(Fixture.securedNetwork)
         model.password = Fixture.validPassword
 
@@ -801,69 +735,11 @@ struct DeviceWiFiSetupModelTests {
         #expect(model.step == .password)
         #expect(model.password == "password1")
         #expect(model.errorMessage == "The Wi-Fi password is not correct.")
-        #expect(homeSetup.callCount == 0)
         #expect(session.disconnectCount == 0)
     }
 
-    @Test func cancelledHomeSetupKeepsWiFiAndAllowsRetry() async throws {
-        let homeSetup = RecordingHomeSetup(errors: [DeviceHomeSetupError.cancelled, nil])
-        let model = try await makeModelOnNetworksStep(homeSetup: homeSetup)
-        model.select(Fixture.openNetwork)
-
-        model.join()
-        try await waitUntil { model.isWiFiConnected && !model.isBusy }
-
-        #expect(model.step == .connected(wiFiName: "Guest"))
-        #expect(model.errorMessage == "The Home setup closed before the sensor was added. Tap Add to Home to try again.")
-        #expect(model.canAddToHome)
-
-        model.addToHome()
-        #expect(model.activity == .addingToHome)
-        try await waitUntil { model.step == .addedToHome }
-
-        #expect(homeSetup.callCount == 2)
-    }
-
-    @Test func failedHomeSetupShowsMessageAndAllowsRetry() async throws {
-        let homeSetup = RecordingHomeSetup(errors: [DeviceHomeSetupError.accessoryNotFound, nil])
-        let model = try await makeModelOnNetworksStep(homeSetup: homeSetup)
-        model.select(Fixture.openNetwork)
-
-        model.join()
-        try await waitUntil { model.isWiFiConnected && !model.isBusy }
-
-        #expect(model.errorMessage == "Home cannot find the sensor. Make sure that the sensor and your phone use the same Wi-Fi network, then try again.")
-
-        model.addToHome()
-        #expect(model.errorMessage == nil)
-        try await waitUntil { model.step == .addedToHome }
-    }
-
-    @Test func unexpectedHomeErrorShowsGenericMessage() async throws {
-        let homeSetup = RecordingHomeSetup(errors: [URLError(.unknown)])
-        let model = try await makeModelOnNetworksStep(homeSetup: homeSetup)
-        model.select(Fixture.openNetwork)
-
-        model.join()
-        try await waitUntil { model.isWiFiConnected && !model.isBusy }
-
-        #expect(model.errorMessage == "The operation did not complete. Try again.")
-    }
-
-    @Test func addToHomeIsIgnoredBeforeWiFiConnects() async throws {
-        let homeSetup = RecordingHomeSetup()
-        let model = try await makeModelOnNetworksStep(homeSetup: homeSetup)
-
-        model.addToHome()
-
-        #expect(!model.canAddToHome)
-        #expect(model.activity == nil)
-        #expect(homeSetup.callCount == 0)
-    }
-
     @Test func goBackIsIgnoredAfterWiFiConnects() async throws {
-        let homeSetup = RecordingHomeSetup(errors: [DeviceHomeSetupError.cancelled])
-        let model = try await makeModelOnNetworksStep(homeSetup: homeSetup)
+        let model = try await makeModelOnNetworksStep()
         model.select(Fixture.openNetwork)
         model.join()
         try await waitUntil { model.isWiFiConnected && !model.isBusy }
@@ -878,8 +754,7 @@ struct DeviceWiFiSetupModelTests {
 
     @Test func closeDuringJoinCancelsAndEndsSession() async throws {
         let session = FakeProvisioningSession(sendDelay: .seconds(60))
-        let homeSetup = RecordingHomeSetup()
-        let model = try await makeModelOnNetworksStep(session: session, homeSetup: homeSetup)
+        let model = try await makeModelOnNetworksStep(session: session)
         model.select(Fixture.securedNetwork)
         model.password = Fixture.validPassword
         model.join()
@@ -893,22 +768,107 @@ struct DeviceWiFiSetupModelTests {
         try await Task.sleep(for: .milliseconds(20))
         #expect(model.step == .password)
         #expect(model.errorMessage == nil)
-        #expect(homeSetup.callCount == 0)
+    }
+}
+
+// MARK: - Home connection
+
+@MainActor
+struct HomeConnectionModelTests {
+    @Test func listsTheSensorBeforeTheAlarm() {
+        #expect(HomeConnectionModel.units == [.sensor, .alarm])
     }
 
-    @Test func closeDuringHomeSetupKeepsWiFiConnectedStep() async throws {
-        let homeSetup = RecordingHomeSetup(delay: .seconds(60))
-        let model = try await makeModelOnNetworksStep(homeSetup: homeSetup)
-        model.select(Fixture.openNetwork)
-        model.join()
-        try await waitUntil { model.activity == .addingToHome }
+    @Test(arguments: [ProvisioningDeviceKind.sensor, .alarm])
+    func addsOneUnitToHome(kind: ProvisioningDeviceKind) async throws {
+        let homeSetup = RecordingHomeSetup()
+        let model = HomeConnectionModel(homeSetup: homeSetup)
+        #expect(model.status(for: kind) == .idle)
 
-        model.close()
+        model.addToHome(kind)
+        #expect(model.status(for: kind) == .adding)
+        #expect(model.isBusy)
+        try await waitUntil { model.status(for: kind) == .added }
+
+        #expect(homeSetup.callCount == 1)
+        #expect(!model.isBusy)
+    }
+
+    @Test func otherUnitWaitsWhileOneSetupIsOpen() async throws {
+        let homeSetup = RecordingHomeSetup(delay: .seconds(60))
+        let model = HomeConnectionModel(homeSetup: homeSetup)
+
+        model.addToHome(.sensor)
+        model.addToHome(.alarm)
+        try await waitUntil { homeSetup.callCount == 1 }
         try await Task.sleep(for: .milliseconds(20))
 
-        #expect(model.activity == nil)
-        #expect(model.step == .connected(wiFiName: "Guest"))
-        #expect(model.errorMessage == nil)
+        #expect(model.status(for: .sensor) == .adding)
+        #expect(model.status(for: .alarm) == .idle)
+        #expect(homeSetup.callCount == 1)
+        model.cancel()
+    }
+
+    @Test func addedUnitIsNotAddedAgain() async throws {
+        let homeSetup = RecordingHomeSetup()
+        let model = HomeConnectionModel(homeSetup: homeSetup)
+        model.addToHome(.sensor)
+        try await waitUntil { model.status(for: .sensor) == .added }
+
+        model.addToHome(.sensor)
+
+        #expect(model.status(for: .sensor) == .added)
+        #expect(homeSetup.callCount == 1)
+    }
+
+    @Test func closedSystemSetupShowsNoError() async throws {
+        let homeSetup = RecordingHomeSetup(errors: [DeviceHomeSetupError.cancelled, nil])
+        let model = HomeConnectionModel(homeSetup: homeSetup)
+
+        model.addToHome(.alarm)
+        try await waitUntil { !model.isBusy }
+        #expect(model.status(for: .alarm) == .idle)
+
+        model.addToHome(.alarm)
+        try await waitUntil { model.status(for: .alarm) == .added }
+        #expect(homeSetup.callCount == 2)
+    }
+
+    @Test func failedSetupShowsTheUnitMessageAndAllowsRetry() async throws {
+        let homeSetup = RecordingHomeSetup(errors: [DeviceHomeSetupError.accessoryNotFound, nil])
+        let model = HomeConnectionModel(homeSetup: homeSetup)
+
+        model.addToHome(.alarm)
+        try await waitUntil { !model.isBusy }
+        #expect(model.status(for: .alarm) == .failed(
+            message: "Home cannot find the alarm. Make sure that the alarm has Wi-Fi and uses the same Wi-Fi network as your phone, then try again."
+        ))
+        #expect(model.status(for: .sensor) == .idle)
+
+        model.addToHome(.alarm)
+        #expect(model.status(for: .alarm) == .adding)
+        try await waitUntil { model.status(for: .alarm) == .added }
+    }
+
+    @Test func unexpectedErrorShowsGenericMessage() async throws {
+        let model = HomeConnectionModel(homeSetup: RecordingHomeSetup(errors: [URLError(.unknown)]))
+
+        model.addToHome(.sensor)
+        try await waitUntil { !model.isBusy }
+
+        #expect(model.status(for: .sensor) == .failed(message: "The operation did not complete. Try again."))
+    }
+
+    @Test func cancelStopsWaitingAndAllowsANewSetup() async throws {
+        let homeSetup = RecordingHomeSetup(delay: .seconds(60))
+        let model = HomeConnectionModel(homeSetup: homeSetup)
+        model.addToHome(.sensor)
+
+        model.cancel()
+        try await Task.sleep(for: .milliseconds(20))
+
+        #expect(model.status(for: .sensor) == .idle)
+        #expect(!model.isBusy)
     }
 }
 
@@ -1110,10 +1070,21 @@ struct DeviceConnectionCopyTests {
     }
 
     @Test func connectedDescriptionNamesSensorAndNetwork() {
-        let description = sensorCopy.wiFiConnectedDescription(deviceName: "DAPUR_000001", wiFiName: "Home")
+        let description = sensorCopy.wiFiConnectedDescription(deviceName: "DAPUR_000001", wiFiName: "Kitchen WiFi")
 
         #expect(description.contains("DAPUR_000001"))
-        #expect(description.contains("Home"))
+        #expect(description.contains("Kitchen WiFi"))
+        // The Home setup is no longer in the Wi-Fi sheet, so the text points to the Home Connection screen.
+        #expect(description.contains(HomeConnectionCopy.screenTitle))
+    }
+
+    @Test func homeConnectionTextNamesEachUnit() {
+        #expect(HomeConnectionCopy.screenTitle == "Home Connection")
+        #expect(sensorCopy.addToHomeButton == "Add Sensor to Home")
+        #expect(alarmCopy.addToHomeButton == "Add Alarm to Home")
+        #expect(alarmCopy.addedToHomeTitle == "Alarm Added to Home")
+        #expect(alarmCopy.addToHomeFooter.contains("alarm label"))
+        #expect(!alarmCopy.addToHomeFooter.localizedCaseInsensitiveContains("sensor"))
     }
 
     @Test func sensorTextIsUnchanged() {

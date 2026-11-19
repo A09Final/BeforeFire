@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// The Wi-Fi and Home setup sheet for one unit. The sensor and the alarm use the same steps.
+/// The Wi-Fi setup sheet for one unit. The sensor and the alarm use the same steps.
 struct DeviceWiFiSetupView: View {
     @State private var model: DeviceWiFiSetupModel
     @Environment(\.dismiss) private var dismiss
@@ -11,14 +11,13 @@ struct DeviceWiFiSetupView: View {
         device: DiscoveredDevice,
         kind: ProvisioningDeviceKind,
         connector: any DeviceProvisioningConnecting,
-        homeSetup: any DeviceHomeSetupPerforming,
         savedSetupCode: DeviceSetupCode? = nil,
         onWiFiJoined: ((DiscoveredDevice, DeviceSetupCode) -> Void)? = nil,
         onSavedSetupCodeRejected: ((DiscoveredDevice) -> Void)? = nil,
         onConnected: @escaping () -> Void
     ) {
         _model = State(initialValue: DeviceWiFiSetupModel(
-            device: device, kind: kind, connector: connector, homeSetup: homeSetup,
+            device: device, kind: kind, connector: connector,
             savedSetupCode: savedSetupCode, onWiFiJoined: onWiFiJoined,
             onSavedSetupCodeRejected: onSavedSetupCodeRejected
         ))
@@ -45,15 +44,7 @@ struct DeviceWiFiSetupView: View {
                 case .password:
                     DeviceWiFiPasswordStep(model: model, presentation: presentation)
                 case .connected(let wiFiName):
-                    DeviceHomeSetupStep(model: model, presentation: presentation, wiFiName: wiFiName)
-                case .addedToHome:
-                    ContentUnavailableView {
-                        Label(copy.addedToHomeTitle, systemImage: "checkmark.circle.fill")
-                            .foregroundStyle(.green)
-                    } description: {
-                        Text(copy.addedToHomeDescription(deviceName: model.device.name))
-                    }
-                    .accessibilityIdentifier(presentation.setupIdentifier("addedToHome"))
+                    DeviceWiFiConnectedStep(model: model, presentation: presentation, wiFiName: wiFiName)
                 }
             }
             .animation(.default, value: model.step)
@@ -69,8 +60,7 @@ struct DeviceWiFiSetupView: View {
     @ToolbarContentBuilder
     private var toolbarContent: some ToolbarContent {
         switch model.step {
-        case .connected, .addedToHome:
-            // The unit has Wi-Fi in both steps, so Done also marks it as connected when the user skips Home.
+        case .connected:
             ToolbarItem(placement: .confirmationAction) {
                 Button(copy.doneButton) {
                     onConnected()
@@ -304,7 +294,7 @@ struct DeviceWiFiPasswordStep: View {
     }
 }
 
-private struct DeviceHomeSetupStep: View {
+private struct DeviceWiFiConnectedStep: View {
     let model: DeviceWiFiSetupModel
     let presentation: DeviceConnectionPresentation
     let wiFiName: String
@@ -317,16 +307,6 @@ private struct DeviceHomeSetupStep: View {
                 .accessibilityIdentifier(presentation.setupIdentifier("wiFiConnected"))
         } description: {
             Text(copy.wiFiConnectedDescription(deviceName: model.device.name, wiFiName: wiFiName))
-        } actions: {
-            if model.activity == .addingToHome {
-                DeviceSetupProgressRow(text: copy.addingToHome, presentation: presentation)
-            } else {
-                Button(copy.addToHomeButton, systemImage: "house.fill") { model.addToHome() }
-                    .buttonStyle(.borderedProminent)
-                    .disabled(!model.canAddToHome)
-                    .accessibilityIdentifier(presentation.setupIdentifier("addToHomeButton"))
-            }
-            DeviceSetupErrorRow(message: model.errorMessage, presentation: presentation)
         }
     }
 }
@@ -365,8 +345,7 @@ struct DeviceSetupErrorRow: View {
     DeviceWiFiSetupView(
         device: SimulatedDeviceScanner.sensors[0],
         kind: .sensor,
-        connector: SimulatedDeviceConnector(),
-        homeSetup: SimulatedDeviceHomeSetup()
+        connector: SimulatedDeviceConnector()
     ) {}
 }
 
@@ -374,7 +353,6 @@ struct DeviceSetupErrorRow: View {
     DeviceWiFiSetupView(
         device: SimulatedDeviceScanner.alarms[0],
         kind: .alarm,
-        connector: SimulatedDeviceConnector(),
-        homeSetup: SimulatedDeviceHomeSetup()
+        connector: SimulatedDeviceConnector()
     ) {}
 }

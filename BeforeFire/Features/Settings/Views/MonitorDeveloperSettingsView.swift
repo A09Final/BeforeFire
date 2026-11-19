@@ -26,7 +26,14 @@ struct MonitorDeveloperSettingsView: View {
                     Label(DeviceConnectionCopy(kind: .alarm).screenTitle, systemImage: "")
                 }
                 .accessibilityIdentifier("settings.alarmConnection")
-                
+
+                NavigationLink {
+                    HomeConnectionView(isSimulated: isDeviceSimulationEnabled)
+                } label: {
+                    Label(HomeConnectionCopy.screenTitle, systemImage: "")
+                }
+                .accessibilityIdentifier("settings.homeConnection")
+
                 NavigationLink {
                     PlacementGuidelineView()
                 } label: {
