@@ -13,7 +13,8 @@ struct PlacementStep: Identifiable {
                       illustration: ("Illustration-sensor-1", "Hands hold the sensor with its sensing side facing down.")),
         PlacementStep(id: 1, title: "Step 2", description: "Add the second instruction here",
                       illustration: ("Illustration-sensor-2", "The sensor is above the stove, with a marked distance of one meter.")),
-        PlacementStep(id: 2, title: "Step 3", description: "Add the third instruction here", illustration: nil)
+        PlacementStep(id: 2, title: "Step 3", description: "Add the third instruction here",
+                      illustration: ("Illustration-sensor-3", "A person hears an alarm sounding near the kitchen counter."))
     ]
 }
 
