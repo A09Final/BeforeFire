@@ -22,7 +22,6 @@ final class DeviceConnectionModel {
     var selectedDevice: DiscoveredDevice?
     let isSimulated: Bool
     @ObservationIgnored let connector: any DeviceProvisioningConnecting
-    @ObservationIgnored let homeSetup: any DeviceHomeSetupPerforming
     /// `nil` keeps the name only in memory, for simulated units and tests.
     @ObservationIgnored private let connectedDeviceStore: (any ConnectedDeviceStoring)?
     /// `nil` saves no setup codes, for simulated units and tests.
@@ -38,7 +37,6 @@ final class DeviceConnectionModel {
         kind: ProvisioningDeviceKind,
         scanner: any DeviceScanning,
         connector: any DeviceProvisioningConnecting,
-        homeSetup: any DeviceHomeSetupPerforming,
         scanDuration: Duration = DeviceProvisioningConfiguration.scanDuration,
         isSimulated: Bool = false,
         connectedDeviceStore: (any ConnectedDeviceStoring)? = nil,
@@ -48,7 +46,6 @@ final class DeviceConnectionModel {
         self.copy = DeviceConnectionCopy(kind: kind)
         self.scanner = scanner
         self.connector = connector
-        self.homeSetup = homeSetup
         self.scanDuration = scanDuration
         self.isSimulated = isSimulated
         self.connectedDeviceStore = connectedDeviceStore
@@ -61,7 +58,6 @@ final class DeviceConnectionModel {
             kind: kind,
             scanner: BluetoothDeviceScanner(kind: kind),
             connector: ESPProvisionConnector(),
-            homeSetup: HomeKitDeviceHomeSetup(),
             connectedDeviceStore: UserDefaultsConnectedDeviceStore(),
             setupCodeStore: KeychainDeviceSetupCodeStore()
         )
@@ -72,7 +68,6 @@ final class DeviceConnectionModel {
             kind: kind,
             scanner: SimulatedDeviceScanner(kind: kind),
             connector: SimulatedDeviceConnector(),
-            homeSetup: SimulatedDeviceHomeSetup(),
             isSimulated: true
         )
     }
