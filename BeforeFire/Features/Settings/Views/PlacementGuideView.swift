@@ -8,12 +8,12 @@ struct PlacementStep: Identifiable {
 
     // Keep the current guide content in one place for Settings and onboarding.
     static let current = [
-        PlacementStep(id: 0, title: "Sensor Placement Guide",
-                      description: "Follow the placement of the sensor as shown in the instruction above",
+        PlacementStep(id: 0, title: "Position the sensor",
+                      description: "Place the sensor unit above the stove. Point the thermal camera downward toward the stove and the radar toward where you stand while cooking.",
                       illustration: ("Illustration-sensor-1", "Hands hold the sensor with its sensing side facing down.")),
-        PlacementStep(id: 1, title: "Step 2", description: "Add the second instruction here",
+        PlacementStep(id: 1, title: "Check the height", description: "Position the sensor unit approximately 1 meter above the stovetop.",
                       illustration: ("Illustration-sensor-2", "The sensor is above the stove, with a marked distance of one meter.")),
-        PlacementStep(id: 2, title: "Step 3", description: "Add the third instruction here",
+        PlacementStep(id: 2, title: "Place the alarm", description: "Choose a location where the alarm can be heard throughout your home and from outside.",
                       illustration: ("Illustration-sensor-3", "A person hears an alarm sounding near the kitchen counter."))
     ]
 }

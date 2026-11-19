@@ -16,7 +16,7 @@ final class SettingsIntegrationTests: XCTestCase {
         let guide = app.buttons["settings.placementGuideline"]
         XCTAssertTrue(guide.waitForExistence(timeout: 5))
         guide.tap()
-        XCTAssertTrue(app.staticTexts["Sensor Placement Guide"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["Position the sensor"].waitForExistence(timeout: 5))
         app.buttons["Done"].tap()
 
         XCTAssertTrue(guide.waitForExistence(timeout: 5))

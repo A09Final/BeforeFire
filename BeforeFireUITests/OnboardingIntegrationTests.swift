@@ -17,15 +17,15 @@ final class OnboardingIntegrationTests: XCTestCase {
         capture("Permissions", in: app)
         app.buttons["onboarding.continue"].tap()
 
-        XCTAssertTrue(app.staticTexts["Sensor Placement Guide"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["Position the sensor"].waitForExistence(timeout: 5))
         app.swipeLeft()
-        XCTAssertTrue(app.staticTexts["Step 2"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["Check the height"].waitForExistence(timeout: 5))
         // All slides share one pushed screen. Back returns to permissions.
         app.navigationBars.buttons.firstMatch.tap()
         XCTAssertTrue(app.staticTexts["Allow Access"].waitForExistence(timeout: 5))
         app.buttons["onboarding.continue"].tap()
 
-        for title in ["Sensor Placement Guide", "Step 2", "Step 3"] {
+        for title in ["Position the sensor", "Check the height", "Place the alarm"] {
             XCTAssertTrue(app.staticTexts[title].waitForExistence(timeout: 5))
             XCTAssertTrue(app.navigationBars.buttons.firstMatch.exists)
             capture("Placement - \(title)", in: app)
