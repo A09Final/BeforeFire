@@ -663,6 +663,66 @@ struct SensorPushTokenRemovalTests {
         #expect(client.requests.map(\.command.action) == [.registerPushToken])
         #expect(try registrations.load().map(\.token) == [token])
     }
+
+    @Test func newTokenForTheLinkedSensorRevokesTheOldToken() async throws {
+        let link = try exampleLink()
+        let store = InMemorySensorBackendLinkStore(link: link)
+        let service = UUID().uuidString
+        let registrations = SensorPushRegistrationStore(keychainService: service)
+        defer { try? registrations.save([]) }
+        await PushTokenRegistrar(store: store, registrations: registrations, client: RecordingSensorCommandClient())
+            .updateToken(token).value
+
+        // A reinstall gives a new token. The Keychain keeps the registration of the old token.
+        let client = RecordingSensorCommandClient()
+        let reinstalled = PushTokenRegistrar(
+            store: store, registrations: SensorPushRegistrationStore(keychainService: service), client: client
+        )
+        await reinstalled.updateToken(replacementToken).value
+
+        #expect(client.requests.map(\.command.action) == [.registerPushToken, .unregisterPushToken])
+        #expect(client.requests.map(\.command.pushToken) == [replacementToken, token])
+        #expect(client.requests.map(\.link) == [link, link])
+        #expect(try registrations.load().map(\.token) == [replacementToken])
+    }
+
+    @Test func offlineRemovalOfTheOldTokenIsRetried() async throws {
+        let link = try exampleLink()
+        let store = InMemorySensorBackendLinkStore(link: link)
+        let registrations = SensorPushRegistrationStore(keychainService: UUID().uuidString)
+        defer { try? registrations.save([]) }
+        let client = RecordingSensorCommandClient()
+        let registrar = PushTokenRegistrar(store: store, registrations: registrations, client: client)
+        await registrar.updateToken(token).value
+
+        client.isOffline = true
+        await registrar.updateToken(replacementToken).value
+        #expect(Set(try registrations.load().compactMap(\.token)) == [token, replacementToken])
+
+        client.isOffline = false
+        client.requests.removeAll()
+        await registrar.retryRevocations().value
+
+        #expect(client.requests.map(\.command.action) == [.unregisterPushToken])
+        #expect(client.requests.first?.command.pushToken == token)
+        #expect(try registrations.load().map(\.token) == [replacementToken])
+    }
+
+    @Test func sameTokenAgainRevokesNothing() async throws {
+        let link = try exampleLink()
+        let store = InMemorySensorBackendLinkStore(link: link)
+        let registrations = SensorPushRegistrationStore(keychainService: UUID().uuidString)
+        defer { try? registrations.save([]) }
+        let client = RecordingSensorCommandClient()
+        let registrar = PushTokenRegistrar(store: store, registrations: registrations, client: client)
+
+        await registrar.updateToken(token).value
+        await registrar.updateToken(token).value
+        await registrar.retryRevocations().value
+
+        #expect(client.requests.map(\.command.action) == [.registerPushToken, .registerPushToken])
+        #expect(try registrations.load().map(\.token) == [token])
+    }
 }
 
 private final class RecordingSensorCommandClient: SensorCommandSending {
