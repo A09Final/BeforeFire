@@ -2,7 +2,19 @@ import XCTest
 
 final class SettingsIntegrationTests: XCTestCase {
     @MainActor
-    func testPlacementGuideReturnsToExistingDeveloperControls() {
+    func testMonitorShowsUnknownWithoutALinkedSensor() {
+        let app = XCUIApplication()
+        app.launchArguments += ["-onboarding.completed", "YES", "-sensorBackend.deviceID", "unlinked-test-sensor"]
+        app.launch()
+        defer { app.terminate() }
+
+        XCTAssertTrue(app.staticTexts["Your Kitchen Is Unknown"].waitForExistence(timeout: 5))
+        let stoveHeat = app.descendants(matching: .any)["monitor.card.stoveHeat"]
+        XCTAssertEqual(stoveHeat.value as? String, "Not available")
+    }
+
+    @MainActor
+    func testPlacementGuideReturnsToSettingsWithExpectedControls() {
         continueAfterFailure = false
         let app = XCUIApplication()
         app.launchArguments += ["-onboarding.completed", "YES"]
@@ -16,14 +28,18 @@ final class SettingsIntegrationTests: XCTestCase {
         let guide = app.buttons["settings.placementGuideline"]
         XCTAssertTrue(guide.waitForExistence(timeout: 5))
         guide.tap()
-        XCTAssertTrue(app.staticTexts["Sensor Placement Guide"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["Position the sensor"].waitForExistence(timeout: 5))
         app.buttons["Done"].tap()
 
         XCTAssertTrue(guide.waitForExistence(timeout: 5))
-        XCTAssertTrue(app.buttons["settings.hubConnection"].exists)
+        XCTAssertFalse(app.buttons["Hub Connection"].exists)
         XCTAssertTrue(app.buttons["settings.sensorConnection"].exists)
         XCTAssertTrue(app.buttons["settings.alarmConnection"].exists)
-        XCTAssertTrue(app.buttons["settings.emergencyContact"].exists)
+        XCTAssertTrue(app.buttons["settings.homeConnection"].exists)
+        XCTAssertFalse(app.buttons["Emergency Contact"].exists)
+        XCTAssertTrue(app.buttons["settings.notifications"].exists)
+
+        #if DEBUG
         XCTAssertTrue(app.switches["settings.actionGuidanceToggle"].exists)
         // SwiftUI exposes the row and its native switch as separate accessibility elements.
         app.switches["settings.actionGuidanceToggle"].switches.firstMatch.tap()
@@ -31,6 +47,8 @@ final class SettingsIntegrationTests: XCTestCase {
 
         let controls = [
             app.switches["settings.hubDisconnectedToggle"],
+            app.switches["settings.simulateSensorsToggle"],
+            app.buttons["settings.sensorData"],
             app.buttons["settings.previewAlarm"]
         ]
         for control in controls {
@@ -49,10 +67,22 @@ final class SettingsIntegrationTests: XCTestCase {
         decreaseDuration.tap()
         XCTAssertTrue(app.staticTexts["Snooze duration, 60 seconds"].waitForExistence(timeout: 5))
         assertCanReach(app.buttons["settings.endAlarmActivity"], in: app)
+        #else
+        XCTAssertFalse(app.staticTexts["Developer Settings"].exists)
+        XCTAssertFalse(app.staticTexts["Developer Settings · Live Activity"].exists)
+        XCTAssertFalse(app.switches["settings.actionGuidanceToggle"].exists)
+        XCTAssertFalse(app.switches["settings.hubDisconnectedToggle"].exists)
+        XCTAssertFalse(app.switches["settings.simulateSensorsToggle"].exists)
+        XCTAssertFalse(app.buttons["settings.sensorData"].exists)
+        XCTAssertFalse(app.buttons["settings.previewAlarm"].exists)
+        XCTAssertFalse(app.buttons["settings.snoozeDuration-Increment"].exists)
+        XCTAssertFalse(app.buttons["settings.endAlarmActivity"].exists)
+        #endif
     }
 
+    #if DEBUG
     @MainActor
-    func testSimulatedSensorJoinsWiFiAndHome() {
+    func testSimulatedSensorJoinsWiFi() {
         continueAfterFailure = false
         let app = XCUIApplication()
         let status = openSimulatedSensorConnection(in: app)
@@ -75,9 +105,10 @@ final class SettingsIntegrationTests: XCTestCase {
         password.typeText("password1")
         joinButton.tap()
 
-        // The Home setup starts at once after the sensor joins Wi-Fi.
-        let addedToHome = app.descendants(matching: .any)["sensorWiFi.addedToHome"].firstMatch
-        XCTAssertTrue(addedToHome.waitForExistence(timeout: 10))
+        // The Wi-Fi setup ends at Wi-Fi. The Home setup is on the Home Connection screen.
+        let wiFiConnected = app.descendants(matching: .any)["sensorWiFi.wiFiConnected"].firstMatch
+        XCTAssertTrue(wiFiConnected.waitForExistence(timeout: 10))
+        XCTAssertFalse(app.buttons["sensorWiFi.addToHomeButton"].exists)
         app.buttons["sensorWiFi.doneButton"].tap()
 
         expectSensorStatus(status, label: "Sensor, DAPUR_A1B2C3")
@@ -104,14 +135,14 @@ final class SettingsIntegrationTests: XCTestCase {
         wiFiName.typeText("Hidden Kitchen")
         app.buttons["sensorWiFi.joinButton"].tap()
 
-        XCTAssertTrue(app.descendants(matching: .any)["sensorWiFi.addedToHome"].firstMatch.waitForExistence(timeout: 10))
+        XCTAssertTrue(app.descendants(matching: .any)["sensorWiFi.wiFiConnected"].firstMatch.waitForExistence(timeout: 10))
         app.buttons["sensorWiFi.doneButton"].tap()
 
         expectSensorStatus(status, label: "Sensor, DAPUR_A1B2C3")
     }
 
     @MainActor
-    func testSimulatedAlarmJoinsWiFiAndHome() {
+    func testSimulatedAlarmJoinsWiFi() {
         continueAfterFailure = false
         let app = XCUIApplication()
         let status = openSimulatedConnection(.alarm, in: app)
@@ -131,10 +162,32 @@ final class SettingsIntegrationTests: XCTestCase {
         guestNetwork.tap()
         app.buttons["alarmWiFi.joinButton"].tap()
 
-        XCTAssertTrue(app.descendants(matching: .any)["alarmWiFi.addedToHome"].firstMatch.waitForExistence(timeout: 10))
+        XCTAssertTrue(app.descendants(matching: .any)["alarmWiFi.wiFiConnected"].firstMatch.waitForExistence(timeout: 10))
+        XCTAssertFalse(app.buttons["alarmWiFi.addToHomeButton"].exists)
         app.buttons["alarmWiFi.doneButton"].tap()
 
         expectSensorStatus(status, label: "Alarm, DAPUR_ALM_A1A2B3")
+    }
+
+    @MainActor
+    func testSimulatedHomeConnectionAddsSensorAndAlarm() {
+        continueAfterFailure = false
+        let app = XCUIApplication()
+        openSimulatedHomeConnection(in: app)
+        defer { app.terminate() }
+
+        let addSensor = app.buttons["sensorHome.addButton"]
+        let addAlarm = app.buttons["alarmHome.addButton"]
+        XCTAssertTrue(addSensor.waitForExistence(timeout: 5))
+        XCTAssertTrue(addAlarm.exists)
+
+        addSensor.tap()
+        XCTAssertTrue(app.descendants(matching: .any)["sensorHome.added"].firstMatch.waitForExistence(timeout: 10))
+        XCTAssertFalse(addSensor.exists)
+
+        assertCanReach(addAlarm, in: app)
+        addAlarm.tap()
+        XCTAssertTrue(app.descendants(matching: .any)["alarmHome.added"].firstMatch.waitForExistence(timeout: 10))
     }
 
     @MainActor
@@ -201,6 +254,21 @@ final class SettingsIntegrationTests: XCTestCase {
         return status
     }
 
+    /// Turns on the device simulation and opens Home Connection.
+    @MainActor
+    private func openSimulatedHomeConnection(in app: XCUIApplication) {
+        app.launchArguments += ["-onboarding.completed", "YES"]
+        app.launch()
+        app.buttons["monitor.settings"].tap()
+
+        // The simulation keeps the test independent of the system Home setup.
+        let simulationToggle = app.switches["settings.simulateSensorsToggle"]
+        XCTAssertTrue(simulationToggle.waitForExistence(timeout: 5))
+        simulationToggle.switches.firstMatch.tap()
+
+        app.buttons["settings.homeConnection"].tap()
+    }
+
     @MainActor
     private func selectSimulatedSensor(in app: XCUIApplication) {
         app.buttons["sensor.connectButton"].tap()
@@ -229,4 +297,5 @@ final class SettingsIntegrationTests: XCTestCase {
         let expectation = XCTNSPredicateExpectation(predicate: expectedStatus, object: status)
         XCTAssertEqual(XCTWaiter.wait(for: [expectation], timeout: 5), .completed)
     }
+    #endif
 }

@@ -53,6 +53,18 @@ struct SensorBackendLinkTests {
         }
     }
 
+    @Test(arguments: [
+        ("http://Dericks-MacBook-Pro.local:8080", "http://beforefire-server.local:8080"),
+        ("http://dericks-macbook-pro.local:8081", "http://beforefire-server.local:8081"),
+        ("https://DERICKS-MACBOOK-PRO.LOCAL:8080", "https://beforefire-server.local:8080"),
+        ("http://192.168.1.10:8080", "http://192.168.1.10:8080"),
+        ("http://other-mac.local:8080", "http://other-mac.local:8080"),
+        ("http://beforefire-server.local:8080", "http://beforefire-server.local:8080")
+    ])
+    func movesOnlyTheEarlierDefaultServerToTheNewName(saved: String, expected: String) {
+        #expect(SensorBackendLink.replacingLegacyDefaultHost(in: saved) == expected)
+    }
+
     @Test func rejectsShortSetupCode() {
         #expect(throws: SensorBackendLinkIssue.invalidSetupCode) {
             try SensorBackendLink(backendAddress: "192.168.1.10", deviceID: exampleSerial, setupCode: "abc")
@@ -124,8 +136,14 @@ struct MonitorReadingsFormatterTests {
         )
     }
 
-    @Test func showsExampleValuesWhenNoSensorIsLinked() {
-        #expect(formatter.content(for: .notConfigured) == nil)
+    @Test func showsUnknownWhenNoSensorIsLinked() {
+        let content = formatter.content(for: .notConfigured)
+        #expect(content.statusValue == "Unknown")
+        #expect(!content.isDangerous)
+        #expect(content.assessment == nil)
+        #expect(content.readings.map(\.id) == MonitorReadingsFormatter.cardOrder)
+        #expect(content.readings.allSatisfy { $0.value == "—" && $0.unit == nil && $0.spokenValue == "Not available" })
+        #expect(MonitorViewModel.unlinked.displayedStatusValue == content.statusValue)
     }
 
     @Test func formatsAllCardsInScreenOrder() {
@@ -204,8 +222,8 @@ struct MonitorReadingsFormatterTests {
         #expect(!content.isDangerous)
     }
 
-    @Test func showsOfflineWhenTheServerFails() throws {
-        let content = try #require(formatter.content(for: .failed(.backendUnreachable)))
+    @Test func showsOfflineWhenTheServerFails() {
+        let content = formatter.content(for: .failed(.backendUnreachable))
         #expect(content.statusValue == "Offline")
         #expect(content.readings.allSatisfy { $0.value == "—" })
     }
@@ -280,7 +298,8 @@ struct SensorReadingsClientTests {
         (404, #"{"error":"no_readings"}"#, .noReadings),
         (404, #"{"error":"unknown_device_id"}"#, .unknownDevice),
         (500, #"{"error":"internal_error"}"#, .unexpectedResponse),
-        (200, "not json", .unexpectedResponse)
+        (200, "not json", .unexpectedResponse),
+        (200, #"{"deviceId":"DAPUR_FFFFFF","readings":{},"isStale":false,"connection":"online"}"#, .unexpectedResponse)
     ])
     func mapsErrorResponses(statusCode: Int, body: String, expected: SensorReadingsFetchError) async throws {
         StubURLProtocol.handler = { _ in (statusCode, Data(body.utf8)) }
@@ -472,6 +491,43 @@ struct SensorBackendSettingsModelTests {
         #expect(link.backendAddress == SensorBackendConfiguration.defaultBackendAddress)
     }
 
+    @Test func defaultServerUsesTheNameOfTheServerScript() throws {
+        let url = try SensorBackendLink.serverURL(from: SensorBackendConfiguration.defaultBackendAddress)
+        #expect(url.host == SensorBackendConfiguration.defaultHost)
+        #expect(url.port == SensorBackendConfiguration.defaultPort)
+        #expect(!SensorBackendConfiguration.legacyDefaultHosts.contains(SensorBackendConfiguration.defaultHost))
+    }
+
+    @Test func keychainStoreMovesALinkToTheEarlierDefaultServer() throws {
+        let suiteName = "SensorBackendTests.\(UUID().uuidString)"
+        let defaults = try #require(UserDefaults(suiteName: suiteName))
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+        let store = KeychainSensorBackendLinkStore(defaults: defaults, keychainService: suiteName)
+        defer { try? store.remove() }
+        // A link that an earlier version saved with its default server.
+        try store.save(try exampleLink(address: "http://Dericks-MacBook-Pro.local:8080"))
+
+        let relaunchedStore = KeychainSensorBackendLinkStore(defaults: defaults, keychainService: suiteName)
+        let link = try #require(relaunchedStore.load())
+
+        #expect(link.backendAddress == SensorBackendConfiguration.defaultBackendAddress)
+        #expect(link.deviceID == exampleSerial)
+        #expect(link.setupCode == exampleSetupCode)
+        #expect(defaults.string(forKey: "sensorBackend.backendAddress") == SensorBackendConfiguration.defaultBackendAddress)
+    }
+
+    @Test func keychainStoreKeepsATypedServer() throws {
+        let suiteName = "SensorBackendTests.\(UUID().uuidString)"
+        let defaults = try #require(UserDefaults(suiteName: suiteName))
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+        let store = KeychainSensorBackendLinkStore(defaults: defaults, keychainService: suiteName)
+        defer { try? store.remove() }
+
+        try store.save(try exampleLink(address: "http://other-mac.local:8081"))
+
+        #expect(store.load()?.backendAddress == "http://other-mac.local:8081")
+    }
+
     @Test func keychainStoreKeepsTheLink() throws {
         let suiteName = "SensorBackendTests.\(UUID().uuidString)"
         let defaults = try #require(UserDefaults(suiteName: suiteName))
@@ -544,6 +600,17 @@ struct SensorPushTokenRemovalTests {
         #expect(try registrations.load().isEmpty)
     }
 
+    @Test func savedRemovalForTheEarlierDefaultServerGoesToTheNewName() throws {
+        let oldLink = try exampleLink(address: "http://Dericks-MacBook-Pro.local:8080")
+        let registration = SensorPushRegistration(link: oldLink, token: token)
+
+        let link = try registration.sensorLink()
+
+        #expect(link.backendAddress == SensorBackendConfiguration.defaultBackendAddress)
+        #expect(link.deviceID == oldLink.deviceID)
+        #expect(link.setupCode == oldLink.setupCode)
+    }
+
     @Test func unlinkOfAnOlderInstallWaitsForAPNsToken() async throws {
         let oldLink = try exampleLink()
         let store = InMemorySensorBackendLinkStore(link: oldLink)
@@ -601,6 +668,66 @@ struct SensorPushTokenRemovalTests {
         await registrar.retryRevocations().value
 
         #expect(client.requests.map(\.command.action) == [.registerPushToken])
+        #expect(try registrations.load().map(\.token) == [token])
+    }
+
+    @Test func newTokenForTheLinkedSensorRevokesTheOldToken() async throws {
+        let link = try exampleLink()
+        let store = InMemorySensorBackendLinkStore(link: link)
+        let service = UUID().uuidString
+        let registrations = SensorPushRegistrationStore(keychainService: service)
+        defer { try? registrations.save([]) }
+        await PushTokenRegistrar(store: store, registrations: registrations, client: RecordingSensorCommandClient())
+            .updateToken(token).value
+
+        // A reinstall gives a new token. The Keychain keeps the registration of the old token.
+        let client = RecordingSensorCommandClient()
+        let reinstalled = PushTokenRegistrar(
+            store: store, registrations: SensorPushRegistrationStore(keychainService: service), client: client
+        )
+        await reinstalled.updateToken(replacementToken).value
+
+        #expect(client.requests.map(\.command.action) == [.registerPushToken, .unregisterPushToken])
+        #expect(client.requests.map(\.command.pushToken) == [replacementToken, token])
+        #expect(client.requests.map(\.link) == [link, link])
+        #expect(try registrations.load().map(\.token) == [replacementToken])
+    }
+
+    @Test func offlineRemovalOfTheOldTokenIsRetried() async throws {
+        let link = try exampleLink()
+        let store = InMemorySensorBackendLinkStore(link: link)
+        let registrations = SensorPushRegistrationStore(keychainService: UUID().uuidString)
+        defer { try? registrations.save([]) }
+        let client = RecordingSensorCommandClient()
+        let registrar = PushTokenRegistrar(store: store, registrations: registrations, client: client)
+        await registrar.updateToken(token).value
+
+        client.isOffline = true
+        await registrar.updateToken(replacementToken).value
+        #expect(Set(try registrations.load().compactMap(\.token)) == [token, replacementToken])
+
+        client.isOffline = false
+        client.requests.removeAll()
+        await registrar.retryRevocations().value
+
+        #expect(client.requests.map(\.command.action) == [.unregisterPushToken])
+        #expect(client.requests.first?.command.pushToken == token)
+        #expect(try registrations.load().map(\.token) == [replacementToken])
+    }
+
+    @Test func sameTokenAgainRevokesNothing() async throws {
+        let link = try exampleLink()
+        let store = InMemorySensorBackendLinkStore(link: link)
+        let registrations = SensorPushRegistrationStore(keychainService: UUID().uuidString)
+        defer { try? registrations.save([]) }
+        let client = RecordingSensorCommandClient()
+        let registrar = PushTokenRegistrar(store: store, registrations: registrations, client: client)
+
+        await registrar.updateToken(token).value
+        await registrar.updateToken(token).value
+        await registrar.retryRevocations().value
+
+        #expect(client.requests.map(\.command.action) == [.registerPushToken, .registerPushToken])
         #expect(try registrations.load().map(\.token) == [token])
     }
 }

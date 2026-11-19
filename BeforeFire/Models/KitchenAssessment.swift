@@ -11,6 +11,8 @@ nonisolated enum KitchenCondition: String, Codable, CaseIterable, Sendable {
         case .alarm: "Alarm"
         }
     }
+
+    var usesAlarmColor: Bool { self == .warning2 || self == .alarm }
 }
 
 nonisolated enum KitchenConditionReason: String, Codable, CaseIterable, Sendable {

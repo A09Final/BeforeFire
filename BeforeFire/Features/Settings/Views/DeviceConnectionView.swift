@@ -219,10 +219,9 @@ struct DeviceConnectionView: View {
 
     private func makeSetupModel(for device: DiscoveredDevice) -> DeviceWiFiSetupModel {
         DeviceWiFiSetupModel(device: device, kind: model.kind, connector: model.connector,
-                            homeSetup: model.homeSetup, savedSetupCode: savedSetupCode(for: device),
+                            savedSetupCode: savedSetupCode(for: device),
                             onWiFiJoined: handleWiFiJoined,
-                            onSavedSetupCodeRejected: handleSavedSetupCodeRejected,
-                            startsHomeSetupAfterWiFi: !isOnboarding)
+                            onSavedSetupCodeRejected: handleSavedSetupCodeRejected)
     }
 
     /// A sensor that the user linked on the Sensor Data screen, for example a sensor that already had Wi-Fi,

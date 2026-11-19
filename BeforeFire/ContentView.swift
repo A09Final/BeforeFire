@@ -6,7 +6,9 @@
 //
 
 import ActivityKit
+import OSLog
 import SwiftUI
+import WidgetKit
 
 struct ContentView: View {
     @State private var alarmPreview = AlarmPreviewModel()
@@ -16,6 +18,7 @@ struct ContentView: View {
     @State private var onboarding = OnboardingProgressStore()
     @State private var navigationPath = NavigationPath()
     @Environment(\.scenePhase) private var scenePhase
+    private static let widgetLogger = Logger(subsystem: "BeforeFire", category: "KitchenStatusWidget")
 
     private struct LiveReadingsTaskID: Equatable {
         let link: SensorBackendLink?
@@ -26,7 +29,7 @@ struct ContentView: View {
         Group {
             if onboarding.hasCompleted {
                 NavigationStack(path: $navigationPath) {
-                    MonitorView(viewModel: .mock)
+                    MonitorView(viewModel: .unlinked)
                 }
             } else {
                 OnboardingFlowView(isSimulated: simulatesOnboarding) {
@@ -47,7 +50,13 @@ struct ContentView: View {
                   case .updated(let snapshot) = liveReadings.status else { return }
             alarmPreview.handleLiveReading(snapshot, linkedDeviceID: deviceID)
         }
-        .onOpenURL { alarmPreview.open($0, linkedDeviceID: sensorBackend.link?.deviceID) }
+        .onOpenURL { url in
+            if url == KitchenStatusWidgetConnection.monitorURL {
+                navigationPath = NavigationPath()
+            } else {
+                alarmPreview.open(url, linkedDeviceID: sensorBackend.link?.deviceID)
+            }
+        }
         .task {
             for activity in Activity<AlarmActivityAttributes>.activities {
                 await alarmPreview.adoptRemoteActivity(activity, linkedDeviceID: sensorBackend.link?.deviceID)
@@ -58,6 +67,12 @@ struct ContentView: View {
         }
         .onChange(of: sensorBackend.link) { oldLink, newLink in
             AlarmLiveActivityRegistration.shared.linkChanged(from: oldLink, to: newLink)
+        }
+        .onChange(of: sensorBackend.link, initial: true) { _, link in
+            updateKitchenStatusWidgetConnection(for: link)
+        }
+        .onChange(of: liveReadings.kitchenStatus.title) { _, _ in
+            WidgetCenter.shared.reloadTimelines(ofKind: KitchenStatusWidgetConnection.kind)
         }
         .onChange(of: alarmPreview.isAlarmPresented) { _, isPresented in
             if isPresented {
@@ -82,7 +97,12 @@ struct ContentView: View {
             }
         }
         .onChange(of: scenePhase, initial: true) { _, phase in
-            if phase == .active { alarmPreview.synchronizeFromLiveActivity() }
+            if phase == .active {
+                alarmPreview.synchronizeFromLiveActivity()
+                KitchenWidgetPushRegistration.shared.refresh(force: true)
+            } else if phase == .background {
+                WidgetCenter.shared.reloadTimelines(ofKind: KitchenStatusWidgetConnection.kind)
+            }
             alarmPreview.setApplicationActive(phase == .active)
             presentPendingPushEvent()
         }
@@ -109,6 +129,18 @@ struct ContentView: View {
         #else
         false
         #endif
+    }
+
+    private func updateKitchenStatusWidgetConnection(for link: SensorBackendLink?) {
+        do {
+            let connection = try KitchenStatusWidgetConnection()
+            if try connection.update(link?.readingsAccess) {
+                WidgetCenter.shared.reloadTimelines(ofKind: KitchenStatusWidgetConnection.kind)
+            }
+            KitchenWidgetPushRegistration.shared.refresh(force: true)
+        } catch {
+            Self.widgetLogger.error("Cannot update the widget sensor connection: \(String(describing: error), privacy: .private)")
+        }
     }
 
     private func presentPendingPushEvent() {

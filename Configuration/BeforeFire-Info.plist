@@ -2,6 +2,8 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+    <key>KitchenStatusKeychainGroup</key>
+    <string>$(KITCHEN_STATUS_KEYCHAIN_GROUP)</string>
     <key>NSCameraUsageDescription</key>
     <string>BeforeFire uses the camera to scan setup QR codes for your sensor and alarm.</string>
     <key>NSBluetoothAlwaysUsageDescription</key>

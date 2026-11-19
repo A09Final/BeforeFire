@@ -12,11 +12,16 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
         return true
     }
 
+    func applicationDidEnterBackground(_ application: UIApplication) {
+        AlarmLiveActivityRegistration.shared.refreshRegistration()
+    }
+
     func application(_ application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
         let notifications = PushNotificationManager.shared
         notifications.didRegister(deviceToken: deviceToken)
         if let registration = notifications.deviceRegistration {
             PushTokenRegistrar.shared.updateToken(registration.token)
+            AlarmLiveActivityRegistration.shared.refreshRegistration()
         }
     }
 

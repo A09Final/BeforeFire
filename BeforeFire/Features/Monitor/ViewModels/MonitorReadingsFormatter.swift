@@ -4,12 +4,13 @@ import Foundation
 struct MonitorReadingsFormatter {
     enum StatusText {
         /// The sensor sends readings, but no fuzzy result yet.
-        static let unknown = "Unknown"
+        static let unknown = KitchenStatus.unknown.title
         /// The app cannot get current values from the sensor.
-        static let offline = "Offline"
+        static let offline = KitchenStatus.offline.title
     }
 
     enum ConnectionText {
+        static let notLinked = "Sensor not linked"
         static let loading = "Connecting to sensor"
         static let online = "Sensor connected"
         static let offline = "Sensor offline"
@@ -51,11 +52,11 @@ struct MonitorReadingsFormatter {
 
     var locale: Locale = .current
 
-    /// Returns `nil` when no sensor is linked. The screen then shows the example values.
-    func content(for status: MonitorLiveReadingsModel.Status) -> MonitorContent? {
+    func content(for status: MonitorLiveReadingsModel.Status) -> MonitorContent {
         switch status {
         case .notConfigured:
-            return nil
+            return unavailableContent(status: StatusText.unknown, connection: ConnectionText.notLinked,
+                                      hasSensorLink: false)
         case .loading:
             return unavailableContent(status: StatusText.unknown, connection: ConnectionText.loading)
         case .failed:
@@ -66,29 +67,30 @@ struct MonitorReadingsFormatter {
     }
 
     func content(for snapshot: SensorReadingsSnapshot) -> MonitorContent {
-        // Old values can show a safe kitchen that is not safe now, so they are not shown.
-        guard !snapshot.isStale, snapshot.connection != .offline else {
+        let status = KitchenStatus(snapshot: snapshot)
+        switch status {
+        case .offline:
             return unavailableContent(status: StatusText.offline, connection: ConnectionText.offline)
-        }
-        guard snapshot.connection == .online else {
+        case .unknown:
             return unavailableContent(status: StatusText.unknown, connection: ConnectionText.unreachable)
+        case .reported(let assessment):
+            return MonitorContent(
+                connectionTitle: ConnectionText.online,
+                statusValue: status.title,
+                isDangerous: status.condition == .alarm,
+                readings: Self.cardOrder.map { reading(for: $0, in: snapshot) },
+                assessment: assessment
+            )
         }
-        let assessment = snapshot.assessment
-        return MonitorContent(
-            connectionTitle: ConnectionText.online,
-            statusValue: assessment.validCondition?.displayName ?? StatusText.unknown,
-            isDangerous: assessment.validCondition == .alarm,
-            readings: Self.cardOrder.map { reading(for: $0, in: snapshot) },
-            assessment: assessment
-        )
     }
 
-    private func unavailableContent(status: String, connection: String) -> MonitorContent {
+    private func unavailableContent(status: String, connection: String, hasSensorLink: Bool = true) -> MonitorContent {
         MonitorContent(
             connectionTitle: connection,
             statusValue: status,
             isDangerous: false,
-            readings: Self.cardOrder.map(unavailableReading)
+            readings: Self.cardOrder.map(unavailableReading),
+            hasSensorLink: hasSensorLink
         )
     }
 

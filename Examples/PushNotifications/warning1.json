@@ -2,11 +2,15 @@
   "aps": {
     "alert": {
       "title": "Check your kitchen",
-      "body": "The stove is on. Make sure that somebody watches it."
+      "body": "Check your kitchen.\\nCheck the stove and nearby area."
     },
-    "sound": "default",
+    "sound": {
+      "critical": 1,
+      "name": "default",
+      "volume": 1
+    },
     "thread-id": "DAPUR_A1B2C3",
-    "interruption-level": "active",
+    "interruption-level": "critical",
     "relevance-score": 0.5
   },
   "beforefire": {

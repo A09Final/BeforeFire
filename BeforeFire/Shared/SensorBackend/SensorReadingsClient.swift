@@ -12,26 +12,28 @@ nonisolated enum SensorReadingsFetchError: Error, Equatable {
     case unexpectedResponse
 }
 
-protocol SensorReadingsFetching {
-    /// Throws `SensorReadingsFetchError`, or `CancellationError` when the task is cancelled.
-    func fetchReadings(for link: SensorBackendLink) async throws -> SensorReadingsSnapshot
+/// The URL and read key give access to readings from one sensor.
+nonisolated struct SensorReadingsAccess: Codable, Equatable, Sendable {
+    let url: URL
+    let deviceID: String
+    let readKey: String
 }
 
 /// Reads the sensor values with `GET /v1/devices/{deviceId}/readings`.
-struct URLSessionSensorReadingsClient: SensorReadingsFetching {
+nonisolated struct URLSessionSensorReadingsClient {
     private let session: URLSession
 
     init(session: URLSession = .shared) {
         self.session = session
     }
 
-    func fetchReadings(for link: SensorBackendLink) async throws -> SensorReadingsSnapshot {
+    func fetchReadings(using access: SensorReadingsAccess) async throws -> SensorReadingsSnapshot {
         var request = URLRequest(
-            url: link.readingsURL,
+            url: access.url,
             cachePolicy: .reloadIgnoringLocalCacheData,
             timeoutInterval: SensorBackendConfiguration.requestTimeout
         )
-        request.setValue("Bearer \(link.readKey)", forHTTPHeaderField: "Authorization")
+        request.setValue("Bearer \(access.readKey)", forHTTPHeaderField: "Authorization")
 
         let body: Data
         let response: URLResponse
@@ -49,11 +51,11 @@ struct URLSessionSensorReadingsClient: SensorReadingsFetching {
         }
         switch httpResponse.statusCode {
         case 200:
-            do {
-                return try JSONDecoder().decode(SensorReadingsSnapshot.self, from: body)
-            } catch {
+            guard let snapshot = try? JSONDecoder().decode(SensorReadingsSnapshot.self, from: body),
+                  snapshot.deviceID == access.deviceID else {
                 throw SensorReadingsFetchError.unexpectedResponse
             }
+            return snapshot
         case 401:
             throw SensorReadingsFetchError.invalidReadKey
         case 404:

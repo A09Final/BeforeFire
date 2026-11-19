@@ -25,14 +25,23 @@ final class KeychainSensorBackendLinkStore: SensorBackendLinkStoring {
     }
 
     func load() -> SensorBackendLink? {
-        guard let backendAddress = defaults.string(forKey: Key.backendAddress),
+        guard let savedAddress = defaults.string(forKey: Key.backendAddress),
               let deviceID = defaults.string(forKey: Key.deviceID),
               let setupCode = setupCodes.read(account: deviceID)
         else {
             return nil
         }
+        let backendAddress = SensorBackendLink.replacingLegacyDefaultHost(in: savedAddress)
         // Saved values were valid when they were saved. A failure here means that the format rules changed.
-        return try? SensorBackendLink(backendAddress: backendAddress, deviceID: deviceID, setupCode: setupCode)
+        guard let link = try? SensorBackendLink(backendAddress: backendAddress, deviceID: deviceID,
+                                                setupCode: setupCode)
+        else {
+            return nil
+        }
+        if backendAddress != savedAddress {
+            defaults.set(link.backendAddress, forKey: Key.backendAddress)
+        }
+        return link
     }
 
     func save(_ link: SensorBackendLink) throws {

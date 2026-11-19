@@ -37,6 +37,10 @@ struct SensorBackendLink: Equatable, Sendable {
         backendURL.appending(path: SensorBackendConfiguration.readingsPath(deviceID: deviceID))
     }
 
+    var readingsAccess: SensorReadingsAccess {
+        SensorReadingsAccess(url: readingsURL, deviceID: deviceID, readKey: readKey)
+    }
+
     var commandsURL: URL {
         backendURL.appending(path: SensorBackendConfiguration.commandsPath(deviceID: deviceID))
     }
@@ -71,6 +75,19 @@ struct SensorBackendLink: Equatable, Sendable {
             throw SensorBackendLinkIssue.invalidBackendAddress
         }
         return url
+    }
+
+    /// Replaces the host of an earlier default server with `SensorBackendConfiguration.defaultHost`.
+    /// It keeps the scheme and the port. Other addresses, for example a typed IP address, stay the same.
+    static func replacingLegacyDefaultHost(in address: String) -> String {
+        guard var components = URLComponents(string: address),
+              let host = components.host,
+              SensorBackendConfiguration.legacyDefaultHosts.contains(host.lowercased())
+        else {
+            return address
+        }
+        components.host = SensorBackendConfiguration.defaultHost
+        return components.string ?? address
     }
 
     /// Accepts only sensor serials, because only the sensor unit sends readings.
