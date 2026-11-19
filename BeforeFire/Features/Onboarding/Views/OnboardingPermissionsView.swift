@@ -13,9 +13,11 @@ struct OnboardingPermissionsView: View {
                        buttonTitle: OnboardingCopy.continueButton,
                        isBusy: isRequesting || (!isSimulated && notifications.isUpdating),
                        action: { isRequesting = true }) {
-            VStack(alignment: .leading, spacing: 32) {
-                permission("Bluetooth", description: OnboardingCopy.bluetoothDescription)
-                permission("Notifications", description: OnboardingCopy.notificationsDescription)
+            VStack(alignment: .leading, spacing: 24) {
+                OnboardingInfoRow(symbol: "antenna.radiowaves.left.and.right", title: "Bluetooth",
+                                  description: OnboardingCopy.bluetoothDescription)
+                OnboardingInfoRow(symbol: "bell.badge.fill", title: "Notifications",
+                                  description: OnboardingCopy.notificationsDescription)
                 if let message = notifications.errorMessage, !isSimulated {
                     Text(message).foregroundStyle(.red)
                     Button("Continue Without Notifications", action: onContinue)
@@ -33,10 +35,4 @@ struct OnboardingPermissionsView: View {
         }
     }
 
-    private func permission(_ title: String, description: String) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(title).font(.headline)
-            Text(description).foregroundStyle(.secondary)
-        }
-    }
 }

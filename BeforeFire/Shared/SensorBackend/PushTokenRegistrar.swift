@@ -14,9 +14,17 @@ final class PushTokenRegistrar {
     private var work: Task<Void, Never>?
     private static let retryInterval: Duration = .seconds(30)
 
-    init(store: any SensorBackendLinkStoring = KeychainSensorBackendLinkStore(),
-         registrations: SensorPushRegistrationStore = SensorPushRegistrationStore(),
-         client: any SensorCommandSending = URLSessionSensorCommandClient()) {
+    convenience init() {
+        // Build the real dependencies here, on the main actor, instead of as
+        // default arguments (those are evaluated in a nonisolated context).
+        self.init(store: KeychainSensorBackendLinkStore(),
+                  registrations: SensorPushRegistrationStore(),
+                  client: URLSessionSensorCommandClient())
+    }
+
+    init(store: any SensorBackendLinkStoring,
+         registrations: SensorPushRegistrationStore,
+         client: any SensorCommandSending) {
         self.store = store
         self.registrations = registrations
         self.client = client
@@ -67,7 +75,7 @@ final class PushTokenRegistrar {
         let nextWork = Task {
             await previousWork?.value
             if registerCurrentToken { await registerCurrent() }
-            await revokeUnlinked()
+            await revokeObsoleteTokens()
         }
         work = nextWork
         return nextWork
@@ -87,7 +95,7 @@ final class PushTokenRegistrar {
         }
     }
 
-    private func revokeUnlinked() async {
+    private func revokeObsoleteTokens() async {
         let saved: [SensorPushRegistration]
         do {
             saved = try registrations.load()
@@ -97,8 +105,7 @@ final class PushTokenRegistrar {
         }
 
         for registration in saved {
-            guard store.load()?.deviceID != registration.deviceID,
-                  let token = registration.token ?? token else { continue }
+            guard let token = tokenToRevoke(for: registration) else { continue }
             do {
                 let link = try registration.sensorLink()
                 let resolved = SensorPushRegistration(link: link, token: token)
@@ -111,6 +118,18 @@ final class PushTokenRegistrar {
                 logger.error("Push token removal is pending.")
             }
         }
+    }
+
+    /// The token that the sensor must forget, or `nil` when the registration is still in use.
+    private func tokenToRevoke(for registration: SensorPushRegistration) -> String? {
+        guard store.load()?.deviceID == registration.deviceID else {
+            // An unlinked sensor forgets this phone. A registration with no token is from an older install.
+            return registration.token ?? token
+        }
+        // The linked sensor keeps only the current token. iOS gives a new token after a reinstall, and after
+        // a change between an Xcode build and a TestFlight build. APNs rejects the old token for each alert.
+        guard let token, let savedToken = registration.token, savedToken != token else { return nil }
+        return savedToken
     }
 
     private func replace(_ registration: SensorPushRegistration, with replacement: SensorPushRegistration?) throws {

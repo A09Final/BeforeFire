@@ -21,9 +21,11 @@ struct SnoozeAlarmPreviewIntent: LiveActivityIntent {
               activity.activityState == .active || activity.activityState == .stale else {
             return .result()
         }
-        // TODO: Define and verify hardware snooze commands before adding a real alarm action.
         let state = activity.content.state.snoozed(at: .now)
         await activity.update(ActivityContent(state: state, staleDate: state.snoozeEndsAt))
+        #if !BEFOREFIRE_WIDGET_EXTENSION
+        await AlarmLiveActivityRegistration.shared.syncReminderState(for: activity, state: state)
+        #endif
         NotificationCenter.default.post(name: AlarmActivityAttributes.previewStateDidChange, object: nil)
         return .result()
     }

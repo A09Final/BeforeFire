@@ -28,4 +28,9 @@ struct DeviceConnectionPresentation {
     func setupIdentifier(_ element: String) -> String {
         "\(identifierPrefix)WiFi.\(element)"
     }
+
+    /// An identifier on the Home Connection screen, for example `alarmHome.addButton`.
+    func homeIdentifier(_ element: String) -> String {
+        "\(identifierPrefix)Home.\(element)"
+    }
 }

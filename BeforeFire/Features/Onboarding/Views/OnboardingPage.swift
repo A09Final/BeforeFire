@@ -7,6 +7,8 @@ struct OnboardingPage<Content: View>: View {
     let buttonTitle: String
     var isBusy = false
     var buttonIdentifier = "onboarding.continue"
+    var showsNavigationBar = true
+    var onSkip: (() -> Void)? = nil
     let action: () -> Void
     @ViewBuilder let content: () -> Content
 
@@ -14,9 +16,21 @@ struct OnboardingPage<Content: View>: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 40) {
                 VStack(alignment: .leading, spacing: 16) {
-                    Text(title)
-                        .font(.largeTitle.bold())
-                        .accessibilityAddTraits(.isHeader)
+                    HStack(alignment: .firstTextBaseline, spacing: 12) {
+                        Text(title)
+                            .font(.largeTitle.bold())
+                            .accessibilityAddTraits(.isHeader)
+                        #if DEBUG
+                        if let onSkip {
+                            Spacer(minLength: 0)
+                            Button("Skip", action: onSkip)
+                                .font(.body)
+                                .frame(minWidth: 44, minHeight: 44)
+                                .fixedSize()
+                                .accessibilityIdentifier("onboarding.skip")
+                        }
+                        #endif
+                    }
                     if let description {
                         Text(description)
                             .foregroundStyle(.secondary)
@@ -46,7 +60,7 @@ struct OnboardingPage<Content: View>: View {
             .background(Color(.systemGroupedBackground))
         }
         .navigationBarTitleDisplayMode(.inline)
-        .toolbar(.visible, for: .navigationBar)
+        .toolbar(showsNavigationBar ? .visible : .hidden, for: .navigationBar)
     }
 }
 
