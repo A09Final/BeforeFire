@@ -119,19 +119,21 @@ struct DeviceConnectionCopy {
     let backButton = "Back"
     let doneButton = "Done"
 
-    // MARK: Home setup
+    // MARK: Wi-Fi result
 
     let wiFiConnectedTitle = "Wi-Fi Connected"
-    let addToHomeButton = "Add to Home"
-    var addingToHome: String { "Adding \(theUnit) to Home…" }
-    var addedToHomeTitle: String { "\(unitName) Added to Home" }
 
     func wiFiConnectedDescription(deviceName: String, wiFiName: String) -> String {
-        "\(deviceName) is connected to \(wiFiName). Add \(theUnit) to Home with the HomeKit code on the \(unitName.lowercased()) label. Keep your phone on the same Wi-Fi network."
+        "\(deviceName) is connected to \(wiFiName). To add \(theUnit) to the Home app, use \(HomeConnectionCopy.screenTitle) in Settings."
     }
 
-    func addedToHomeDescription(deviceName: String) -> String {
-        "\(deviceName) is in the Home app."
+    // MARK: Home setup
+
+    var addToHomeButton: String { "Add \(unitName) to Home" }
+    var addingToHome: String { "Adding \(theUnit) to Home…" }
+    var addedToHomeTitle: String { "\(unitName) Added to Home" }
+    var addToHomeFooter: String {
+        "Scan the HomeKit code on the \(unitName.lowercased()) label. Keep your phone on the same Wi-Fi network as \(theUnit)."
     }
 
     func networkAccessibilityLabel(for network: DeviceWiFiNetwork) -> String {
@@ -200,13 +202,13 @@ struct DeviceConnectionCopy {
     private func message(for error: DeviceHomeSetupError) -> String {
         switch error {
         case .cancelled:
-            "The Home setup closed before \(theUnit) was added. Tap Add to Home to try again."
+            "The Home setup closed before \(theUnit) was added. Try again."
         case .unsupported:
             "This device cannot add accessories to Home."
         case .missingEntitlement:
             "BeforeFire does not have permission to add accessories to Home."
         case .accessoryNotFound:
-            "Home cannot find \(theUnit). Make sure that \(theUnit) and your phone use the same Wi-Fi network, then try again."
+            "Home cannot find \(theUnit). Make sure that \(theUnit) has Wi-Fi and uses the same Wi-Fi network as your phone, then try again."
         case .failed:
             "\(theUnit.capitalizedFirstLetter) was not added to Home. Try again."
         }
