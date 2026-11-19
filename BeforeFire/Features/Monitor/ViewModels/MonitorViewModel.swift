@@ -3,9 +3,10 @@ import Foundation
 struct MonitorViewModel {
     private(set) var connectionTitle: String
     private(set) var statusValue: String
-    let statusHeading = "Your Kitchen Is"
+    let statusHeading = MonitorStyle.statusHeading
 
     private var originalReadings: [MonitorReading]
+    private var hasSensorLink = true
     /// `true` when the live sensor values report the alarm condition.
     private var isLiveDangerous = false
     private var liveAssessment: KitchenAssessment?
@@ -15,6 +16,9 @@ struct MonitorViewModel {
     // These values are fixed examples for the developer preview.
     var isActionGuidanceVisible = false
     var previewCondition: MonitorPreviewCondition = .unsafe
+    var activePreviewCondition: MonitorPreviewCondition? {
+        isActionGuidanceVisible ? previewCondition : nil
+    }
 
     init(connectionTitle: String, statusValue: String, readings: [MonitorReading]) {
         self.connectionTitle = connectionTitle
@@ -24,6 +28,7 @@ struct MonitorViewModel {
 
     init(content: MonitorContent) {
         self.init(connectionTitle: content.connectionTitle, statusValue: content.statusValue, readings: content.readings)
+        hasSensorLink = content.hasSensorLink
         isLiveDangerous = content.isDangerous
         liveAssessment = content.assessment
     }
@@ -33,6 +38,7 @@ struct MonitorViewModel {
         connectionTitle = content.connectionTitle
         statusValue = content.statusValue
         originalReadings = content.readings
+        hasSensorLink = content.hasSensorLink
         isLiveDangerous = content.isDangerous
         liveAssessment = content.assessment
     }
@@ -51,7 +57,8 @@ struct MonitorViewModel {
         }
         if previewCondition == .normal { return Self.mockContent.readings }
 
-        return originalReadings.map { reading in
+        let previewReadings = hasSensorLink ? originalReadings : Self.mockContent.readings
+        return previewReadings.map { reading in
             switch reading.id {
             case .stoveHeat:
                 return MonitorReading(
@@ -91,7 +98,7 @@ struct MonitorViewModel {
     }
 
     var displayedStatusValue: String {
-        isActionGuidanceVisible ? previewCondition.rawValue : statusValue
+        activePreviewCondition?.rawValue ?? statusValue
     }
 
     var displayedStatusTitle: String {
@@ -103,13 +110,13 @@ struct MonitorViewModel {
     }
 
     var isAlarmPreview: Bool {
-        isActionGuidanceVisible && previewCondition == .alarm
+        activePreviewCondition == .alarm
     }
 
     /// Shows the status in the alarm color for the preview or for a live alarm condition.
     var showsAlarmStatus: Bool {
         if isActionGuidanceVisible { return previewCondition == .dangerous || previewCondition == .alarm }
-        return liveAssessment?.validCondition == .warning2 || isLiveDangerous
+        return liveAssessment?.validCondition?.usesAlarmColor == true || isLiveDangerous
     }
 
     var readingAlertCondition: MonitorPreviewCondition? {
@@ -137,9 +144,10 @@ struct MonitorViewModel {
         isActionGuidanceVisible ? previewCondition.assessment : liveAssessment
     }
 
+    static let unlinked = MonitorViewModel(content: MonitorReadingsFormatter().content(for: .notConfigured))
     static let mock = MonitorViewModel(content: mockContent)
 
-    /// Example values. The Monitor screen shows them when no sensor is linked.
+    /// Example values for the developer preview and tests.
     static let mockContent = MonitorContent(
         connectionTitle: "Hub connected",
         statusValue: "Normal",

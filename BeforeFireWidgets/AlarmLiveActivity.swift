@@ -7,6 +7,7 @@ import WidgetKit
 struct BeforeFireWidgets: WidgetBundle {
     var body: some Widget {
         AlarmLiveActivity()
+        KitchenStatusWidget()
     }
 }
 

@@ -2,6 +2,18 @@ import XCTest
 
 final class SettingsIntegrationTests: XCTestCase {
     @MainActor
+    func testMonitorShowsUnknownWithoutALinkedSensor() {
+        let app = XCUIApplication()
+        app.launchArguments += ["-onboarding.completed", "YES", "-sensorBackend.deviceID", "unlinked-test-sensor"]
+        app.launch()
+        defer { app.terminate() }
+
+        XCTAssertTrue(app.staticTexts["Your Kitchen Is Unknown"].waitForExistence(timeout: 5))
+        let stoveHeat = app.descendants(matching: .any)["monitor.card.stoveHeat"]
+        XCTAssertEqual(stoveHeat.value as? String, "Not available")
+    }
+
+    @MainActor
     func testPlacementGuideReturnsToSettingsWithExpectedControls() {
         continueAfterFailure = false
         let app = XCUIApplication()

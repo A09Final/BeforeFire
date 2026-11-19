@@ -91,7 +91,7 @@ struct DeviceConnectionCopy {
     var disconnectConfirmationMessage: String {
         switch kind {
         case .sensor:
-            "The app forgets the sensor and its setup code, and the Monitor screen shows example values. The sensor keeps its Wi-Fi network and stays in the Home app."
+            "The app forgets the sensor and its setup code. Monitor shows Unknown when no sensor is linked. The sensor keeps its Wi-Fi network and stays in the Home app."
         case .alarm:
             "The app forgets the alarm and its setup code. The alarm keeps its Wi-Fi network and stays in the Home app."
         }

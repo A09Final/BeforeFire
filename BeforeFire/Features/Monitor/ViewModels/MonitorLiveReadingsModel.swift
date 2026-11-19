@@ -6,7 +6,7 @@ import Observation
 @Observable
 final class MonitorLiveReadingsModel {
     enum Status: Equatable {
-        /// No sensor is linked. The Monitor screen shows the example values.
+        /// No sensor is linked, so readings are unavailable.
         case notConfigured
         case loading
         case updated(SensorReadingsSnapshot)
@@ -16,6 +16,14 @@ final class MonitorLiveReadingsModel {
     private(set) var status: Status = .notConfigured
     /// The time of the last successful response. It stays after a failure, so the settings screen can show it.
     private(set) var lastUpdatedAt: Date?
+
+    var kitchenStatus: KitchenStatus {
+        switch status {
+        case .updated(let snapshot): KitchenStatus(snapshot: snapshot)
+        case .failed: .offline
+        case .notConfigured, .loading: .unknown
+        }
+    }
 
     @ObservationIgnored private let client: any SensorReadingsFetching
     @ObservationIgnored private let refreshInterval: Duration
