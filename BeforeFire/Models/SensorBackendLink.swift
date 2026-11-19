@@ -37,6 +37,10 @@ struct SensorBackendLink: Equatable, Sendable {
         backendURL.appending(path: SensorBackendConfiguration.readingsPath(deviceID: deviceID))
     }
 
+    var readingsAccess: SensorReadingsAccess {
+        SensorReadingsAccess(url: readingsURL, deviceID: deviceID, readKey: readKey)
+    }
+
     var commandsURL: URL {
         backendURL.appending(path: SensorBackendConfiguration.commandsPath(deviceID: deviceID))
     }

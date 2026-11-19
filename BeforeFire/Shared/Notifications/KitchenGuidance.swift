@@ -7,6 +7,8 @@ nonisolated enum KitchenGuidance {
     static let alarmInstruction = "Turn stove off NOW"
     static let alarmSupportingInstruction = "Call closest available person if you are not able to reach the stove"
     static let snoozedInstruction = "Turn stove off or call the closest available person"
+    static let alarmActivityInstruction = "Turn stove off NOW if safe."
+    static let alarmActivitySupportingInstruction = "If not, call someone nearby."
     static let unknownStatus = "Unknown"
 
     static func monitorMessage(for assessment: KitchenAssessment) -> String? {
@@ -36,18 +38,12 @@ nonisolated enum KitchenGuidance {
 
     static func notificationBody(for assessment: KitchenAssessment) -> String? {
         guard let condition = assessment.validCondition, condition != .normal else { return nil }
-        if let message = ruleMessage(for: assessment, condition: condition) { return message }
-        // Do not guess a rule or a temperature/IAQ class when the sender omitted metadata.
-        let reasons = assessment.reasons.map(\.displayName).joined(separator: ", ")
-        let reasonText = reasons.isEmpty ? "" : " \(reasons)."
+        // The banner uses short general guidance. Full rule details stay in Monitor.
         switch condition {
         case .normal: return nil
-        case .warning1:
-            return "Check your kitchen.\(reasonText) Check the stove and surrounding area."
-        case .warning2:
-            return "Check your kitchen now.\(reasonText) Turn off the stove if you can do so safely."
-        case .alarm:
-            return "Turn off the stove now if you can safely reach it.\(reasonText)"
+        case .warning1: return "Check your kitchen.\nCheck the stove and nearby area."
+        case .warning2: return "Check the stove NOW.\nTurn it off if safe."
+        case .alarm: return "\(alarmActivityInstruction)\n\(alarmActivitySupportingInstruction)"
         }
     }
 

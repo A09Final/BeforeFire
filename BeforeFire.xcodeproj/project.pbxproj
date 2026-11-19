@@ -26,6 +26,20 @@
 		BFAE20261105000000000063 /* BeforeFire/Shared/Notifications/KitchenGuidance.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFAE20261105000000000023 /* BeforeFire/Shared/Notifications/KitchenGuidance.swift */; };
 		BFAE20261105000000000064 /* BeforeFire/Shared/Notifications/KitchenRuleMessages.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFAE20261105000000000024 /* BeforeFire/Shared/Notifications/KitchenRuleMessages.swift */; };
 		BFAE20261105000000000070 /* BeforeFireNotificationService.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = BFAE20261105000000000002 /* BeforeFireNotificationService.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		BFAF20261119000000010000 /* BeforeFireWidgets/KitchenStatusWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFAF20261119000000000000 /* BeforeFireWidgets/KitchenStatusWidget.swift */; };
+		BFAF20261119000000010001 /* BeforeFireWidgets/KitchenStatusTimelineProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFAF20261119000000000001 /* BeforeFireWidgets/KitchenStatusTimelineProvider.swift */; };
+		BFAF20261119000000010002 /* BeforeFire/Models/KitchenStatus.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFAF20261119000000000002 /* BeforeFire/Models/KitchenStatus.swift */; };
+		BFAF20261119000000010003 /* BeforeFire/Models/SensorReadingsSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFAF20261119000000000003 /* BeforeFire/Models/SensorReadingsSnapshot.swift */; };
+		BFAF20261119000000010004 /* BeforeFire/Models/MonitorReading.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFAF20261119000000000004 /* BeforeFire/Models/MonitorReading.swift */; };
+		BFAF20261119000000010005 /* BeforeFire/Shared/Styling/MonitorStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFAF20261119000000000005 /* BeforeFire/Shared/Styling/MonitorStyle.swift */; };
+		BFAF20261119000000010006 /* BeforeFire/Shared/Keychain/KeychainPasswordStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFAF20261119000000000006 /* BeforeFire/Shared/Keychain/KeychainPasswordStore.swift */; };
+		BFAF20261119000000010007 /* BeforeFire/Shared/SensorBackend/SensorBackendConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFAF20261119000000000007 /* BeforeFire/Shared/SensorBackend/SensorBackendConfiguration.swift */; };
+		BFAF20261119000000010008 /* BeforeFire/Shared/SensorBackend/SensorReadingsClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFAF20261119000000000008 /* BeforeFire/Shared/SensorBackend/SensorReadingsClient.swift */; };
+		BFAF20261119000000010009 /* BeforeFire/Shared/Widget/KitchenStatusWidgetConnection.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFAF20261119000000000009 /* BeforeFire/Shared/Widget/KitchenStatusWidgetConnection.swift */; };
+		BFAF2026111900000001000B /* BeforeFire/Features/Monitor/ViewModels/MonitorPreviewCondition.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFAF2026111900000000000B /* BeforeFire/Features/Monitor/ViewModels/MonitorPreviewCondition.swift */; };
+		BFBB20261119000000000001 /* BeforeFire/Shared/Widget/KitchenWidgetPushRegistration.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFBA20261119000000000001 /* BeforeFire/Shared/Widget/KitchenWidgetPushRegistration.swift */; };
+		BFBB20261119000000000002 /* BeforeFire/Shared/Widget/KitchenStatusWidgetPushHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFBA20261119000000000002 /* BeforeFire/Shared/Widget/KitchenStatusWidgetPushHandler.swift */; };
+		BFBB20261119000000000003 /* BeforeFire/Shared/Widget/KitchenStatusWidgetEntry.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFBA20261119000000000003 /* BeforeFire/Shared/Widget/KitchenStatusWidgetEntry.swift */; };
 		F0A0C6093089F00D00BF99E1 /* AGENTS.md in Resources */ = {isa = PBXBuildFile; fileRef = F0A0C6083089F00D00BF99E1 /* AGENTS.md */; };
 /* End PBXBuildFile section */
 
@@ -92,6 +106,21 @@
 		BFAE20261105000000000024 /* BeforeFire/Shared/Notifications/KitchenRuleMessages.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BeforeFire/Shared/Notifications/KitchenRuleMessages.swift; sourceTree = SOURCE_ROOT; };
 		BFAE20261105000000000025 /* BeforeFire/Shared/Notifications/KitchenNotificationContent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BeforeFire/Shared/Notifications/KitchenNotificationContent.swift; sourceTree = SOURCE_ROOT; };
 		BFAE20261105000000000030 /* BeforeFireNotificationService/Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = BeforeFireNotificationService/Info.plist; sourceTree = SOURCE_ROOT; };
+		BFAF20261119000000000000 /* BeforeFireWidgets/KitchenStatusWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BeforeFireWidgets/KitchenStatusWidget.swift; sourceTree = SOURCE_ROOT; };
+		BFAF20261119000000000001 /* BeforeFireWidgets/KitchenStatusTimelineProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BeforeFireWidgets/KitchenStatusTimelineProvider.swift; sourceTree = SOURCE_ROOT; };
+		BFAF20261119000000000002 /* BeforeFire/Models/KitchenStatus.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BeforeFire/Models/KitchenStatus.swift; sourceTree = SOURCE_ROOT; };
+		BFAF20261119000000000003 /* BeforeFire/Models/SensorReadingsSnapshot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BeforeFire/Models/SensorReadingsSnapshot.swift; sourceTree = SOURCE_ROOT; };
+		BFAF20261119000000000004 /* BeforeFire/Models/MonitorReading.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BeforeFire/Models/MonitorReading.swift; sourceTree = SOURCE_ROOT; };
+		BFAF20261119000000000005 /* BeforeFire/Shared/Styling/MonitorStyle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BeforeFire/Shared/Styling/MonitorStyle.swift; sourceTree = SOURCE_ROOT; };
+		BFAF20261119000000000006 /* BeforeFire/Shared/Keychain/KeychainPasswordStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BeforeFire/Shared/Keychain/KeychainPasswordStore.swift; sourceTree = SOURCE_ROOT; };
+		BFAF20261119000000000007 /* BeforeFire/Shared/SensorBackend/SensorBackendConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BeforeFire/Shared/SensorBackend/SensorBackendConfiguration.swift; sourceTree = SOURCE_ROOT; };
+		BFAF20261119000000000008 /* BeforeFire/Shared/SensorBackend/SensorReadingsClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BeforeFire/Shared/SensorBackend/SensorReadingsClient.swift; sourceTree = SOURCE_ROOT; };
+		BFAF20261119000000000009 /* BeforeFire/Shared/Widget/KitchenStatusWidgetConnection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BeforeFire/Shared/Widget/KitchenStatusWidgetConnection.swift; sourceTree = SOURCE_ROOT; };
+		BFAF2026111900000000000A /* BeforeFireWidgets/BeforeFireWidgets.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = BeforeFireWidgets/BeforeFireWidgets.entitlements; sourceTree = SOURCE_ROOT; };
+		BFAF2026111900000000000B /* BeforeFire/Features/Monitor/ViewModels/MonitorPreviewCondition.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BeforeFire/Features/Monitor/ViewModels/MonitorPreviewCondition.swift; sourceTree = SOURCE_ROOT; };
+		BFBA20261119000000000001 /* BeforeFire/Shared/Widget/KitchenWidgetPushRegistration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BeforeFire/Shared/Widget/KitchenWidgetPushRegistration.swift; sourceTree = SOURCE_ROOT; };
+		BFBA20261119000000000002 /* BeforeFire/Shared/Widget/KitchenStatusWidgetPushHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BeforeFire/Shared/Widget/KitchenStatusWidgetPushHandler.swift; sourceTree = SOURCE_ROOT; };
+		BFBA20261119000000000003 /* BeforeFire/Shared/Widget/KitchenStatusWidgetEntry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BeforeFire/Shared/Widget/KitchenStatusWidgetEntry.swift; sourceTree = SOURCE_ROOT; };
 		F0A0C5DD3089EFBE00BF99E1 /* BeforeFire.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = BeforeFire.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		F0A0C5EA3089EFBE00BF99E1 /* BeforeFireTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = BeforeFireTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		F0A0C5F43089EFBE00BF99E1 /* BeforeFireUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = BeforeFireUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -149,6 +178,21 @@
 		BFAC20261027000000000003 /* BeforeFireWidgets */ = {
 			isa = PBXGroup;
 			children = (
+				BFBA20261119000000000001 /* BeforeFire/Shared/Widget/KitchenWidgetPushRegistration.swift */,
+				BFBA20261119000000000002 /* BeforeFire/Shared/Widget/KitchenStatusWidgetPushHandler.swift */,
+				BFBA20261119000000000003 /* BeforeFire/Shared/Widget/KitchenStatusWidgetEntry.swift */,
+				BFAF20261119000000000000 /* BeforeFireWidgets/KitchenStatusWidget.swift */,
+				BFAF20261119000000000001 /* BeforeFireWidgets/KitchenStatusTimelineProvider.swift */,
+				BFAF20261119000000000002 /* BeforeFire/Models/KitchenStatus.swift */,
+				BFAF20261119000000000003 /* BeforeFire/Models/SensorReadingsSnapshot.swift */,
+				BFAF20261119000000000004 /* BeforeFire/Models/MonitorReading.swift */,
+				BFAF20261119000000000005 /* BeforeFire/Shared/Styling/MonitorStyle.swift */,
+				BFAF20261119000000000006 /* BeforeFire/Shared/Keychain/KeychainPasswordStore.swift */,
+				BFAF20261119000000000007 /* BeforeFire/Shared/SensorBackend/SensorBackendConfiguration.swift */,
+				BFAF20261119000000000008 /* BeforeFire/Shared/SensorBackend/SensorReadingsClient.swift */,
+				BFAF20261119000000000009 /* BeforeFire/Shared/Widget/KitchenStatusWidgetConnection.swift */,
+				BFAF2026111900000000000B /* BeforeFire/Features/Monitor/ViewModels/MonitorPreviewCondition.swift */,
+				BFAF2026111900000000000A /* BeforeFireWidgets/BeforeFireWidgets.entitlements */,
 				BFAC20261027000000000014 /* BeforeFireWidgets/AlarmLiveActivity.swift */,
 				BFAC20261027000000000015 /* BeforeFireWidgets/AlarmLiveActivityStyle.swift */,
 				BFAC20261027000000000016 /* BeforeFire/Shared/LiveActivity/AlarmActivityAttributes.swift */,
@@ -388,6 +432,20 @@
 				BFAE20261105000000000061 /* BeforeFire/Models/KitchenAssessment.swift in Sources */,
 				BFAE20261105000000000063 /* BeforeFire/Shared/Notifications/KitchenGuidance.swift in Sources */,
 				BFAE20261105000000000064 /* BeforeFire/Shared/Notifications/KitchenRuleMessages.swift in Sources */,
+				BFBB20261119000000000001 /* BeforeFire/Shared/Widget/KitchenWidgetPushRegistration.swift in Sources */,
+				BFBB20261119000000000002 /* BeforeFire/Shared/Widget/KitchenStatusWidgetPushHandler.swift in Sources */,
+				BFBB20261119000000000003 /* BeforeFire/Shared/Widget/KitchenStatusWidgetEntry.swift in Sources */,
+				BFAF20261119000000010000 /* BeforeFireWidgets/KitchenStatusWidget.swift in Sources */,
+				BFAF20261119000000010001 /* BeforeFireWidgets/KitchenStatusTimelineProvider.swift in Sources */,
+				BFAF20261119000000010002 /* BeforeFire/Models/KitchenStatus.swift in Sources */,
+				BFAF20261119000000010003 /* BeforeFire/Models/SensorReadingsSnapshot.swift in Sources */,
+				BFAF20261119000000010004 /* BeforeFire/Models/MonitorReading.swift in Sources */,
+				BFAF20261119000000010005 /* BeforeFire/Shared/Styling/MonitorStyle.swift in Sources */,
+				BFAF20261119000000010006 /* BeforeFire/Shared/Keychain/KeychainPasswordStore.swift in Sources */,
+				BFAF20261119000000010007 /* BeforeFire/Shared/SensorBackend/SensorBackendConfiguration.swift in Sources */,
+				BFAF20261119000000010008 /* BeforeFire/Shared/SensorBackend/SensorReadingsClient.swift in Sources */,
+				BFAF20261119000000010009 /* BeforeFire/Shared/Widget/KitchenStatusWidgetConnection.swift in Sources */,
+				BFAF2026111900000001000B /* BeforeFire/Features/Monitor/ViewModels/MonitorPreviewCondition.swift in Sources */,
 				BFAC20261027000000000028 /* BeforeFireWidgets/AlarmLiveActivity.swift in Sources */,
 				BFAC20261027000000000029 /* BeforeFireWidgets/AlarmLiveActivityStyle.swift in Sources */,
 				BFAC2026102700000000002A /* BeforeFire/Shared/LiveActivity/AlarmActivityAttributes.swift in Sources */,
@@ -452,13 +510,13 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_ENTITLEMENTS = BeforeFireWidgets/BeforeFireWidgets.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 15;
 				DEVELOPMENT_TEAM = LF442H2D9J;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = BeforeFireWidgets/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "BeforeFire Alarm";
-                SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) BEFOREFIRE_WIDGET_EXTENSION";
 				IPHONEOS_DEPLOYMENT_TARGET = 27.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -469,6 +527,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.ibnu.BeforeFire.AlarmWidgets;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) BEFOREFIRE_WIDGET_EXTENSION";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
@@ -478,13 +537,13 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_ENTITLEMENTS = BeforeFireWidgets/BeforeFireWidgetsRelease.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 15;
 				DEVELOPMENT_TEAM = LF442H2D9J;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = BeforeFireWidgets/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "BeforeFire Alarm";
-                SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) BEFOREFIRE_WIDGET_EXTENSION";
 				IPHONEOS_DEPLOYMENT_TARGET = 27.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -495,6 +554,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.ibnu.BeforeFire.AlarmWidgets;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) BEFOREFIRE_WIDGET_EXTENSION";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
@@ -606,6 +666,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 27.0;
+				KITCHEN_STATUS_KEYCHAIN_GROUP = "$(DEVELOPMENT_TEAM).com.ibnu.BeforeFire.kitchen-status";
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
@@ -665,6 +726,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 27.0;
+				KITCHEN_STATUS_KEYCHAIN_GROUP = "$(DEVELOPMENT_TEAM).com.ibnu.BeforeFire.kitchen-status";
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;

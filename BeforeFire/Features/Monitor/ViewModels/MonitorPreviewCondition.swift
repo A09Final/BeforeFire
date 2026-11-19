@@ -1,4 +1,4 @@
-enum MonitorPreviewCondition: String, CaseIterable, Identifiable {
+nonisolated enum MonitorPreviewCondition: String, CaseIterable, Identifiable, Sendable {
     case normal = "Normal"
     case unsafe = "Unsafe"
     case dangerous = "Dangerous"

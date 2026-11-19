@@ -93,6 +93,7 @@ final class AlarmPreviewModel {
         guard let deviceID = activity.attributes.sensorDeviceID, deviceID == linkedDeviceID,
               let eventID = activity.attributes.remoteEventID,
               activity.activityState == .active || activity.activityState == .stale else { return }
+        AlarmLiveActivityRegistration.shared.observeUpdateToken(for: activity)
         if liveAlarmDeviceID == deviceID { activityMessage = "Alarm Live Activity is running." }
         let localActivities = activeActivities.filter {
             $0.attributes.sensorDeviceID == deviceID && $0.attributes.remoteEventID == nil
@@ -248,8 +249,9 @@ final class AlarmPreviewModel {
             activityMessage = "Live Activity preview is running."
             return
         }
-        if let liveAlarmDeviceID, liveAlarmDeviceID == remoteDeviceID {
-            // The server can also end this activity when the app is in the background.
+        if liveAlarmDeviceID != nil {
+            // A sensor alarm uses the server activity. A pushless local fallback cannot end remotely.
+            AlarmLiveActivityRegistration.shared.refreshRegistration()
             activityMessage = "Waiting for the alarm Live Activity."
             return
         }

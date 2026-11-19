@@ -4,6 +4,7 @@ enum MonitorStyle {
     // DESIGN: All typography uses SF Pro. Change width and weight here.
     static let fontWidth: Font.Width = .compressed
     static let valueWeight: Font.Weight = .black
+    static let statusHeading = "Your Kitchen Is"
     static let statusHeadingSize: CGFloat = 19
     static let statusHeadingTracking: CGFloat = 2
     static let statusValueSize: CGFloat = 132

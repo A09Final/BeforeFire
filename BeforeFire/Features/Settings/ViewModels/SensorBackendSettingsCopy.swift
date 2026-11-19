@@ -24,7 +24,7 @@ enum SensorBackendSettingsCopy {
     static let statusHeader = "Status"
     static let readingsLabel = "Sensor values"
     static let lastUpdateLabel = "Last update"
-    static let notLinked = "Not linked. The Monitor screen shows example values."
+    static let notLinked = MonitorReadingsFormatter.ConnectionText.notLinked
     static let loading = "Connecting…"
     static let receiving = "Receiving"
     static let sensorOffline = "The sensor sends no new values. Make sure that it is on and connected to Wi-Fi."

@@ -17,7 +17,7 @@ struct MonitorPreviewTests {
     }
 
     @Test func previewChangesGuidanceAndReadings() {
-        var model = MonitorViewModel.mock
+        var model = MonitorViewModel.unlinked
         model.isActionGuidanceVisible = true
 
         #expect(model.displayedStatusTitle == "Your Kitchen Is\nUnsafe")
