@@ -136,8 +136,14 @@ struct MonitorReadingsFormatterTests {
         )
     }
 
-    @Test func showsExampleValuesWhenNoSensorIsLinked() {
-        #expect(formatter.content(for: .notConfigured) == nil)
+    @Test func showsUnknownWhenNoSensorIsLinked() {
+        let content = formatter.content(for: .notConfigured)
+        #expect(content.statusValue == "Unknown")
+        #expect(!content.isDangerous)
+        #expect(content.assessment == nil)
+        #expect(content.readings.map(\.id) == MonitorReadingsFormatter.cardOrder)
+        #expect(content.readings.allSatisfy { $0.value == "—" && $0.unit == nil && $0.spokenValue == "Not available" })
+        #expect(MonitorViewModel.unlinked.displayedStatusValue == content.statusValue)
     }
 
     @Test func formatsAllCardsInScreenOrder() {
@@ -216,8 +222,8 @@ struct MonitorReadingsFormatterTests {
         #expect(!content.isDangerous)
     }
 
-    @Test func showsOfflineWhenTheServerFails() throws {
-        let content = try #require(formatter.content(for: .failed(.backendUnreachable)))
+    @Test func showsOfflineWhenTheServerFails() {
+        let content = formatter.content(for: .failed(.backendUnreachable))
         #expect(content.statusValue == "Offline")
         #expect(content.readings.allSatisfy { $0.value == "—" })
     }
@@ -292,7 +298,8 @@ struct SensorReadingsClientTests {
         (404, #"{"error":"no_readings"}"#, .noReadings),
         (404, #"{"error":"unknown_device_id"}"#, .unknownDevice),
         (500, #"{"error":"internal_error"}"#, .unexpectedResponse),
-        (200, "not json", .unexpectedResponse)
+        (200, "not json", .unexpectedResponse),
+        (200, #"{"deviceId":"DAPUR_FFFFFF","readings":{},"isStale":false,"connection":"online"}"#, .unexpectedResponse)
     ])
     func mapsErrorResponses(statusCode: Int, body: String, expected: SensorReadingsFetchError) async throws {
         StubURLProtocol.handler = { _ in (statusCode, Data(body.utf8)) }

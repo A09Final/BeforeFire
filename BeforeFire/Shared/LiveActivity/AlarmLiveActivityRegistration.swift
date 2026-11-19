@@ -31,6 +31,7 @@ final class AlarmLiveActivityRegistration {
     private var pushUpload: Task<Void, Never>?
     private var snoozeUpload: Task<Void, Never>?
     private let store = KeychainSensorBackendLinkStore()
+    private let updateRegistrar = AlarmActivityUpdateRegistrar()
     private let logger = Logger(subsystem: "BeforeFire", category: "AlarmLiveActivityRegistration")
     private let installationID: String
     private var startObservation: Task<Void, Never>?
@@ -53,12 +54,12 @@ final class AlarmLiveActivityRegistration {
 
     func startObserving() {
         guard startObservation == nil else { return }
-        startObservation = Task {
+        startObservation = Task(priority: .high) {
             for await token in Activity<AlarmActivityAttributes>.pushToStartTokenUpdates {
                 uploadStartToken(token)
             }
         }
-        activityObservation = Task {
+        activityObservation = Task(priority: .high) {
             for activity in Activity<AlarmActivityAttributes>.activities {
                 observeUpdateToken(for: activity)
             }
@@ -70,6 +71,7 @@ final class AlarmLiveActivityRegistration {
     }
 
     func refreshRegistration() {
+        updateRegistrar.retryPending()
         pushUpload?.cancel()
         if let link = store.load(), let token = PushNotificationManager.shared.deviceRegistration?.token {
             pushUpload = Task {
@@ -84,7 +86,7 @@ final class AlarmLiveActivityRegistration {
         for activity in Activity<AlarmActivityAttributes>.activities {
             observeUpdateToken(for: activity)
             guard activity.attributes.sensorDeviceID == link.deviceID,
-                  let eventID = activity.attributes.remoteEventID, let token = activity.pushToken else { continue }
+                  let eventID = activity.attributes.remoteEventID ?? activity.content.state.pushEventID, let token = activity.pushToken else { continue }
             Task { await uploadUpdateToken(token, eventID: eventID, link: link) }
         }
     }
@@ -123,7 +125,7 @@ final class AlarmLiveActivityRegistration {
         reminderStateChanged(deviceID: deviceID, state: state)
         // The snooze request must not wait for the separate token upload.
         await snoozeUpload?.value
-        if let eventID = activity.attributes.remoteEventID, let token = activity.pushToken,
+        if let eventID = activity.attributes.remoteEventID ?? activity.content.state.pushEventID, let token = activity.pushToken,
            let link = store.load(), link.deviceID == deviceID {
             await uploadUpdateToken(token, eventID: eventID, link: link)
         }
@@ -159,12 +161,13 @@ final class AlarmLiveActivityRegistration {
         }
     }
 
-    private func observeUpdateToken(for activity: Activity<AlarmActivityAttributes>) {
+    func observeUpdateToken(for activity: Activity<AlarmActivityAttributes>) {
         guard activityObservations[activity.id] == nil,
-              let eventID = activity.attributes.remoteEventID,
+              let eventID = activity.attributes.remoteEventID ?? activity.content.state.pushEventID,
               let link = store.load(),
               link.deviceID == activity.attributes.sensorDeviceID else { return }
-        activityObservations[activity.id] = Task {
+        logger.info("Observing an alarm Live Activity. Update token available: \(activity.pushToken != nil)")
+        activityObservations[activity.id] = Task(priority: .high) {
             defer { activityObservations[activity.id] = nil }
             var previousToken: Data?
             if let token = activity.pushToken {
@@ -182,7 +185,7 @@ final class AlarmLiveActivityRegistration {
     }
 
     private func uploadUpdateToken(_ token: Data, eventID: String, link: SensorBackendLink) async {
-        await upload(Registration(installationId: installationID, eventId: eventID, updateToken: Self.hex(token)), to: link)
+        await updateRegistrar.register(token, installationID: installationID, eventID: eventID, link: link).value
     }
 
     @discardableResult

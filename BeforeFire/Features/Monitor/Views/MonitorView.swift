@@ -1,4 +1,8 @@
 import SwiftUI
+#if DEBUG
+import OSLog
+import WidgetKit
+#endif
 
 struct MonitorView: View {
     @State private var viewModel: MonitorViewModel
@@ -37,9 +41,27 @@ struct MonitorView: View {
             )
         }
         .onChange(of: liveReadings.status, initial: true) { _, status in
-            viewModel.show(readingsFormatter.content(for: status) ?? MonitorViewModel.mockContent)
+            viewModel.show(readingsFormatter.content(for: status))
+        }
+        #if DEBUG
+        .onChange(of: viewModel.activePreviewCondition, initial: true) { _, condition in
+            updateWidgetPreview(condition)
+        }
+        #endif
+    }
+
+    #if DEBUG
+    private func updateWidgetPreview(_ condition: MonitorPreviewCondition?) {
+        do {
+            if try KitchenStatusWidgetConnection().updatePreviewCondition(condition) {
+                WidgetCenter.shared.reloadTimelines(ofKind: KitchenStatusWidgetConnection.kind)
+            }
+        } catch {
+            Logger(subsystem: "BeforeFire", category: "KitchenStatusWidget")
+                .error("Cannot update the widget preview: \(String(describing: error), privacy: .private)")
         }
     }
+    #endif
 
     private func pageContent(expandsGrid: Bool) -> some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -160,7 +182,7 @@ struct MonitorView: View {
 }
 
 #Preview("Monitoring") {
-    NavigationStack { MonitorView(viewModel: .mock) }
+    NavigationStack { MonitorView(viewModel: .unlinked) }
         .environment(AlarmPreviewModel())
         .environment(SensorBackendSettingsModel.preview())
         .environment(MonitorLiveReadingsModel.live())
@@ -168,7 +190,7 @@ struct MonitorView: View {
 
 #Preview("Large Text") {
     NavigationStack {
-        MonitorView(viewModel: .mock)
+        MonitorView(viewModel: .unlinked)
             .environment(\.dynamicTypeSize, .accessibility3)
     }
     .environment(AlarmPreviewModel())

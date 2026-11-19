@@ -8,6 +8,12 @@ nonisolated enum KeychainPasswordStoreError: Error, Equatable {
 /// Reads and writes the generic passwords of one Keychain service. Each value has an account name.
 struct KeychainPasswordStore {
     let service: String
+    private let accessGroup: String?
+
+    init(service: String, accessGroup: String? = nil) {
+        self.service = service
+        self.accessGroup = accessGroup
+    }
 
     func read(account: String) -> String? {
         try? readValue(account: account)
@@ -61,8 +67,10 @@ struct KeychainPasswordStore {
     }
 
     private func baseQuery() -> [String: Any] {
-        [kSecClass as String: kSecClassGenericPassword,
-         kSecAttrService as String: service]
+        var query: [String: Any] = [kSecClass as String: kSecClassGenericPassword,
+                                    kSecAttrService as String: service]
+        if let accessGroup { query[kSecAttrAccessGroup as String] = accessGroup }
+        return query
     }
 
     private func delete(matching query: [String: Any]) throws {

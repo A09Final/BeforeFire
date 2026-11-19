@@ -8,4 +8,5 @@ struct MonitorContent: Equatable {
     let isDangerous: Bool
     let readings: [MonitorReading]
     var assessment: KitchenAssessment? = nil
+    var hasSensorLink = true
 }
