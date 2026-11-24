@@ -51,6 +51,13 @@ struct OnboardingFlowView: View {
     private var completion: some View {
         VStack {
             Spacer()
+            Image("Illustration-sensor-4")
+                .resizable()
+                .scaledToFit()
+                .frame(maxWidth: 300, maxHeight: 300)
+                .clipShape(.rect(cornerRadius: 18))
+                .padding(.bottom, 16)
+                .accessibilityHidden(true)
             Text(OnboardingCopy.completionTitle)
                 .font(.largeTitle.bold())
                 .multilineTextAlignment(.center)
